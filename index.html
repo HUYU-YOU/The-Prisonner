@@ -1,52 +1,68 @@
-<div id="game-container">
-  <!-- Écran de sélection au début (maintenant contenu dans le jeu) -->
-  <div id="menu-screen">
-    <h1>THE PRISONER</h1>
-    <div class="character-select">
-      <button onmousedown="startHeroHold('Knight')" onmouseup="endHeroHold('Knight')" onmouseleave="endHeroHold('Knight')">Chevalier</button>
-<button onmousedown="startHeroHold('Elf')" onmouseup="endHeroHold('Elf')" onmouseleave="endHeroHold('Elf')">Elfe</button>
-      <button onmousedown="startHeroHold('Mage')" onmouseup="endHeroHold('Mage')" onmouseleave="endHeroHold('Mage')">🔒Le brulé </button>
-    </div>
-  </div>
-
-  <aside id="hud">
-    <h1 class="title">THE PRISONER</h1>
-    <div id="portrait"></div>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE PRISONER</title>
     
-    <div class="stats-text">
-      <p>NAME: <span id="p-name">???</span></p>
-      <p>WEAPON: <span id="p-weapon">???</span></p>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="game-container">
+      <div id="menu-screen">
+        <h1>THE PRISONER</h1>
+        <div class="character-select">
+          <button onmousedown="startHeroHold('Knight')" onmouseup="endHeroHold('Knight')" onmouseleave="endHeroHold('Knight')">Chevalier</button>
+          <button onmousedown="startHeroHold('Elf')" onmouseup="endHeroHold('Elf')" onmouseleave="endHeroHold('Elf')">Elfe</button>
+          <button onmousedown="startHeroHold('Mage')" onmouseup="endHeroHold('Mage')" onmouseleave="endHeroHold('Mage')">🔒Le brulé </button>
+        </div>
+      </div>
+
+      <aside id="hud">
+        <h1 class="title">THE PRISONER</h1>
+        <div id="portrait"></div>
+        
+        <div class="stats-text">
+          <p>NAME: <span id="p-name">???</span></p>
+          <p>WEAPON: <span id="p-weapon">???</span></p>
+        </div>
+
+        <div class="bar-container">
+          <p>HEALTH</p>
+          <div class="bar-bg"><div id="health-bar" style="width: 100%; background: #2ecc71;"></div></div>
+          <p>MANA</p>
+          <div class="bar-bg"><div id="mana-bar" style="width: 0%; background: #3498db;"></div></div>
+        </div>
+
+      <div id="inventory-container">
+      
+      <div class="inventory-box" id="potion-box">
+        <div class="potion-btn" onclick="usePotion('green')">🟢 <span id="p-green">0</span></div>
+        <div class="potion-btn" onclick="usePotion('yellow')">🟡 <span id="p-yellow">0</span></div>
+        <div class="potion-btn" onclick="usePotion('blue')">🔵 <span id="p-blue">0</span></div>
+        <div class="potion-btn" onclick="usePotion('red')">🔴 <span id="p-red">0</span></div>
+      </div>
+
+      <div class="inventory-box" id="key-box">
+        <div class="key-item">🔑 <span id="key-gold">0</span></div>
+        <div class="key-item">💀 <span id="key-skull">0</span></div>
+        <div class="key-item">🔮 <span id="key-orb">0</span></div>
+      </div>
+
     </div>
 
-    <!-- Barres -->
-    <div class="bar-container">
-      <p>HEALTH</p>
-      <div class="bar-bg"><div id="health-bar" style="width: 100%; background: #2ecc71;"></div></div>
-      <p>MANA</p>
-      <div class="bar-bg"><div id="mana-bar" style="width: 0%; background: #3498db;"></div></div>
+        <button id="pause-btn">MAP / PAUSE</button>
+      </aside>
+
+      <main id="game-viewport">
+        <canvas id="gameCanvas"></canvas>
+      </main>
     </div>
-
-  <div id="inventory-container">
-  
-  <div class="inventory-box" id="potion-box">
-    <div class="potion-btn" onclick="usePotion('green')">🟢 <span id="p-green">0</span></div>
-    <div class="potion-btn" onclick="usePotion('yellow')">🟡 <span id="p-yellow">0</span></div>
-    <div class="potion-btn" onclick="usePotion('blue')">🔵 <span id="p-blue">0</span></div>
-    <div class="potion-btn" onclick="usePotion('red')">🔴 <span id="p-red">0</span></div>
-  </div>
-
-  <div class="inventory-box" id="key-box">
-    <div class="key-item">🔑 <span id="key-gold">0</span></div>
-    <div class="key-item">💀 <span id="key-skull">0</span></div>
-    <div class="key-item">🔮 <span id="key-orb">0</span></div>
-  </div>
-
-</div>
-
-    <button id="pause-btn">MAP / PAUSE</button>
-  </aside>
-
-  <main id="game-viewport">
-    <canvas id="gameCanvas"></canvas>
-  </main>
-</div>
+    <script src="js/assets.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/main.js"></script>
+    
+</body>
+</html>
