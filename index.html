@@ -13,10 +13,15 @@
       <div id="menu-screen">
         <h1>THE PRISONER</h1>
         <div class="character-select">
-          <button onmousedown="startHeroHold('Knight')" onmouseup="endHeroHold('Knight')" onmouseleave="endHeroHold('Knight')">Chevalier</button>
-          <button onmousedown="startHeroHold('Elf')" onmouseup="endHeroHold('Elf')" onmouseleave="endHeroHold('Elf')">Elfe</button>
-          <button onmousedown="startHeroHold('Mage')" onmouseup="endHeroHold('Mage')" onmouseleave="endHeroHold('Mage')">🔒Le brulé </button>
-        </div>
+          <button class="hero-btn" onmousedown="startHeroHold('Knight')" onmouseup="endHeroHold('Knight')" onmouseleave="endHeroHold('Knight')">
+            <img src="assets/card/Knight.png" alt="Chevalier">
+          </button>
+          <button class="hero-btn" onmousedown="startHeroHold('Elf')" onmouseup="endHeroHold('Elf')" onmouseleave="endHeroHold('Elf')">
+            <img src="assets/card/Elf.png" alt="Elfe">
+          </button>
+          <button class="hero-btn" onmousedown="startHeroHold('Mage')" onmouseup="endHeroHold('Mage')" onmouseleave="endHeroHold('Mage')">
+            <img src="assets/card/Burned.png" alt="🔒 Le Brûlé">
+          </button>
       </div>
 
       <aside id="hud">
