@@ -51,25 +51,26 @@ function renderGameView() {
     }
     
 
-    // SOL 
+ // SOL
     let imageSol = assetsManager.images['sol_base'];
+    
+    // On dessine le fond de base quoiqu'il arrive
+    ctx.fillStyle = '#2c251f'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // On affiche l'image sans condition complexe pour tester
-    if (imageSol && imageSol.src) {
-        try {
-            let pattern = ctx.createPattern(imageSol, 'repeat');
-            ctx.fillStyle = pattern;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        } catch (e) {
-            // Si ça plante, on affiche le nom du problème dans la console
-            console.error("Erreur avec le pattern du sol :", e);
-            ctx.fillStyle = 'blue'; // Si c'est bleu, le pattern a échoué
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-    } else {
-        console.warn("L'image sol_base n'est pas dans assetsManager");
-        ctx.fillStyle = 'red'; // Si c'est rouge, l'image n'existe pas dans assetsManager
+    if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) {
+        let pattern = ctx.createPattern(imageSol, 'repeat');
+        ctx.fillStyle = pattern;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        // Grille de secours uniquement si l'image n'est pas chargée
+        ctx.strokeStyle = '#3d342c';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < canvas.width; i += 60) {
+            for(let j = 0; j < canvas.height; j += 60) {
+                ctx.strokeRect(i, j, 60, 60);
+            }
+        }
     }
 
     // MURS
