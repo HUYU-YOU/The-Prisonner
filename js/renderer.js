@@ -74,17 +74,19 @@ function renderGameView() {
     }
 
     // MURS
-    let imgMurG = assetsManager.images['left_wall'];
-    if (imgMurG && imgMurG.complete && imgMurG.naturalWidth !== 0) {
-        // Dessine le mur gauche (x=0, y=0, largeur=wallMargin, hauteur=canvas.height)
-        ctx.drawImage(imgMurG, 0, 0, wallMargin, canvas.height);
+    let wallL = assetsManager.images['wall_left'];
+
+    // On dessine le mur gauche si l'image est prête
+    if (wallL && wallL.complete && wallL.naturalWidth !== 0) {
+        // Le 0, 0, wallMargin, canvas.height correspond aux coordonnées (x,y) et taille (largeur, hauteur)
+        ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
     } else {
-        // Fond noir de secours 
+        // Si l'image n'est pas chargée, on dessine le bloc noir pour ne pas casser le jeu
         ctx.fillStyle = '#050505';
         ctx.fillRect(0, 0, wallMargin, canvas.height);
     }
 
-  
+    // Garde les fillRect pour les 3 autres murs en attendant de les implanter un par un
     ctx.fillStyle = '#050505';
     ctx.fillRect(0, 0, canvas.width, wallMargin); // Haut
     ctx.fillRect(0, canvas.height - wallMargin, canvas.width, wallMargin); // Bas
