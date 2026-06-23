@@ -18,7 +18,7 @@ function spawnEnemy(type, count, baseX = null, baseY = null) {
             let minSpawnY = wallMargin + arenaShrink;
             let maxSpawnY = canvas.height - wallMargin - arenaShrink - 40;
 
-            if (arenaWave >= 21) {
+            if (arenaWave >= 41) {
                 let side = Math.floor(Math.random() * 4);
                 if (side === 0) { ex = minSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); }
                 else if (side === 1) { ex = maxSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); } 
