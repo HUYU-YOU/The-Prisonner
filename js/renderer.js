@@ -148,6 +148,14 @@ function renderGameView() {
                 ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); ctx.fillStyle = '#e67e22'; ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4);
             }
         }
+        } 
+    else if (item.type === 'key_skull') {
+    // Dessin d'une clé squelette (en forme de crâne)
+    ctx.fillStyle = '#ecf0f1'; 
+    ctx.beginPath(); ctx.arc(item.x, item.y + floatY, 10, 0, Math.PI * 2); ctx.fill(); // Crâne
+    ctx.fillStyle = '#bdc3c7'; ctx.fillRect(item.x - 3, item.y + 10 + floatY, 6, 15); // Manche
+    ctx.fillStyle = '#2c3e50'; ctx.fillRect(item.x - 2, item.y + 2 + floatY, 4, 4); // Yeux
+}
     });
 
     // DANGERS
