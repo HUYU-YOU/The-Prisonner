@@ -48,7 +48,8 @@ function spawnEnemy(type, count, baseX = null, baseY = null) {
             wobble: Math.random() * Math.PI * 2,
             timeAlive: 0, phase: 1, invulnerable: false,
             isBurning: false, burnTicks: 0, burnTimer: 0,
-            slowTimer: 0, killedBySummon: false, killedByNecro: false // Ajouts Nécromancien
+            slowTimer: 0, isPermanentlySlowed: false, // <-- RALENTISSEMENT INFINI NÉCRO
+            killedBySummon: false, killedByNecro: false
         });
     }
 }
@@ -64,7 +65,7 @@ function saveRoomState() {
 function loadRoom(roomId) {
   currentRoomId = roomId;
   projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
-  necroSummons = []; necroKills = []; // On nettoie le terrain
+  necroSummons = []; necroKills = []; 
   
   if (!worldState.bloodStains[roomId]) worldState.bloodStains[roomId] = [];
   bloodStains = worldState.bloodStains[roomId];
@@ -95,31 +96,19 @@ function loadRoom(roomId) {
     currentItems = [];
   }
   else if (roomId === 3) { 
-    currentDoors = [
-      { ...doorE, id: 'door_3_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnW.x, spawnY: spawnW.y },
-      { ...doorN, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y }
-    ];
+    currentDoors = [ { ...doorE, id: 'door_3_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnW.x, spawnY: spawnW.y }, { ...doorN, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } ];
     currentItems = [];
   }
   else if (roomId === 4) { 
-    currentDoors = [
-      { ...doorW, id: 'door_4_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnE.x, spawnY: spawnE.y },
-      { ...doorN, id: 'door_4_6', requiresKey: false, locked: false, dest: 6, spawnX: spawnS.x, spawnY: spawnS.y }
-    ];
+    currentDoors = [ { ...doorW, id: 'door_4_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorN, id: 'door_4_6', requiresKey: false, locked: false, dest: 6, spawnX: spawnS.x, spawnY: spawnS.y } ];
     currentItems = [];
   }
   else if (roomId === 5) { 
-    currentDoors = [
-      { ...doorS, id: 'door_5_3', requiresKey: false, locked: false, dest: 3, spawnX: spawnN.x, spawnY: spawnN.y },
-      { ...doorN, id: 'door_5_7', requiresKey: false, locked: false, dest: 7, spawnX: 275, spawnY: spawnS.y } 
-    ];
+    currentDoors = [ { ...doorS, id: 'door_5_3', requiresKey: false, locked: false, dest: 3, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_5_7', requiresKey: false, locked: false, dest: 7, spawnX: 275, spawnY: spawnS.y } ];
     currentItems = [];
   }
   else if (roomId === 6) { 
-    currentDoors = [
-      { ...doorS, id: 'door_6_4', requiresKey: false, locked: false, dest: 4, spawnX: spawnN.x, spawnY: spawnN.y },
-      { ...doorN, id: 'door_6_7', requiresKey: false, locked: false, dest: 7, spawnX: 875, spawnY: spawnS.y } 
-    ];
+    currentDoors = [ { ...doorS, id: 'door_6_4', requiresKey: false, locked: false, dest: 4, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_6_7', requiresKey: false, locked: false, dest: 7, spawnX: 875, spawnY: spawnS.y } ];
     currentItems = [];
   }
   else if (roomId === 7) { 
@@ -158,29 +147,29 @@ function loadRoom(roomId) {
 function activateUltimate() {
     if (playerStats.mana < 100) return;
 
-    // --- ULTIME NÉCROMANCIEN (Gère la Résurrection et la Fusion) ---
     if (player.heroClass === 'Necromancer') {
         if (necroSummons.length > 0) {
-            // FUSION DE TOUTES LES INVOCATIONS EN UN GOLEM GÉANT
             let totalHP = 0;
             necroSummons.forEach(s => totalHP += s.health);
-            necroSummons = []; // On absorbe tout
-            necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 40, size: 60, speed: 2.5, attackCooldown: 0 });
-            spawnParticles(player.x + player.size/2, player.y + player.size/2, '#8e44ad', 50, true);
+            necroSummons = []; 
+            totalHP *= 2; // PV DOUBLÉS POUR LA FUSION
+            
+            // FUSION INVULNÉRABLE (3 SECS = 180 frames)
+            necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 4.5, attackCooldown: 0, invulnerableTimer: 180 }); 
+            spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 80, true);
         } else if (necroKills.length > 0) {
-            // RÉSURRECTION DU CIMETIÈRE
             necroKills.forEach(kill => {
-                let sz = 30, hp = 40, dmg = 15, spd = 2.5;
-                if(kill === 'troll') { hp = 200; sz = 60; dmg = 30; spd = 1.5; }
-                else if(kill === 'mage') { hp = 100; sz = 45; dmg = 20; spd = 2; }
-                else if(kill === 'dragon') { hp = 500; sz = 80; dmg = 50; spd = 1.5; }
-                else if(kill === 'spider') { sz = 20; hp = 20; dmg = 10; spd = 4; }
-                necroSummons.push({ type: kill, x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: hp, maxHealth: hp, damage: dmg, size: sz, speed: spd, attackCooldown: 0 });
+                let sz = 30, hp = 40, dmg = 15, spd = 4.5; // INVOCATIONS PLUS RAPIDES
+                if(kill === 'troll') { hp = 200; sz = 60; dmg = 30; spd = 3.5; }
+                else if(kill === 'mage') { hp = 100; sz = 45; dmg = 20; spd = 4; }
+                else if(kill === 'dragon') { hp = 500; sz = 80; dmg = 50; spd = 3; }
+                else if(kill === 'spider') { sz = 20; hp = 20; dmg = 10; spd = 6; }
+                necroSummons.push({ type: kill, x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: hp, maxHealth: hp, damage: dmg, size: sz, speed: spd, attackCooldown: 0, invulnerableTimer: 0 });
             });
-            necroKills = []; // Cimetière vidé après utilisation
+            necroKills = []; 
             spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
         } else {
-            return; // Si on a rien à faire, on n'utilise pas le mana
+            return; 
         }
     }
     
