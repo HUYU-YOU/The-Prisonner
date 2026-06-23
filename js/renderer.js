@@ -74,13 +74,22 @@ function renderGameView() {
     }
 
     // MURS
+    let imgMurG = assetsManager.images['left_wall'];
+    if (imgMurG && imgMurG.complete && imgMurG.naturalWidth !== 0) {
+        // Dessine le mur gauche (x=0, y=0, largeur=wallMargin, hauteur=canvas.height)
+        ctx.drawImage(imgMurG, 0, 0, wallMargin, canvas.height);
+    } else {
+        // Fond noir de secours 
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, wallMargin, canvas.height);
+    }
+
+  
     ctx.fillStyle = '#050505';
-    ctx.fillRect(0, 0, canvas.width, wallMargin); 
-    ctx.fillRect(0, canvas.height - wallMargin, canvas.width, wallMargin); 
-    ctx.fillRect(0, 0, wallMargin, canvas.height); 
-    ctx.fillRect(canvas.width - wallMargin, 0, wallMargin, canvas.height); 
+    ctx.fillRect(0, 0, canvas.width, wallMargin); // Haut
+    ctx.fillRect(0, canvas.height - wallMargin, canvas.width, wallMargin); // Bas
+    ctx.fillRect(canvas.width - wallMargin, 0, wallMargin, canvas.height); // Droite
     
-    // ARÈNE ZONE ROUGE 
 // ARÈNE ZONE ROUGE
 if (currentRoomId === 999) { 
     ctx.strokeStyle = '#c0392b'; 
