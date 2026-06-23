@@ -104,21 +104,36 @@ if (currentRoomId === 999) {
         ctx.fillStyle = '#29547d'; ctx.fillRect(bookshelf.x + 20, bookshelf.y + 50, 10, 20);
     }
 
-    // PORTES
+// PORTES
     currentDoors.forEach(door => {
-        ctx.fillStyle = '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height);
-        ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
-        if(door.face === 'north' || door.face === 'south') { ctx.strokeRect(door.x + 10, door.y, door.width - 20, door.height); } 
-        else { ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); }
+        let doorImg = null;
+        
+        // On associe la face de la porte à la bonne image chargée
+        if (door.face === 'north') doorImg = assetsManager.images['back_door'];
+        else if (door.face === 'south') doorImg = assetsManager.images['front_door'];
+        else if (door.face === 'west') doorImg = assetsManager.images['left_door'];
+        else if (door.face === 'east') doorImg = assetsManager.images['right_door'];
 
+        // Si l'image existe et est prête, on l'affiche
+        if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) {
+            ctx.drawImage(doorImg, door.x, door.y, door.width, door.height);
+        } else {
+            // CODE DE SECOURS : on dessine la porte marron de base si l'image charge mal
+            ctx.fillStyle = '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height);
+            ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+            if(door.face === 'north' || door.face === 'south') { ctx.strokeRect(door.x + 10, door.y, door.width - 20, door.height); } 
+            else { ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); }
+        }
+
+        // LE CADENAS : dessiné par-dessus la porte si elle nécessite une clé
         if (door.requiresKey && door.locked) {
             let lockX = door.x + door.width / 2; let lockY = door.y + door.height / 2;
-            if (door.face === 'north') lockY += 15;
+            if (door.face === 'north') lockY += 15; // On abaisse un peu le cadenas pour la porte du haut
             ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(lockX, lockY, 10, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(lockX, lockY + 2, 4, 0, Math.PI * 2); ctx.fill();
         }
     });
-
+    
     // RAMASSABLES
     currentItems.forEach(item => {
         if (!item.collected) {
