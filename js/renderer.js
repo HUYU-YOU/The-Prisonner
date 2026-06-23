@@ -50,22 +50,26 @@ function renderGameView() {
         shakeIntensity *= 0.9; 
     }
     
-    // --- SOL (ARRIÈRE-PLAN) ---
-    // On essaye de charger le sol depuis assets
+    // ==========================================
+    // SOL (Arrière-plan)
+    // ==========================================
     let imageSol = assetsManager.images['sol_base'];
+
+    // On affiche l'image si elle est chargée
     if (imageSol && imageSol.complete && imageSol.naturalWidth !== 0) {
         let pattern = ctx.createPattern(imageSol, 'repeat');
         ctx.fillStyle = pattern;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
-        // Fond de secours si l'image n'est pas encore chargée
-        ctx.fillStyle = currentRoomId === 999 ? '#1a1a1a' : '#2c251f'; 
+        // Mode secours : change la couleur selon le mode
+        ctx.fillStyle = (currentRoomId === 999) ? '#1a1a1a' : '#2c251f'; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
         // Grille de secours
         ctx.strokeStyle = '#3d342c';
         ctx.lineWidth = 1;
-        for(let i=0; i<canvas.width; i+=60) {
-            for(let j=0; j<canvas.height; j+=60) {
+        for(let i = 0; i < canvas.width; i += 60) {
+            for(let j = 0; j < canvas.height; j += 60) {
                 ctx.strokeRect(i, j, 60, 60);
             }
         }
