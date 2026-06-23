@@ -104,16 +104,16 @@ function renderGameView() {
     }
 
    // PORTES
-    currentDoors.forEach(door => {
+  currentDoors.forEach(door => {
         let doorImg = null;
-        let isOpen = worldState.openedDoors[door.id] || false; 
         
+        let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false;
         // 1. DÉTECTION DE L'ÉTAT DE LA PORTE
         let stateStr = '_close'; // Par défaut
         if (isOpen) {
             stateStr = '_open';
         } else if (door.requiresKey && door.locked) {
-            stateStr = '_key'; // <-- UTILISE TON NOUVEAU DESIGN
+            stateStr = '_key'; 
         }
         
         // 2. SÉLECTION DE L'IMAGE
@@ -135,8 +135,6 @@ function renderGameView() {
         }
 
         // --- LE PETIT CADENAS JAUNE ---
-        // 💡 Astuce : Si tes nouvelles images _key.png ont DÉJÀ un cadenas dessiné dessus par tes soins, 
-        // tu peux complètement supprimer ce bloc "if" ci-dessous pour éviter un doublon visuel !
         if (door.requiresKey && door.locked && !isOpen) {
             let lockX = door.x + door.width / 2; let lockY = door.y + door.height / 2;
             if (door.face === 'north') lockY += 15;
