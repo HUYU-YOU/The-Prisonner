@@ -106,3 +106,15 @@ assetsManager.load('left_door', 'assets/decors/left_door.png');
 assetsManager.load('right_door', 'assets/decors/right_door.png');
 assetsManager.load('back_door', 'assets/decors/back_door.png');   // Porte du NORD (Haut)
 assetsManager.load('front_door', 'assets/decors/front_door.png'); // Porte du SUD (Bas)
+assetsManager.load('left_door_close', 'assets/decors/left_door_close.png');
+assetsManager.load('left_door_open', 'assets/decors/left_door_open.png');
+assetsManager.load('left_door_key', 'assets/decors/left_door_key.png'); 
+assetsManager.load('right_door_close', 'assets/decors/right_door_close.png');
+assetsManager.load('right_door_open', 'assets/decors/right_door_open.png');
+assetsManager.load('right_door_key', 'assets/decors/right_door_key.png'); 
+assetsManager.load('front_door_close', 'assets/decors/front_door_close.png');
+assetsManager.load('front_door_open', 'assets/decors/front_door_open.png');
+assetsManager.load('front_door_key', 'assets/decors/front_door_key.png'); 
+assetsManager.load('back_door_close', 'assets/decors/back_door_close.png');
+assetsManager.load('back_door_open', 'assets/decors/back_door_open.png');
+assetsManager.load('back_door_key', 'assets/decors/back_door_key.png'); 
