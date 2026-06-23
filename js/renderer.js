@@ -49,7 +49,7 @@ function renderGameView() {
         shakeIntensity *= 0.9; 
     }
     
- // SOL
+    // SOL
     let imageSol = assetsManager.images['sol_base'];
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -75,14 +75,13 @@ function renderGameView() {
     let wallB = assetsManager.images['front_wall'];
     if (wallB && wallB.complete && wallB.naturalWidth > 0) { ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin); }
 
-    
-// ARÈNE ZONE ROUGE
-if (currentRoomId === 999) { 
-    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6;
-    let x = wallMargin + arenaShrink; let y = wallMargin + arenaShrink;
-    let w = canvas.width - (wallMargin + arenaShrink) * 2; let h = canvas.height - (wallMargin + arenaShrink) * 2;
-    ctx.strokeRect(x, y, w, h);
-}
+    // ARÈNE ZONE ROUGE
+    if (currentRoomId === 999) { 
+        ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6;
+        let x = wallMargin + arenaShrink; let y = wallMargin + arenaShrink;
+        let w = canvas.width - (wallMargin + arenaShrink) * 2; let h = canvas.height - (wallMargin + arenaShrink) * 2;
+        ctx.strokeRect(x, y, w, h);
+    }
 
     // SANG
     bloodStains.forEach(blood => {
@@ -104,36 +103,31 @@ if (currentRoomId === 999) {
         ctx.fillStyle = '#29547d'; ctx.fillRect(bookshelf.x + 20, bookshelf.y + 50, 10, 20);
     }
 
-// PORTES
+    // PORTES
     currentDoors.forEach(door => {
         let doorImg = null;
-        
-        // On associe la face de la porte à la bonne image chargée
         if (door.face === 'north') doorImg = assetsManager.images['back_door'];
         else if (door.face === 'south') doorImg = assetsManager.images['front_door'];
         else if (door.face === 'west') doorImg = assetsManager.images['left_door'];
         else if (door.face === 'east') doorImg = assetsManager.images['right_door'];
 
-        // Si l'image existe et est prête, on l'affiche
         if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) {
             ctx.drawImage(doorImg, door.x, door.y, door.width, door.height);
         } else {
-            // CODE DE SECOURS : on dessine la porte marron de base si l'image charge mal
             ctx.fillStyle = '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height);
             ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
             if(door.face === 'north' || door.face === 'south') { ctx.strokeRect(door.x + 10, door.y, door.width - 20, door.height); } 
             else { ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); }
         }
 
-        // LE CADENAS : dessiné par-dessus la porte si elle nécessite une clé
         if (door.requiresKey && door.locked) {
             let lockX = door.x + door.width / 2; let lockY = door.y + door.height / 2;
-            if (door.face === 'north') lockY += 15; // On abaisse un peu le cadenas pour la porte du haut
+            if (door.face === 'north') lockY += 15;
             ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(lockX, lockY, 10, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(lockX, lockY + 2, 4, 0, Math.PI * 2); ctx.fill();
         }
     });
-    
+
     // RAMASSABLES
     currentItems.forEach(item => {
         if (!item.collected) {
@@ -161,13 +155,21 @@ if (currentRoomId === 999) {
         necroSummons.forEach(s => {
             ctx.save(); ctx.translate(s.x + s.size/2, s.y + s.size/2);
             if (s.type === 'fusion') {
+                if (s.invulnerableTimer && s.invulnerableTimer > 0) {
+                    ctx.shadowBlur = 20; ctx.shadowColor = '#f1c40f'; // Glow doré d'invincibilité
+                    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(0, 0, s.size/2 + 8, 0, Math.PI*2); ctx.stroke();
+                }
                 ctx.fillStyle = '#8e44ad'; ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size);
                 ctx.fillStyle = '#1abc9c'; ctx.beginPath(); ctx.arc(0, 0, s.size/4, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
             } else {
                 ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'; ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(-s.size/4, -s.size/4, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(s.size/4, -s.size/4, 4, 0, Math.PI*2); ctx.fill();
             }
             ctx.restore();
+            
+            // Barres de vie des invocations
             ctx.fillStyle = '#111'; ctx.fillRect(s.x, s.y - 10, s.size, 4);
             ctx.fillStyle = '#8e44ad'; ctx.fillRect(s.x, s.y - 10, s.size * (s.health / s.maxHealth), 4);
         });
@@ -208,16 +210,34 @@ if (currentRoomId === 999) {
             ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill();
         }
         
-        // Aura violette quand le monstre est ralenti par le Nécromancien
-        if (enemy.slowTimer > 0) {
+        // Aura violette quand le monstre est ralenti par le Nécromancien (Temporaire OU Infini)
+        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) {
             ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 4, 0, Math.PI*2); ctx.stroke();
         }
         ctx.restore();
         
+        // --- BARRES DE VIE ENNEMIS ET NOMS DES BOSS ---
         if (!['troll', 'mage', 'dragon'].includes(enemy.type)) {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
+        } else {
+            let bossName = "Boss";
+            if (enemy.type === 'troll') bossName = "Troll Corrompu";
+            else if (enemy.type === 'mage') bossName = "Mage Exilé";
+            else if (enemy.type === 'dragon') bossName = "Dragon Maudit";
+            
+            ctx.fillStyle = '#f1c40f'; 
+            ctx.font = 'bold 16px Arial'; 
+            ctx.textAlign = 'center';
+            ctx.fillText(bossName, enemy.x + enemy.size/2, enemy.y - 25); 
+            
+            let barWidth = 100;
+            ctx.fillStyle = '#111'; 
+            ctx.fillRect(enemy.x + enemy.size/2 - barWidth/2, enemy.y - 15, barWidth, 8);
+            ctx.fillStyle = '#e74c3c'; 
+            ctx.fillRect(enemy.x + enemy.size/2 - barWidth/2 + 1, enemy.y - 14, (barWidth-2) * (Math.max(0, enemy.health) / enemy.maxHealth), 6);
+            ctx.textAlign = 'left';
         }
     });
 
@@ -225,7 +245,6 @@ if (currentRoomId === 999) {
     projectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
         if (p.isNecro) {
-            // Tirs du Nécromancien (Faux/Faux-faucille)
             ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
         } else if (p.isFire) {
@@ -280,6 +299,20 @@ if (currentRoomId === 999) {
     }
     ctx.globalAlpha = 1.0; 
 
-    // UI FINALE ET TEXTES
+    // UI FINALE ET TEXTES (AFFICHAGE DES VAGUES AU CENTRE)
+    if (currentRoomId === 999) {
+        ctx.fillStyle = '#ecf0f1';
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        
+        let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
+        if (arenaState === "WAITING" && arenaTimer > 0) {
+            ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
+        } else if (displayWave > 0) {
+            ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
+        }
+        ctx.textAlign = 'left';
+    }
+
     ctx.restore(); 
 }
