@@ -72,6 +72,10 @@ let playerStats = {
   }
 };
 
+// ============================================================================
+// ASSETS MANAGER - CHARGEMENT DES IMAGES
+// ============================================================================
+
 const assetsManager = {
     images: {},
     load(name, path) {
@@ -79,29 +83,15 @@ const assetsManager = {
         img.crossOrigin = "Anonymous";
         img.src = path;
         this.images[name] = img;
-        console.log("Chargement de : " + name); // Aide pour le débogage (F12)
+        img.onload = () => console.log("Chargé : " + name);
+        img.onerror = () => console.error("Erreur de chargement : " + path);
     }
 };
 
 // --- CHARGEMENT DES TILES ET SKINS ---
-// Assure-toi que le chemin correspond exactement à ton dossier sur GitHub
+// IMPORTANT : Vérifie que le fichier floor.png est bien dans assets/tiles/
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
-// Ajoute tes autres images ici plus tard :
-// assetsManager.load('knight', 'assets/skins/knight.png');
 
-/*// --- CHARGEMENT DES TILES ET SKINS ---
-// Assure-toi que le chemin correspond exactement à ton dossier sur GitHub
-assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
-// Ajoute tes autres images ici plus tard :
-// assetsManager.load('knight', 'assets/skins/knight.png');
-// --- SYSTEME DE CHARGEMENT DES SKINS/TILES ---
-const assetsManager = {
-    images: {},
-    load(name, path) {
-        let img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.src = path;
-        this.images[name] = img;
-        assetsManager.load('sol_base', 'assets/tiles/floor.png');
-    }
-};*/
+assetsManager.load('card_knight', 'assets/card/Knight.png');
+assetsManager.load('card_elf', 'assets/card/Elf.png');
+assetsManager.load('card_burned', 'assets/card/Burned.png');
