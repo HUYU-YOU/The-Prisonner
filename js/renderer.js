@@ -93,9 +93,6 @@ function renderGameView() {
         let h = canvas.height - (wallMargin + arenaShrink) * 2;
         
         ctx.strokeRect(x, y, w, h);
-        
-        // Optionnel : Si tu veux un effet "zone sombre" mais transparent, 
-        // utilise une couleur avec de l'opacité (rgba) au lieu de #111 :
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Noir avec 30% d'opacité
         ctx.fillRect(x, y, w, h);
     }
