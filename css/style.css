@@ -1,105 +1,34 @@
 body, html { 
     margin: 0; 
     height: 100%; 
-    background: #020202; /* Fond très noir autour du jeu */
+    background: #020202; 
     color: #d4af37; 
     font-family: 'Georgia', serif; 
     overflow: hidden; 
     display: flex; 
-    justify-content: center; /* Centre horizontalement */
-    align-items: center; /* Centre verticalement */
+    justify-content: center; 
+    align-items: center; 
 }
 
-/* LA BOÎTE GLOBALE DU JEU (HUD + SALLE) */
 #game-container { 
     display: flex; 
-    width: 1500px; /* Taille fixe totale */
-    height: 800px; /* Taille fixe totale */
-    max-width: 100vw; /* Empêche de déborder si l'écran est trop petit */
+    width: 1500px; 
+    height: 800px; 
+    max-width: 100vw; 
     max-height: 100vh;
-    box-shadow: 0 0 50px rgba(0,0,0,1); /* Superbe ombre autour de la fenêtre du jeu */
+    box-shadow: 0 0 50px rgba(0,0,0,1); 
     position: relative;
     background: #0a0a0a;
 }
 
-/* L'INVENTAIRE (Strictement lié à la boîte) */
-#hud { 
-    width: 300px; 
-    height: 100%; 
-    box-sizing: border-box; 
-    background: #3b2f21; 
-    border-right: 4px solid #5e4b33; 
-    padding: 15px;
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px;
-}
-
-.title { 
-    text-align: center; 
-    font-size: 24px; 
-    color: #d4af37; 
-    text-shadow: 2px 2px #000; 
-    margin: 0; 
-}
-
-#portrait { 
-    width: 150px; 
-    height: 150px; 
-    background: #222; 
-    margin: 0 auto; 
-    border: 3px solid #d4af37; 
-    flex-shrink: 0; 
-}
-
-.bar-bg { 
-    background: #000; 
-    height: 12px; 
-    border: 1px solid #d4af37; 
-    margin-bottom: 10px; 
-}
-
-.bar-bg div { 
-    height: 100%; 
-}
-
-.items-grid, .potions-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 5px; 
-    margin-bottom: 10px; 
-}
-
-button { 
-    background: #5e4b33; 
-    color: #d4af37; 
-    border: 1px solid #d4af37; 
-    cursor: pointer; 
-    padding: 10px; 
-    font-weight: bold; 
-}
-
-/* LA SALLE DE JEU */
-#game-viewport { 
-    width: 1200px; 
-    height: 100%; 
-}
-
-canvas { 
-    width: 100%; 
-    height: 100%; 
-    display: block; 
-}
-
-/* LE MENU */
 #menu-screen {
     position: absolute; 
     top: 0; 
     left: 0; 
     width: 100%; 
     height: 100%;
-    background: rgba(0,0,0,0.95); 
-    z-index: 10;
+    background: rgba(0,0,0,0.98); 
+    z-index: 999; 
     display: flex; 
     flex-direction: column; 
     justify-content: center; 
@@ -118,48 +47,104 @@ canvas {
     gap: 20px; 
 }
 
-.character-select button { 
-    padding: 20px 40px; 
-    font-size: 20px; 
+.hero-btn { 
+    background: transparent;
+    padding: 0; 
     border-radius: 5px; 
-    transition: 0.3s; 
-    font-family: 'Georgia', serif; 
+    transition: transform 0.3s, filter 0.3s; 
+    border: 2px solid #555;
+    cursor: pointer;
+    overflow: hidden;
 }
 
-.character-select button:hover:not([disabled]) { 
-    background: #8b0000; 
-    color: white; 
-    border-color: white; 
+.hero-btn img {
+    display: block;
+    width: 250px;
+    height: 350px;
+    object-fit: cover;
+}
+
+.hero-btn:hover:not([disabled]) { 
+    border-color: #d4af37; 
     transform: scale(1.05); 
+    filter: brightness(1.2);
 }
 
-.character-select button[disabled] { 
-    opacity: 0.5; 
+.hero-btn[disabled] { 
+    opacity: 0.4; 
     cursor: not-allowed; 
-    border: 1px solid #555; 
-    color: #555; 
+    border-color: #222; 
 }
 
-/* Cible le dernier bouton du HUD (ton bouton MAP / PAUSE) et le pousse tout en bas */
+/* L'INVENTAIRE / HUD (À gauche) */
+#hud { 
+    width: 300px; 
+    height: 100%; 
+    box-sizing: border-box; 
+    background: #3b2f21; 
+    border-right: 4px solid #5e4b33; 
+    padding: 15px;
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px;
+    flex-shrink: 0; 
+}
+
+.title { 
+    text-align: center; 
+    font-size: 24px; 
+    color: #d4af37; 
+    text-shadow: 2px 2px #000; 
+    margin: 0; 
+}
+
+#portrait { 
+    width: 150px; 
+    height: 150px; 
+    background: #222; 
+    margin: 0 auto; 
+    border: 3px solid #d4af37; 
+    flex-shrink: 0; 
+    background-size: cover; 
+    background-position: top center; 
+}
+
+.bar-bg { 
+    background: #000; 
+    height: 12px; 
+    border: 1px solid #d4af37; 
+    margin-bottom: 10px; 
+}
+
+.bar-bg div { 
+    height: 100%; 
+}
+
+button { 
+    background: #5e4b33; 
+    color: #d4af37; 
+    border: 1px solid #d4af37; 
+    cursor: pointer; 
+    padding: 10px; 
+    font-weight: bold; 
+}
+
+
 #hud > button:last-child {
     margin-top: auto; 
 }
 
-/* Style des potions cliquables */
-.potion-btn {
-    cursor: pointer; /* Change la souris en petite main */
-    user-select: none; /* Empêche de surligner le texte en cliquant vite */
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+/* LA SALLE DE JEU (À droite) */
+#game-viewport { 
+    flex-grow: 1; 
+    height: 100%; 
+    position: relative;
 }
 
-/* Petit effet visuel quand on passe la souris sur une potion */
-.potion-btn:hover {
-    transform: scale(1.05);
-    filter: brightness(1.5);
-    color: #fff;
+canvas { 
+    width: 100%; 
+    height: 100%; 
+    display: block; 
 }
 
 /* --- DISPOSITION DE L'INVENTAIRE --- */
@@ -167,36 +152,48 @@ canvas {
     display: flex;
     justify-content: space-between;
     margin-top: 15px; 
-    height: 140px; /* On fixe une hauteur pour que les potions puissent s'étirer */
+    height: 140px; 
 }
 
-/* Base commune pour les deux boîtes */
 .inventory-box {
-    background-color: rgba(0, 0, 0, 0.65); /* Opacité réduite à 65% */
+    background-color: rgba(0, 0, 0, 0.65); 
     border: 1px solid #d4af37;
     border-radius: 4px;
     display: flex;
     flex-direction: column;
-    width: 47%; /* Prend un peu moins de la moitié de la largeur pour laisser un espace au centre */
+    width: 47%; 
     box-sizing: border-box;
 }
 
-/* Spécifique aux potions : réparties sur toute la hauteur */
 #potion-box {
     padding: 10px;
-    justify-content: space-between; /* Écarte les éléments au maximum */
+    justify-content: space-between; 
 }
 
-/* Spécifique aux clés : petites et serrées en haut */
 #key-box {
     padding: 10px;
-    justify-content: flex-start; /* Tasse les éléments vers le haut */
-    gap: 8px; /* Tout petit espace entre les clés */
-    font-size: 0.85em; /* Réduit la taille générale (emoji + texte) */
+    justify-content: flex-start; 
+    gap: 8px; 
+    font-size: 0.85em; 
 }
 
 .key-item {
     display: flex;
     align-items: center;
     gap: 5px;
+}
+
+.potion-btn {
+    cursor: pointer; 
+    user-select: none; 
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.potion-btn:hover {
+    transform: scale(1.05);
+    filter: brightness(1.5);
+    color: #fff;
 }
