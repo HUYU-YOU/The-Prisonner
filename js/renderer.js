@@ -299,9 +299,12 @@ function renderGameView() {
             else skin = 'Elf_west';                                                     // Gauche
 
             let img = assetsManager.images[skin];
+            // MODIFICATION ICI : On agrandit l'affichage par 1.5
+            let displaySize = player.size * 1.5; 
+            
             if (img && img.complete && img.naturalWidth > 0) {
-                // On dessine l'image parfaitement droite
-                ctx.drawImage(img, -player.size/2, -player.size/2, player.size, player.size);
+                // On dessine l'image agrandie et centrée
+                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
                 // Dessin géométrique de secours si l'image n'est pas chargée
                 ctx.rotate(player.faceAngle);
