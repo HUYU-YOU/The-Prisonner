@@ -88,10 +88,8 @@ const assetsManager = {
     }
 };
 
-// --- CHARGEMENT DES TILES ET SKINS ---
-// IMPORTANT : Vérifie que le fichier floor.png est bien dans assets/tiles/
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
-
+assetsManager.load('left_wall', 'assets/tiles/left_wall.png');
 assetsManager.load('card_knight', 'assets/card/Knight.png');
 assetsManager.load('card_elf', 'assets/card/Elf.png');
 assetsManager.load('card_burned', 'assets/card/Burned.png');
