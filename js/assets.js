@@ -72,7 +72,8 @@ let playerStats = {
   }
 };
 
-// --- SYSTEME DE CHARGEMENT FUTUR DES SKINS/TILES ---
+
+// --- SYSTEME DE CHARGEMENT DES SKINS/TILES ---
 const assetsManager = {
     images: {},
     load(name, path) {
@@ -80,5 +81,6 @@ const assetsManager = {
         img.crossOrigin = "Anonymous";
         img.src = path;
         this.images[name] = img;
+        assetsManager.load('sol_base', 'assets/tiles/floor.png');
     }
 };
