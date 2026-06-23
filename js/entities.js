@@ -124,7 +124,7 @@ function loadRoom(roomId) {
     currentItems = [];
   }
 
-  currentEnemies = [];
+currentEnemies = [];
   if (roomId !== 999) {
       if (worldState.enemyStates[roomId]) {
           currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId]));
@@ -135,6 +135,7 @@ function loadRoom(roomId) {
           else if (roomId === 5) spawnEnemy('goblin', 2, 400, 300);
           else if (roomId === 6) spawnEnemy('goblin', 2, 800, 300);
           else if (roomId === 7) spawnEnemy('goblin', 5, 450, 200);
+          else if (roomId === 8) spawnEnemy('troll', 1, 600, 250); 
       }
   } else if (roomId === 999) {
       currentDoors = []; currentItems = [];
