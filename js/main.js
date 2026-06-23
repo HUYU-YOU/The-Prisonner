@@ -8,7 +8,8 @@ function updatePortrait(heroClass) {
     const imgMap = {
         'Knight': 'assets/card/Knight.png',
         'Elf': 'assets/card/Elf.png',
-        'Mage': 'assets/card/Burned.png'
+        'Mage': 'assets/card/Burned.png',
+        'Necromancer': 'assets/card/Burned.png' // Laisse ça en attendant ton image Necro.png
     };
     if (imgMap[heroClass]) {
         portrait.style.backgroundImage = `url('${imgMap[heroClass]}')`;
@@ -38,102 +39,77 @@ window.selectHero = function(heroClass) {
 
     player.heroClass = heroClass;
     if (heroClass === 'Knight') {
-        playerStats.name = "CHEVALIER"; 
-        playerStats.weapon = "ÉPÉE LOURDE"; 
-        player.speed = 4;
-        playerStats.maxHealth = 140; 
-        playerStats.health = 140;
+        playerStats.name = "CHEVALIER"; playerStats.weapon = "ÉPÉE LOURDE"; player.speed = 4;
+        playerStats.maxHealth = 140; playerStats.health = 140;
     } else if (heroClass === 'Elf') {
-        playerStats.name = "KEBRA"; 
-        playerStats.weapon = "ARC D'EMERYN"; 
-        player.speed = 6;
-        playerStats.maxHealth = 100; 
-        playerStats.health = 100;
+        playerStats.name = "KEBRA"; playerStats.weapon = "ARC D'EMERYN"; player.speed = 6;
+        playerStats.maxHealth = 100; playerStats.health = 100;
     }
     
     document.getElementById('p-name').innerText = playerStats.name;
     document.getElementById('p-weapon').innerText = playerStats.weapon;
     document.getElementById('menu-screen').style.display = 'none';
     
-    // Met à jour le portrait dans le HUD
     updatePortrait(heroClass);
-    
-    loadRoom(1); 
-    updateHUD();
-    gameState = "PLAYING";
+    loadRoom(1); updateHUD(); gameState = "PLAYING";
 };
 
 function startArenaMode(heroClass) {
-    isArenaMode = true; 
-    arenaWave = 1; 
-    arenaState = "WAITING"; 
-    arenaTimer = 300; 
+    isArenaMode = true; arenaWave = 1; arenaState = "WAITING"; arenaTimer = 300; 
     player.heroClass = heroClass;
     
     if (heroClass === 'Knight') {
-        playerStats.name = "CHEVALIER (ARÈNE)"; 
-        playerStats.weapon = "ÉPÉE LOURDE"; 
-        player.speed = 4;
-        playerStats.maxHealth = 140; 
-        playerStats.health = 140;
+        playerStats.name = "CHEVALIER (ARÈNE)"; playerStats.weapon = "ÉPÉE LOURDE"; player.speed = 4;
+        playerStats.maxHealth = 140; playerStats.health = 140;
     } else if (heroClass === 'Elf') {
-        playerStats.name = "KEBRA (ARÈNE)"; 
-        playerStats.weapon = "ARC D'EMERYN"; 
-        player.speed = 6;
-        playerStats.maxHealth = 100; 
-        playerStats.health = 100;
+        playerStats.name = "KEBRA (ARÈNE)"; playerStats.weapon = "ARC D'EMERYN"; player.speed = 6;
+        playerStats.maxHealth = 100; playerStats.health = 100;
     } else if (heroClass === 'Mage') {
-        playerStats.name = "MAGE BRÛLEUR"; 
-        playerStats.weapon = "BOULES DE FEU"; 
-        player.speed = 5;
-        playerStats.maxHealth = 100; 
-        playerStats.health = 100;
+        playerStats.name = "MAGE BRÛLEUR"; playerStats.weapon = "BOULES DE FEU"; player.speed = 5;
+        playerStats.maxHealth = 100; playerStats.health = 100;
+    } else if (heroClass === 'Necromancer') {
+        playerStats.name = "NÉCROMANCIEN"; playerStats.weapon = "FAUX DES ÂMES"; player.speed = 4.5;
+        playerStats.maxHealth = 120; playerStats.health = 120;
     }
     
     document.getElementById('p-name').innerText = playerStats.name;
     document.getElementById('p-weapon').innerText = playerStats.weapon;
     document.getElementById('menu-screen').style.display = 'none';
     
-    // Met à jour le portrait dans le HUD
     updatePortrait(heroClass);
-    
-    loadRoom(999); 
-    updateHUD();
-    gameState = "PLAYING";
+    loadRoom(999); updateHUD(); gameState = "PLAYING";
 }
 
 window.usePotion = function(color) {
     if (playerStats.inventory.potions[color] > 0) {
         let potionUsed = false;
-        
         if (color === 'green' && playerStats.health < playerStats.maxHealth) {
-            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.2)); 
-            potionUsed = true;
-        } 
-        else if (color === 'red' && playerStats.health < playerStats.maxHealth) {
-            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.5)); 
-            potionUsed = true;
-        } 
-        else if (color === 'blue' && playerStats.mana < 100) {
-            playerStats.mana = Math.min(100, playerStats.mana + 20); 
-            potionUsed = true;
-        } 
-        else if (color === 'yellow') {
-            playerPoisonTimer = 0; 
-            playerSlowTimer = 0;
-            potionUsed = true;
+            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.2)); potionUsed = true;
+        } else if (color === 'red' && playerStats.health < playerStats.maxHealth) {
+            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.5)); potionUsed = true;
+        } else if (color === 'blue' && playerStats.mana < 100) {
+            playerStats.mana = Math.min(100, playerStats.mana + 20); potionUsed = true;
+        } else if (color === 'yellow') {
+            playerPoisonTimer = 0; playerSlowTimer = 0; potionUsed = true;
         }
         
         if (potionUsed) {
-            playerStats.inventory.potions[color]--;
-            updateHUD();
+            playerStats.inventory.potions[color]--; updateHUD();
             spawnParticles(player.x + player.size/2, player.y + player.size/2, '#3498db', 20);
         }
     }
 };
 
-window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
-window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+window.addEventListener('keydown', (e) => {
+    let k = e.key.toLowerCase();
+    if(k === ' ') k = 'space'; // Normalisation de l'Espace
+    keys[k] = true;
+});
+window.addEventListener('keyup', (e) => {
+    let k = e.key.toLowerCase();
+    if(k === ' ') k = 'space';
+    keys[k] = false;
+});
 window.addEventListener('mouseup', () => { leftClickHeld = false; });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -146,10 +122,7 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mousedown', (e) => {
     if (gameState !== "PLAYING") return;
-    
-    leftClickHeld = true; 
-    leftClickHoldTime = 0;
-    
+    leftClickHeld = true; leftClickHoldTime = 0;
     if (attackCooldown > 0) return;
 
     let dx = mouse.x - (player.x + player.size / 2);
@@ -158,16 +131,12 @@ canvas.addEventListener('mousedown', (e) => {
     player.faceAngle = angle; 
     
     let now = Date.now();
-    if (now - lastClickTime < 300 && playerStats.mana >= 100) {
-        activateUltimate(); 
-        return;
-    }
+    if (now - lastClickTime < 300 && playerStats.mana >= 100) { activateUltimate(); return; }
     lastClickTime = now;
 
     if (player.heroClass === 'Elf') {
         if (isUltimateActive) {
-            elfStealthBroken = true;
-            let spread = 0.15;
+            elfStealthBroken = true; let spread = 0.15;
             projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle - spread) * 12, vy: Math.sin(angle - spread) * 12, size: 5, hitTargets: [], angle: angle - spread, isFire: false });
             projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle + spread) * 12, vy: Math.sin(angle + spread) * 12, size: 5, hitTargets: [], angle: angle + spread, isFire: false });
             attackCooldown = 15;
@@ -178,15 +147,16 @@ canvas.addEventListener('mousedown', (e) => {
     } else if (player.heroClass === 'Mage') {
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 8, hitTargets: [], angle: angle, isFire: true });
         attackCooldown = 35;
+    } else if (player.heroClass === 'Necromancer') {
+        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 8, vy: Math.sin(angle) * 8, size: 6, hitTargets: [], angle: angle, isFire: false, isNecro: true });
+        attackCooldown = 30;
     } else if (player.heroClass === 'Knight') {
-        isAttacking = true; 
-        attackCooldown = 40;
+        isAttacking = true; attackCooldown = 40;
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 60 - 60, y: player.y + player.size / 2 + Math.sin(angle) * 60 - 60, size: 120 };
         currentEnemies.forEach(enemy => { 
             if (checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) enemy.health -= 50;
-                spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, enemy.color, 15);
-                triggerShake(5, 8); 
+                spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, enemy.color, 15); triggerShake(5, 8); 
             } 
         });
     }
@@ -194,9 +164,28 @@ canvas.addEventListener('mousedown', (e) => {
 
 // --- CORE FRAME LOOP TICK ---
 function update() {
-    if (gameState !== "PLAYING" && gameState !== "GAMEOVER") { requestAnimationFrame(update); return; }
+    
+    // SECRET UNLOCK MENU : NÉCROMANCIEN !
+    if (gameState === "MENU") {
+        if (keys['space']) {
+            if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
+            spaceHoldTimer++;
+            if (spaceHoldTimer >= 300) { // 300 frames = 5 secondes
+                spaceHoldTimer = 0; keys['space'] = false;
+                startArenaMode('Necromancer');
+            }
+        } else {
+            spaceHoldTimer = 0;
+        }
+        requestAnimationFrame(update);
+        return;
+    }
 
+    if (gameState !== "PLAYING" && gameState !== "GAMEOVER") { requestAnimationFrame(update); return; }
     if (gameState === "GAMEOVER") { renderGameView(); requestAnimationFrame(update); return; }
+
+    // --- LE DÉLAI D'UNE SECONDE AVANT L'ASSAUT DES VAGUES ---
+    if (currentRoomId === 999 && waveStartDelay > 0) waveStartDelay--;
 
     // LOGIQUE CHANGE ROOM ET TRANSITIONS
     let roomChanged = false;
@@ -204,31 +193,21 @@ function update() {
         if (!roomChanged && checkCollision(player, door)) { 
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; 
-                    door.locked = false;
-                    worldState.unlockedDoors[door.id] = true; 
-                    updateHUD();
+                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; updateHUD();
                     spawnParticles(door.x + door.width/2, door.y + door.height/2, '#f1c40f', 30);
-                    if (door.dest !== null) {
-                        saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true;
-                    }
+                    if (door.dest !== null) { saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; }
                 } else {
-                    if (door.face === 'north') player.y = door.y + door.height;
-                    else if (door.face === 'south') player.y = door.y - player.size;
-                    else if (door.face === 'east') player.x = door.x - player.size;
-                    else if (door.face === 'west') player.x = door.x + door.width;
+                    if (door.face === 'north') player.y = door.y + door.height; else if (door.face === 'south') player.y = door.y - player.size;
+                    else if (door.face === 'east') player.x = door.x - player.size; else if (door.face === 'west') player.x = door.x + door.width;
                 }
-            } else if (door.dest !== null) {
-                saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true;
-            } 
+            } else if (door.dest !== null) { saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; } 
         }
     });
-    
     if (roomChanged) { requestAnimationFrame(update); return; }
 
     // ULTIME ET TIMERS MOTRICES
-    if ((keys[' '] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
-        activateUltimate(); keys[' '] = false; keys['0'] = false; keys['control'] = false; 
+    if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
+        activateUltimate(); keys['space'] = false; keys['0'] = false; keys['control'] = false; 
     }
     if (leftClickHeld) {
         leftClickHoldTime++;
@@ -253,8 +232,7 @@ function update() {
     if (playerInvulnerableTimer > 0) playerInvulnerableTimer--;
 
     let manaBar = document.getElementById('mana-bar');
-    if (playerStats.mana >= 100) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3";
-    else manaBar.style.opacity = "1";
+    if (playerStats.mana >= 100) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; else manaBar.style.opacity = "1";
 
     // SYSTEM COMPORTEMENT ARÈNE / VAGUES
     if (currentRoomId === 999) {
@@ -267,64 +245,67 @@ function update() {
         if (arenaState === "WAITING") {
             arenaTimer--;
             if (arenaTimer <= 0) {
+                
+                // POTION TOUTES LES 5 VAGUES
+                if (arenaWave % 5 === 0) {
+                    currentItems.push({ id: 'potion_arena_' + arenaWave, type: 'potion_green', x: canvas.width/2 - 7.5, y: canvas.height/2 - 7.5, size: 15, collected: false });
+                }
+
                 if (arenaWave === 10) spawnEnemy('troll', 1); 
                 else if (arenaWave === 20) spawnEnemy('mage', 1); 
                 else if (arenaWave === 30) spawnEnemy('dragon', 1);
                 else {
-                    if (arenaWave < 6) spawnEnemy('goblin', arenaWave);
-                    else if (arenaWave >= 6 && arenaWave <= 10) { spawnEnemy('skeleton', 5); spawnEnemy('goblin', arenaWave - 5); }
-                    else if (arenaWave >= 11 && arenaWave <= 14) { spawnEnemy('skeleton', 5 + (arenaWave - 10)); spawnEnemy('goblin', 4); }
-                    else { 
-                        spawnEnemy('skeleton', 9); 
-                        if (arenaWave >= 25) {
-                            spawnEnemy('spider', 10); spawnEnemy('goblin', 4 + (arenaWave - 24)); 
-                        } else {
-                            spawnEnemy('spider', arenaWave - 14); spawnEnemy('goblin', 4); 
+                    if (arenaWave < 5) {
+                        spawnEnemy('goblin', arenaWave * 2);
+                    } else if (arenaWave < 15) {
+                        spawnEnemy('goblin', 5);
+                        spawnEnemy('skeleton', arenaWave - 4); // 1 Squelette en plus par vague
+                    } else {
+                        let numGoblins = 5; let numSkeletons = 10; let numSpiders = 0;
+                        let extra = arenaWave - 14; 
+                        for (let i = 1; i <= extra; i++) {
+                            let cycle = i % 3;
+                            if (cycle === 1) numSkeletons++; else if (cycle === 2) numSpiders++; else numGoblins++;
                         }
+                        spawnEnemy('goblin', numGoblins);
+                        spawnEnemy('skeleton', numSkeletons);
+                        if (numSpiders > 0) spawnEnemy('spider', numSpiders);
                     }
                 }
+                
+                waveStartDelay = 60; // 1 SECONDE DE DÉLAI AVANT ATTAQUE DES ENNEMIS
                 arenaWave++; arenaState = "ACTIVE";
-                if ((arenaWave - 1) % 10 === 0 && (arenaWave - 1) > 0) {
-                    currentItems.push({ id: 'potion_arena_' + arenaWave, type: 'potion_green', x: canvas.width/2 - 7.5, y: canvas.height/2 - 7.5, size: 15, collected: false });
-                }
             }
         }
     }
 
-    // CONTROLES DE DEPLACEMENT
-    let currentSpeed = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
-    if (keys['z'] || keys['w'] || keys['arrowup'])    player.y -= currentSpeed;
-    if (keys['s'] || keys['arrowdown'])               player.y += currentSpeed;
-    if (keys['q'] || keys['a'] || keys['arrowleft'])  player.x -= currentSpeed;
-    if (keys['d'] || keys['arrowright'])              player.x += currentSpeed;
+    // CONTROLES JOUEUR
+    let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
+    if (keys['z'] || keys['w'] || keys['arrowup'])    player.y -= currentSpeedPlayer;
+    if (keys['s'] || keys['arrowdown'])               player.y += currentSpeedPlayer;
+    if (keys['q'] || keys['a'] || keys['arrowleft'])  player.x -= currentSpeedPlayer;
+    if (keys['d'] || keys['arrowright'])              player.x += currentSpeedPlayer;
 
-    let minLimitX = wallMargin + arenaShrink; 
-    let minLimitY = wallMargin + arenaShrink;
+    let minLimitX = wallMargin + arenaShrink; let minLimitY = wallMargin + arenaShrink;
     let maxLimitX = canvas.width - wallMargin - arenaShrink - player.size;
     let maxLimitY = canvas.height - wallMargin - arenaShrink - player.size;
 
-    if (player.x < minLimitX) player.x = minLimitX; 
-    if (player.y < minLimitY) player.y = minLimitY;
-    if (player.x > maxLimitX) player.x = maxLimitX; 
-    if (player.y > maxLimitY) player.y = maxLimitY;
+    if (player.x < minLimitX) player.x = minLimitX; if (player.y < minLimitY) player.y = minLimitY;
+    if (player.x > maxLimitX) player.x = maxLimitX; if (player.y > maxLimitY) player.y = maxLimitY;
 
     if (currentRoomId === 1 && player.x + player.size > bookshelf.x && player.y + player.size > bookshelf.y && player.y < bookshelf.y + bookshelf.height) {
         player.x = bookshelf.x - player.size;
     }
 
-    let mouseDx = mouse.x - (player.x + player.size / 2);
-    let mouseDy = mouse.y - (player.y + player.size / 2);
-    player.faceAngle = Math.atan2(mouseDy, mouseDx);
+    player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
 
-    // RAMASSAGE DES UTILS
+    // ITEMS
     currentItems.forEach(item => {
         if (!item.collected && checkCollision(player, item)) {
-            item.collected = true; 
-            worldState.collectedItems[item.id] = true; 
+            item.collected = true; worldState.collectedItems[item.id] = true; 
             if (item.type === 'key') playerStats.inventory.keys.gold++;
             else if (item.type === 'potion_green') playerStats.inventory.potions.green++;
-            updateHUD(); 
-            spawnParticles(item.x, item.y, '#f1c40f', 15);
+            updateHUD(); spawnParticles(item.x, item.y, '#f1c40f', 15);
         }
     });
 
@@ -333,13 +314,53 @@ function update() {
 
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
     
+    // --- IA DES INVOCATIONS DU NÉCROMANCIEN ---
+    for (let i = necroSummons.length - 1; i >= 0; i--) {
+        let s = necroSummons[i];
+        let closestEnemy = null; let minDist = 9999;
+        currentEnemies.forEach(e => {
+            if (e.phase === 2 && e.type === 'dragon') return; 
+            let dist = Math.hypot((e.x + e.size/2) - (s.x + s.size/2), (e.y + e.size/2) - (s.y + s.size/2));
+            if (dist < minDist) { minDist = dist; closestEnemy = e; }
+        });
+
+        if (closestEnemy && minDist < 1000) {
+            let dx = (closestEnemy.x + closestEnemy.size/2) - (s.x + s.size/2);
+            let dy = (closestEnemy.y + closestEnemy.size/2) - (s.y + s.size/2);
+            let angle = Math.atan2(dy, dx);
+            s.x += Math.cos(angle) * s.speed; s.y += Math.sin(angle) * s.speed;
+            
+            if (minDist < (s.size + closestEnemy.size) / 2 + 10) {
+                if (s.attackCooldown === undefined) s.attackCooldown = 0;
+                if (s.attackCooldown <= 0) {
+                    closestEnemy.health -= s.damage; s.attackCooldown = 30;
+                    if (closestEnemy.health <= 0) closestEnemy.killedBySummon = true;
+                }
+            }
+        } else {
+             // Si plus d'ennemis, suit le joueur
+             let dx = (player.x + player.size/2) - (s.x + s.size/2); 
+             let dy = (player.y + player.size/2) - (s.y + s.size/2);
+             if (Math.hypot(dx, dy) > 100) {
+                 let angle = Math.atan2(dy, dx);
+                 s.x += Math.cos(angle) * s.speed; s.y += Math.sin(angle) * s.speed;
+             }
+        }
+        if (s.attackCooldown > 0) s.attackCooldown--;
+        if (s.health <= 0) { spawnParticles(s.x + s.size/2, s.y + s.size/2, '#2c3e50', 15); necroSummons.splice(i, 1); }
+    }
+    
     // TOUTE L'IA ET SYSTEMES COMPORTEMENTAUX DES ADVERSAIRES
     currentEnemies.forEach((enemy) => {
         enemy.wobble += 0.1; 
+        
         let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size;
         let eMaxY = canvas.height - wallMargin - arenaShrink - enemy.size;
         if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY;
         if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
+
+        // Figé durant la première seconde de la vague !
+        if (currentRoomId === 999 && waveStartDelay > 0) return; 
 
         if (enemy.isBurning && enemy.burnTicks > 0) {
             enemy.burnTimer--;
@@ -350,36 +371,49 @@ function update() {
             if (enemy.burnTicks <= 0) enemy.isBurning = false;
         }
 
-        let dx = 0, dy = 0, dist = 9999;
-        if (!isElfInvuln) { dx = player.x - enemy.x; dy = player.y - enemy.y; dist = Math.hypot(dx, dy); }
+        // --- NOUVEAU CIBLAGE : Les Invocations du Nécro attirent l'attention en priorité ---
+        let targetX = player.x; let targetY = player.y; let targetEntity = player; let minDistToTarget = 9999;
+
+        if (necroSummons.length > 0) {
+            necroSummons.forEach(s => {
+                let sDist = Math.hypot((s.x + s.size/2) - (enemy.x + enemy.size/2), (s.y + s.size/2) - (enemy.y + enemy.size/2));
+                if (sDist < minDistToTarget) { minDistToTarget = sDist; targetX = s.x; targetY = s.y; targetEntity = s; }
+            });
+        }
         
+        if (targetEntity === player && !isElfInvuln) minDistToTarget = Math.hypot(targetX - enemy.x, targetY - enemy.y);
+        else if (targetEntity === player && isElfInvuln) minDistToTarget = 9999; 
+
+        let dx = 0, dy = 0, dist = minDistToTarget;
+        if (dist !== 9999) { dx = targetX - enemy.x; dy = targetY - enemy.y; }
+
+        let currentEnemySpeed = enemy.speed;
+        if (enemy.slowTimer > 0) { currentEnemySpeed *= 0.5; enemy.slowTimer--; } // Le Nécro ralentit
+
         if (enemy.type === 'goblin') {
-            if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * enemy.speed; enemy.y += (dy / dist) * enemy.speed; }
+            if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
         } else if (enemy.type === 'spider' || enemy.type === 'skeleton') {
             if (enemy.type === 'spider') {
-                if (dist > 100 && dist < 9999) { enemy.x += (dx / dist) * enemy.speed; enemy.y += (dy / dist) * enemy.speed; }
+                if (dist > 100 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
             } else { 
-                if (dist > 300 && dist < 9999) { enemy.x += (dx / dist) * enemy.speed; enemy.y += (dy / dist) * enemy.speed; }
-                else if (dist < 200) { enemy.x -= (dx / dist) * enemy.speed; enemy.y -= (dy / dist) * enemy.speed; }
+                if (dist > 300 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
+                else if (dist < 200) { enemy.x -= (dx / dist) * currentEnemySpeed; enemy.y -= (dy / dist) * currentEnemySpeed; }
             }
             if (enemy.shootCooldown > 0) enemy.shootCooldown--;
             if (enemy.shootCooldown <= 0 && dist < 600) {
-                let pSize = enemy.type === 'spider' ? 6 : 8;
-                let pSpeed = enemy.type === 'spider' ? 8 : 6;
-                let pColor = enemy.type === 'spider' ? '#8e44ad' : '#ecf0f1';
+                let pSize = enemy.type === 'spider' ? 6 : 8; let pSpeed = enemy.type === 'spider' ? 8 : 6; let pColor = enemy.type === 'spider' ? '#8e44ad' : '#ecf0f1';
                 enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*pSpeed, vy: (dy/dist)*pSpeed, size: pSize, color: pColor, damage: 20, type: enemy.type === 'spider' ? 'poison' : 'normal' });
                 enemy.shootCooldown = 120;
             }
         } else if (enemy.type === 'troll') {
-            if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * enemy.speed; enemy.y += (dy / dist) * enemy.speed; }
+            if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
             enemy.summonTimer--;
             if (enemy.summonTimer <= 0) {
-                spawnEnemy('goblin', 1, enemy.x, enemy.y); enemy.summonTimer = 180; 
-                spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#27ae60', 20);
+                spawnEnemy('goblin', 1, enemy.x, enemy.y); enemy.summonTimer = 180; spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#27ae60', 20);
             }
         } else if (enemy.type === 'mage') {
-            if (dist > 300 && dist < 9999) { enemy.x += (dx / dist) * enemy.speed; enemy.y += (dy / dist) * enemy.speed; }
-            else if (dist < 200) { enemy.x -= (dx / dist) * enemy.speed; enemy.y -= (dy / dist) * enemy.speed; }
+            if (dist > 300 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
+            else if (dist < 200) { enemy.x -= (dx / dist) * currentEnemySpeed; enemy.y -= (dy / dist) * currentEnemySpeed; }
             enemy.timeAlive++; 
             if (enemy.shootCooldown > 0) enemy.shootCooldown--;
             if (enemy.shootCooldown <= 0 && dist < 800) {
@@ -394,7 +428,7 @@ function update() {
         } else if (enemy.type === 'dragon') {
             if (enemy.phase2Timer === undefined) enemy.phase2Timer = 1800; 
             if (enemy.phase === 1) {
-                if (dist > 150 && dist < 9999) { enemy.x += (dx / dist) * enemy.speed; enemy.y += (dy / dist) * enemy.speed; }
+                if (dist > 150 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
                 if (enemy.shootCooldown > 0) enemy.shootCooldown--;
                 if (enemy.shootCooldown <= 0 && dist < 500) {
                     let baseAngle = Math.atan2(dy, dx);
@@ -412,9 +446,7 @@ function update() {
                 enemy.phase2Timer--; enemy.health = (enemy.phase2Timer / 1800) * (enemy.maxHealth / 2); 
                 let rate = enemy.phase2Timer < 600 ? 0.12 : 0.04; 
                 if (Math.random() < rate) {
-                    let mx = wallMargin + arenaShrink + Math.random() * (canvas.width - wallMargin*2 - arenaShrink*2);
-                    let my = wallMargin + arenaShrink + Math.random() * (canvas.height - wallMargin*2 - arenaShrink*2);
-                    hazards.push({ x: mx, y: my, radius: 70, timer: 60, maxTimer: 60, damage: 40 });
+                    hazards.push({ x: wallMargin + arenaShrink + Math.random() * (canvas.width - wallMargin*2 - arenaShrink*2), y: wallMargin + arenaShrink + Math.random() * (canvas.height - wallMargin*2 - arenaShrink*2), radius: 70, timer: 60, maxTimer: 60, damage: 40 });
                 }
                 if (enemy.shootCooldown > 0) enemy.shootCooldown--;
                 if (enemy.shootCooldown <= 0 && dist < 9999) {
@@ -425,12 +457,25 @@ function update() {
             }
         }
 
-        if (playerInvulnerableTimer <= 0 && !isElfInvuln && !enemy.invulnerable && checkCollision(player, enemy)) {
-            playerStats.health -= (enemy.type === 'troll' ? 50 : (enemy.type === 'dragon' ? 0 : 20)); 
-            triggerShake(12, 20); spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
-            playerInvulnerableTimer = 60; updateHUD();
-            if (playerStats.health <= 0) handlePlayerDeath();
+        // --- DOMMAGES DE COLLISION (Si l'ennemi attaque le joueur OU une invocation) ---
+        if (targetEntity === player) {
+            if (playerInvulnerableTimer <= 0 && !isElfInvuln && !enemy.invulnerable && checkCollision(player, enemy)) {
+                playerStats.health -= (enemy.type === 'troll' ? 50 : (enemy.type === 'dragon' ? 0 : 20)); 
+                triggerShake(12, 20); spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
+                playerInvulnerableTimer = 60; updateHUD();
+                if (playerStats.health <= 0) handlePlayerDeath();
+            }
+        } else {
+            if (!enemy.invulnerable && checkCollision({x: targetEntity.x, y: targetEntity.y, width: targetEntity.size, height: targetEntity.size}, enemy)) {
+                if (enemy.attackCooldown === undefined) enemy.attackCooldown = 0;
+                if (enemy.attackCooldown <= 0) {
+                    targetEntity.health -= (enemy.type === 'troll' ? 30 : 10);
+                    enemy.attackCooldown = 60;
+                    spawnParticles(targetEntity.x + targetEntity.size/2, targetEntity.y + targetEntity.size/2, '#e74c3c', 10);
+                }
+            }
         }
+        if (enemy.attackCooldown > 0) enemy.attackCooldown--;
     });
 
     // REPOUSSE PHYSIQUE ENTRE MONSTRES
@@ -439,8 +484,7 @@ function update() {
             let e1 = currentEnemies[i]; let e2 = currentEnemies[j];
             let dx = (e1.x + e1.size/2) - (e2.x + e2.size/2); 
             let dy = (e1.y + e1.size/2) - (e2.y + e2.size/2);
-            let dist = Math.hypot(dx, dy); 
-            let minDist = (e1.size + e2.size) / 2; 
+            let dist = Math.hypot(dx, dy); let minDist = (e1.size + e2.size) / 2; 
             if (dist < minDist) {
                 if (dist === 0) { dx = Math.random()-0.5; dy = Math.random()-0.5; dist = Math.hypot(dx, dy); }
                 let overlap = minDist - dist;
@@ -450,14 +494,13 @@ function update() {
         }
     }
 
-    // DANGERS AMBIANTS (MÉTÉORES DRAGON)
+    // DANGERS AMBIANTS
     for (let i = hazards.length - 1; i >= 0; i--) {
         let h = hazards[i]; h.timer--;
         if(h.timer <= 0) {
             if(Math.hypot((player.x+player.size/2) - h.x, (player.y+player.size/2) - h.y) < h.radius + player.size/2) {
                 if (playerInvulnerableTimer <= 0 && !isElfInvuln) {
-                    playerStats.health -= h.damage; triggerShake(15, 20);
-                    playerInvulnerableTimer = 60; updateHUD();
+                    playerStats.health -= h.damage; triggerShake(15, 20); playerInvulnerableTimer = 60; updateHUD();
                     if (playerStats.health <= 0) handlePlayerDeath();
                 }
             }
@@ -468,23 +511,30 @@ function update() {
     // NETTOYAGE PHYSIQUE ET RECOMPENSES
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
-            if (!worldState.bloodStains[currentRoomId]) worldState.bloodStains[currentRoomId] = [];
-            for(let b = 0; b < 5; b++) {
-                worldState.bloodStains[currentRoomId].push({ x: currentEnemies[i].x + Math.random() * 30 - 15, y: currentEnemies[i].y + Math.random() * 30 - 15, r: Math.random() * 12 + 4 });
+            let e = currentEnemies[i];
+            
+            // --- LE CIMETIÈRE DU NÉCRO RÉCUPÈRE L'ÂME ---
+            if (player.heroClass === 'Necromancer' || e.killedBySummon || e.killedByNecro) {
+                necroKills.push(e.type);
             }
+
+            if (!worldState.bloodStains[currentRoomId]) worldState.bloodStains[currentRoomId] = [];
+            for(let b = 0; b < 5; b++) worldState.bloodStains[currentRoomId].push({ x: e.x + Math.random() * 30 - 15, y: e.y + Math.random() * 30 - 15, r: Math.random() * 12 + 4 });
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
-            spawnParticles(currentEnemies[i].x + currentEnemies[i].size/2, currentEnemies[i].y + currentEnemies[i].size/2, '#c0392b', 30);
+            spawnParticles(e.x + e.size/2, e.y + e.size/2, '#c0392b', 30);
             currentEnemies.splice(i, 1);
-            if (currentEnemies.length === 0) worldState.clearedRooms[currentRoomId] = true;
+            if (currentEnemies.length === 0 && currentRoomId !== 999) worldState.clearedRooms[currentRoomId] = true;
             updateHUD();
         }
     }
 
-    // CONTROLE DES INTERSECTIONS DE PROJECTILES (PERFORANTS ELFE & MAGE)
+    // CONTROLE DES INTERSECTIONS DE PROJECTILES (NERF ELFE + DEGATS NÉCRO)
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i]; p.x += p.vx; p.y += p.vy;
         if (p.x < wallMargin || p.y < wallMargin || p.x > canvas.width - wallMargin || p.y > canvas.height - wallMargin) { projectiles.splice(i, 1); continue; }
         
+        let projectileHit = false;
+
         for (let j = 0; j < currentEnemies.length; j++) {
             let enemy = currentEnemies[j];
             if (p.hitTargets && p.hitTargets.includes(enemy)) continue;
@@ -492,24 +542,44 @@ function update() {
             
             if (checkCollision(arrowHitbox, enemy)) {
                 if (!enemy.invulnerable) {
-                    let dmg = player.heroClass === 'Elf' ? 60 : (player.heroClass === 'Mage' ? 30 : 0);
+                    let dmg = 0;
+                    if (player.heroClass === 'Elf') dmg = 60;
+                    else if (player.heroClass === 'Mage') dmg = 30;
+                    else if (p.isNecro) { dmg = 10; enemy.slowTimer = 60; } 
+                    
                     enemy.health -= dmg;
+                    
                     if (player.heroClass === 'Mage') { enemy.isBurning = true; enemy.burnTicks = 5; enemy.burnTimer = 60; }
+                    if (enemy.health <= 0 && p.isNecro) enemy.killedByNecro = true; // Assure la capture d'âme
                 }
                 spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, enemy.color, 10);
-                if (player.heroClass === 'Elf' || player.heroClass === 'Mage') {
+                
+                // --- LES FLÈCHES ELFE NE TRANSPERCENT PLUS (Sauf si Ultimate !) ---
+                let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
+                if (isPiercingElf || player.heroClass === 'Mage') {
                     if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
-                } else { projectiles.splice(i, 1); break; }
+                } else { projectileHit = true; break; } 
             }
         }
+        if (projectileHit) projectiles.splice(i, 1); 
     }
 
-    // TRAJECTOIRE ENEMY PROJECTILES
+    // TRAJECTOIRE ENEMY PROJECTILES (Absorbés par les invocations !)
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         let p = enemyProjectiles[i]; p.x += p.vx; p.y += p.vy;
         if (p.x < wallMargin || p.y < wallMargin || p.x > canvas.width - wallMargin || p.y > canvas.height - wallMargin) { enemyProjectiles.splice(i, 1); continue; }
         let arrowHitbox = { x: p.x - p.size, y: p.y - p.size, size: p.size * 2 };
-        if (playerInvulnerableTimer <= 0 && !isElfInvuln && checkCollision(arrowHitbox, player)) {
+        
+        let hitSummonIndex = -1;
+        for(let j=0; j<necroSummons.length; j++) { 
+             let sHitbox = {x: necroSummons[j].x, y: necroSummons[j].y, size: necroSummons[j].size};
+             if(checkCollision(arrowHitbox, sHitbox)) { hitSummonIndex = j; break; } 
+        }
+        
+        if (hitSummonIndex !== -1) {
+            necroSummons[hitSummonIndex].health -= p.damage;
+            spawnParticles(p.x, p.y, p.color, 15); enemyProjectiles.splice(i, 1);
+        } else if (playerInvulnerableTimer <= 0 && !isElfInvuln && checkCollision(arrowHitbox, player)) {
             playerStats.health -= p.damage; triggerShake(10, 15);
             spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
             if (p.type === 'poison') { playerPoisonTimer = 300; playerSlowTimer = 180; } 
@@ -518,7 +588,6 @@ function update() {
         }
     }
 
-    // APPEL DU RENDU DE RENDERER.JS ET TICK FRAME SUIVANTE
     renderGameView();
     requestAnimationFrame(update);
 }
