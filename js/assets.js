@@ -90,6 +90,9 @@ const assetsManager = {
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
 assetsManager.load('left_wall', 'assets/tiles/left_wall.png');
+assetsManager.load('right_wall', 'assets/tiles/right_wall.png');
+assetsManager.load('back_wall', 'assets/tiles/back_wall.png');   // Mur du HAUT
+assetsManager.load('front_wall', 'assets/tiles/front_wall.png'); // Mur du BAS
 assetsManager.load('card_knight', 'assets/card/Knight.png');
 assetsManager.load('card_elf', 'assets/card/Elf.png');
 assetsManager.load('card_burned', 'assets/card/Burned.png');
