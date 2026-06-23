@@ -162,19 +162,35 @@ function update() {
 
     if (currentRoomId === 999 && waveStartDelay > 0) waveStartDelay--;
 
+    // --- LOGIQUE CHANGE ROOM ET TRANSITIONS ---
+    // Sécurité de création
+    if (!worldState.openedDoors) worldState.openedDoors = {};
+
     let roomChanged = false;
     currentDoors.forEach(door => {
         if (!roomChanged && checkCollision(player, door)) { 
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; updateHUD();
+                    playerStats.inventory.keys.gold--; 
+                    door.locked = false; 
+                    worldState.unlockedDoors[door.id] = true; 
+                    updateHUD();
                     spawnParticles(door.x + door.width/2, door.y + door.height/2, '#f1c40f', 30);
-                    if (door.dest !== null) { saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; }
+                    
+                    if (door.dest !== null) { 
+                        worldState.openedDoors[door.id] = true;
+                        if (door.id) { let p = door.id.split('_'); if (p.length === 3) worldState.openedDoors['door_'+p[2]+'_'+p[1]] = true; }
+                        saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
+                    }
                 } else {
                     if (door.face === 'north') player.y = door.y + door.height; else if (door.face === 'south') player.y = door.y - player.size;
                     else if (door.face === 'east') player.x = door.x - player.size; else if (door.face === 'west') player.x = door.x + door.width;
                 }
-            } else if (door.dest !== null) { saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; } 
+            } else if (door.dest !== null) { 
+                worldState.openedDoors[door.id] = true;
+                if (door.id) { let p = door.id.split('_'); if (p.length === 3) worldState.openedDoors['door_'+p[2]+'_'+p[1]] = true; }
+                saveRoomState(); loadRoom(door.dest); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
+            } 
         }
     });
     if (roomChanged) { requestAnimationFrame(update); return; }
