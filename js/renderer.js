@@ -134,13 +134,6 @@ function renderGameView() {
             else { ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); }
         }
 
-        // --- LE PETIT CADENAS JAUNE ---
-        if (door.requiresKey && door.locked && !isOpen) {
-            let lockX = door.x + door.width / 2; let lockY = door.y + door.height / 2;
-            if (door.face === 'north') lockY += 15;
-            ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(lockX, lockY, 10, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(lockX, lockY + 2, 4, 0, Math.PI * 2); ctx.fill();
-        }
     });
 
     // RAMASSABLES
