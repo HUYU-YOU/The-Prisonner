@@ -76,21 +76,18 @@ function renderGameView() {
     // MURS
     let wallL = assetsManager.images['wall_left'];
 
-    // On dessine le mur gauche si l'image est prête
-    if (wallL && wallL.complete && wallL.naturalWidth !== 0) {
-        // Le 0, 0, wallMargin, canvas.height correspond aux coordonnées (x,y) et taille (largeur, hauteur)
+
+    if (wallL && wallL.src) {
+
+        ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
     } else {
-        // Si l'image n'est pas chargée, on dessine le bloc noir pour ne pas casser le jeu
-        ctx.fillStyle = '#050505';
+ 
+        ctx.fillStyle = 'magenta'; 
         ctx.fillRect(0, 0, wallMargin, canvas.height);
     }
 
-    // Garde les fillRect pour les 3 autres murs en attendant de les implanter un par un
-    ctx.fillStyle = '#050505';
-    ctx.fillRect(0, 0, canvas.width, wallMargin); // Haut
-    ctx.fillRect(0, canvas.height - wallMargin, canvas.width, wallMargin); // Bas
-    ctx.fillRect(canvas.width - wallMargin, 0, wallMargin, canvas.height); // Droite
+
     
 // ARÈNE ZONE ROUGE
 if (currentRoomId === 999) { 
