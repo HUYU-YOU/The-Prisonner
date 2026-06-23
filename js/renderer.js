@@ -74,16 +74,12 @@ function renderGameView() {
     }
 
 
-    // MURS
-    let wallL = assetsManager.images['wall_left'];
 
-    if (wallL && wallL.complete && wallL.naturalWidth > 0) {
-        // L'image existe et est chargée
+    // MURS
+    let wallL = assetsManager.images['left_wall']; 
+
+    if (wallL && wallL.complete) {
         ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
-    } else {
-        // TEST 
-        ctx.fillStyle = 'magenta'; 
-        ctx.fillRect(0, 0, wallMargin, canvas.height);
     }
 
     //autres murs en attendant autres images
