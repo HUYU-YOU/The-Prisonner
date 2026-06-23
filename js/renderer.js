@@ -81,19 +81,20 @@ function renderGameView() {
     ctx.fillRect(canvas.width - wallMargin, 0, wallMargin, canvas.height); 
     
     // ARÈNE ZONE ROUGE 
-    if (currentRoomId === 999) { 
-        ctx.strokeStyle = '#c0392b'; // Bordure Couleur rouge
-        ctx.lineWidth = 6;
-        
-        let x = wallMargin + arenaShrink;
-        let y = wallMargin + arenaShrink;
-        let w = canvas.width - (wallMargin + arenaShrink) * 2;
-        let h = canvas.height - (wallMargin + arenaShrink) * 2;
-        
-        ctx.strokeRect(x, y, w, h);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Noir avec 30% d'opacité
-        ctx.fillRect(x, y, w, h);
-    }
+// ARÈNE ZONE ROUGE
+if (currentRoomId === 999) { 
+    ctx.strokeStyle = '#c0392b'; 
+    ctx.lineWidth = 6;
+    let x = wallMargin + arenaShrink;
+    let y = wallMargin + arenaShrink;
+    let w = canvas.width - (wallMargin + arenaShrink) * 2;
+    let h = canvas.height - (wallMargin + arenaShrink) * 2;
+    
+    ctx.strokeRect(x, y, w, h);
+    
+    // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
+    // ctx.fillRect(x, y, w, h);           
+}
 
     // SANG
     bloodStains.forEach(blood => {
