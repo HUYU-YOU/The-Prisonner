@@ -240,7 +240,13 @@ if (currentRoomId === 999) {
         }
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
+let wallL = assetsManager.images['wall_left'];
+    if (wallL) {
+        console.log("Tentative de dessin du mur gauche");
+        ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
+    } else {
+        console.warn("L'image wall_left est introuvable");
+    }
 
-    // UI FINALE ET TEXTES
-    ctx.restore(); 
+    ctx.restore(); // Toujours en dernier
 }
