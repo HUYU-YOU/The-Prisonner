@@ -47,7 +47,8 @@ function spawnEnemy(type, count, baseX = null, baseY = null) {
             speed: spd, color: col, type: type, shootCooldown: 0, summonTimer: 180,
             wobble: Math.random() * Math.PI * 2,
             timeAlive: 0, phase: 1, invulnerable: false,
-            isBurning: false, burnTicks: 0, burnTimer: 0
+            isBurning: false, burnTicks: 0, burnTimer: 0,
+            slowTimer: 0, killedBySummon: false, killedByNecro: false // Ajouts Nécromancien
         });
     }
 }
@@ -63,6 +64,7 @@ function saveRoomState() {
 function loadRoom(roomId) {
   currentRoomId = roomId;
   projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
+  necroSummons = []; necroKills = []; // On nettoie le terrain
   
   if (!worldState.bloodStains[roomId]) worldState.bloodStains[roomId] = [];
   bloodStains = worldState.bloodStains[roomId];
@@ -155,6 +157,32 @@ function loadRoom(roomId) {
 
 function activateUltimate() {
     if (playerStats.mana < 100) return;
+
+    // --- ULTIME NÉCROMANCIEN (Gère la Résurrection et la Fusion) ---
+    if (player.heroClass === 'Necromancer') {
+        if (necroSummons.length > 0) {
+            // FUSION DE TOUTES LES INVOCATIONS EN UN GOLEM GÉANT
+            let totalHP = 0;
+            necroSummons.forEach(s => totalHP += s.health);
+            necroSummons = []; // On absorbe tout
+            necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 40, size: 60, speed: 2.5, attackCooldown: 0 });
+            spawnParticles(player.x + player.size/2, player.y + player.size/2, '#8e44ad', 50, true);
+        } else if (necroKills.length > 0) {
+            // RÉSURRECTION DU CIMETIÈRE
+            necroKills.forEach(kill => {
+                let sz = 30, hp = 40, dmg = 15, spd = 2.5;
+                if(kill === 'troll') { hp = 200; sz = 60; dmg = 30; spd = 1.5; }
+                else if(kill === 'mage') { hp = 100; sz = 45; dmg = 20; spd = 2; }
+                else if(kill === 'dragon') { hp = 500; sz = 80; dmg = 50; spd = 1.5; }
+                else if(kill === 'spider') { sz = 20; hp = 20; dmg = 10; spd = 4; }
+                necroSummons.push({ type: kill, x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: hp, maxHealth: hp, damage: dmg, size: sz, speed: spd, attackCooldown: 0 });
+            });
+            necroKills = []; // Cimetière vidé après utilisation
+            spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
+        } else {
+            return; // Si on a rien à faire, on n'utilise pas le mana
+        }
+    }
     
     isUltimateActive = true;
     playerStats.mana = 0;
@@ -190,6 +218,8 @@ function handlePlayerDeath() {
         isUltimateActive = false;
         currentEnemies = []; bloodStains = []; projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
         shakeTimer = 0; shakeIntensity = 0; playerPoisonTimer = 0; playerSlowTimer = 0; arenaShrink = 0; 
+        
+        spaceHoldTimer = 0; waveStartDelay = 0; necroKills = []; necroSummons = [];
         
         worldState.unlockedDoors = {};
         worldState.collectedItems = {};
