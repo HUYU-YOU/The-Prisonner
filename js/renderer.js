@@ -73,19 +73,19 @@ function renderGameView() {
         }
     }
 
-    // MURS
+// ==========================================
+    // MURS (TEST DE FORCE BRUTE)
+    // ==========================================
     let wallL = assetsManager.images['wall_left'];
 
-
     if (wallL && wallL.src) {
-
-        ctx.globalCompositeOperation = 'source-over';
+        // On dessine sans se poser de question sur l'état "complete"
+        // Si l'image existe, elle s'affichera dès qu'elle sera en mémoire
         ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
-    } else {
- 
-        ctx.fillStyle = 'magenta'; 
-        ctx.fillRect(0, 0, wallMargin, canvas.height);
-    }
+    } 
+    
+    // Si tu vois le mur gauche apparaître après quelques secondes,
+    // c'est que ton problème était juste le timing de chargement !
 
 
     
