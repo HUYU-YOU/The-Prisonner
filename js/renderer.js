@@ -82,14 +82,22 @@ function renderGameView() {
     ctx.fillRect(0, 0, wallMargin, canvas.height); 
     ctx.fillRect(canvas.width - wallMargin, 0, wallMargin, canvas.height); 
     
-    // ARÈNE ZONE ROUGE
+    // ARÈNE ZONE ROUGE 
     if (currentRoomId === 999) { 
-        ctx.fillStyle = '#111'; 
-        ctx.fillRect(wallMargin + arenaShrink, wallMargin + arenaShrink, canvas.width - (wallMargin + arenaShrink) * 2, canvas.height - (wallMargin + arenaShrink) * 2); 
-        if(arenaShrink > 0) {
-            ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 4;
-            ctx.strokeRect(wallMargin + arenaShrink, wallMargin + arenaShrink, canvas.width - (wallMargin + arenaShrink) * 2, canvas.height - (wallMargin + arenaShrink) * 2);
-        }
+        ctx.strokeStyle = '#c0392b'; // Bordure Couleur rouge
+        ctx.lineWidth = 6;
+        
+        let x = wallMargin + arenaShrink;
+        let y = wallMargin + arenaShrink;
+        let w = canvas.width - (wallMargin + arenaShrink) * 2;
+        let h = canvas.height - (wallMargin + arenaShrink) * 2;
+        
+        ctx.strokeRect(x, y, w, h);
+        
+        // Optionnel : Si tu veux un effet "zone sombre" mais transparent, 
+        // utilise une couleur avec de l'opacité (rgba) au lieu de #111 :
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Noir avec 30% d'opacité
+        ctx.fillRect(x, y, w, h);
     }
 
     // SANG
