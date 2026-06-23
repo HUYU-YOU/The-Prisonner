@@ -51,6 +51,7 @@ let currentEnemies = [];
 
 let worldState = {
     unlockedDoors: {},
+    openedDoors: {},
     collectedItems: {},
     clearedRooms: {},
     bloodStains: {},
