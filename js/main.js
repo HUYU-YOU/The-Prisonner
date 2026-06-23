@@ -2,6 +2,19 @@
 // CORE LOOP CONTROLLER, ENGINE TICKS & USER INTERACTION LISTENERS
 // ============================================================================
 
+// --- FONCTION POUR METTRE À JOUR L'IMAGE DU HUD ---
+function updatePortrait(heroClass) {
+    const portrait = document.getElementById('portrait');
+    const imgMap = {
+        'Knight': 'assets/card/Knight.png',
+        'Elf': 'assets/card/Elf.png',
+        'Mage': 'assets/card/Burned.png'
+    };
+    if (imgMap[heroClass]) {
+        portrait.style.backgroundImage = `url('${imgMap[heroClass]}')`;
+    }
+}
+
 // --- ÉCOUTEURS INTERACTIFS GLOBAUX ---
 window.startHeroHold = function(heroClass) {
     isHolding = true; 
@@ -42,6 +55,9 @@ window.selectHero = function(heroClass) {
     document.getElementById('p-weapon').innerText = playerStats.weapon;
     document.getElementById('menu-screen').style.display = 'none';
     
+    // Met à jour le portrait dans le HUD
+    updatePortrait(heroClass);
+    
     loadRoom(1); 
     updateHUD();
     gameState = "PLAYING";
@@ -77,6 +93,9 @@ function startArenaMode(heroClass) {
     document.getElementById('p-name').innerText = playerStats.name;
     document.getElementById('p-weapon').innerText = playerStats.weapon;
     document.getElementById('menu-screen').style.display = 'none';
+    
+    // Met à jour le portrait dans le HUD
+    updatePortrait(heroClass);
     
     loadRoom(999); 
     updateHUD();
