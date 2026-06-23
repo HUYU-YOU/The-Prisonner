@@ -73,20 +73,30 @@ function renderGameView() {
         }
     }
 
-
     // MURS 
     // Mur Gauche
     let wallL = assetsManager.images['left_wall'];
-    if (wallL) ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
+    if (wallL && wallL.complete && wallL.naturalWidth > 0) {
+        ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
+    }
+    
     // Mur Droite
     let wallR = assetsManager.images['right_wall'];
-    if (wallR) ctx.drawImage(wallR, canvas.width - wallMargin, 0, wallMargin, canvas.height);
+    if (wallR && wallR.complete && wallR.naturalWidth > 0) {
+        ctx.drawImage(wallR, canvas.width - wallMargin, 0, wallMargin, canvas.height);
+    }
+    
     // Mur Haut (Back)
     let wallT = assetsManager.images['back_wall'];
-    if (wallT) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
+    if (wallT && wallT.complete && wallT.naturalWidth > 0) {
+        ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
+    }
+    
     // Mur Bas (Front)
     let wallB = assetsManager.images['front_wall'];
-    if (wallB) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
+    if (wallB && wallB.complete && wallB.naturalWidth > 0) {
+        ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
+    }
 
     
 // ARÈNE ZONE ROUGE
