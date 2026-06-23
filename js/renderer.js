@@ -73,14 +73,24 @@ function renderGameView() {
         }
     }
 
-// ==========================================
+
     // MURS
-    // ==========================================
     let wallL = assetsManager.images['wall_left'];
 
-    if (wallL) {
+    if (wallL && wallL.complete && wallL.naturalWidth > 0) {
+        // L'image existe et est chargée
         ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
+    } else {
+        // TEST 
+        ctx.fillStyle = 'magenta'; 
+        ctx.fillRect(0, 0, wallMargin, canvas.height);
     }
+
+    //autres murs en attendant autres images
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, canvas.width, wallMargin); 
+    ctx.fillRect(0, canvas.height - wallMargin, canvas.width, wallMargin); 
+    ctx.fillRect(canvas.width - wallMargin, 0, wallMargin, canvas.height);
 
 
     
