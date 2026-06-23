@@ -41,7 +41,6 @@ function renderGameView() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save(); 
     
-    // Application du Screen Shake
     if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2;
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
@@ -50,11 +49,8 @@ function renderGameView() {
         shakeIntensity *= 0.9; 
     }
     
-
  // SOL
     let imageSol = assetsManager.images['sol_base'];
-    
-    // On dessine le fond de base quoiqu'il arrive
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -63,55 +59,29 @@ function renderGameView() {
         ctx.fillStyle = pattern;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
-        // Grille de secours uniquement si l'image n'est pas chargée
-        ctx.strokeStyle = '#3d342c';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 1;
         for(let i = 0; i < canvas.width; i += 60) {
-            for(let j = 0; j < canvas.height; j += 60) {
-                ctx.strokeRect(i, j, 60, 60);
-            }
+            for(let j = 0; j < canvas.height; j += 60) ctx.strokeRect(i, j, 60, 60);
         }
     }
 
-    // MURS 
-    // Mur Gauche
+    // MURS
     let wallL = assetsManager.images['left_wall'];
-    if (wallL && wallL.complete && wallL.naturalWidth > 0) {
-        ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
-    }
-    
-    // Mur Droite
+    if (wallL && wallL.complete && wallL.naturalWidth > 0) { ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height); }
     let wallR = assetsManager.images['right_wall'];
-    if (wallR && wallR.complete && wallR.naturalWidth > 0) {
-        ctx.drawImage(wallR, canvas.width - wallMargin, 0, wallMargin, canvas.height);
-    }
-    
-    // Mur Haut (Back)
+    if (wallR && wallR.complete && wallR.naturalWidth > 0) { ctx.drawImage(wallR, canvas.width - wallMargin, 0, wallMargin, canvas.height); }
     let wallT = assetsManager.images['back_wall'];
-    if (wallT && wallT.complete && wallT.naturalWidth > 0) {
-        ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
-    }
-    
-    // Mur Bas (Front)
+    if (wallT && wallT.complete && wallT.naturalWidth > 0) { ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin); }
     let wallB = assetsManager.images['front_wall'];
-    if (wallB && wallB.complete && wallB.naturalWidth > 0) {
-        ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
-    }
+    if (wallB && wallB.complete && wallB.naturalWidth > 0) { ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin); }
 
     
 // ARÈNE ZONE ROUGE
 if (currentRoomId === 999) { 
-    ctx.strokeStyle = '#c0392b'; 
-    ctx.lineWidth = 6;
-    let x = wallMargin + arenaShrink;
-    let y = wallMargin + arenaShrink;
-    let w = canvas.width - (wallMargin + arenaShrink) * 2;
-    let h = canvas.height - (wallMargin + arenaShrink) * 2;
-    
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6;
+    let x = wallMargin + arenaShrink; let y = wallMargin + arenaShrink;
+    let w = canvas.width - (wallMargin + arenaShrink) * 2; let h = canvas.height - (wallMargin + arenaShrink) * 2;
     ctx.strokeRect(x, y, w, h);
-    
-    // ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
-    // ctx.fillRect(x, y, w, h);           
 }
 
     // SANG
@@ -171,6 +141,23 @@ if (currentRoomId === 999) {
         ctx.beginPath(); ctx.arc(h.x, h.y, h.radius * (1 - h.timer/h.maxTimer), 0, Math.PI*2); ctx.fill();
     });
 
+    // INVOCATIONS DU NÉCROMANCIEN
+    if (typeof necroSummons !== 'undefined') {
+        necroSummons.forEach(s => {
+            ctx.save(); ctx.translate(s.x + s.size/2, s.y + s.size/2);
+            if (s.type === 'fusion') {
+                ctx.fillStyle = '#8e44ad'; ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size);
+                ctx.fillStyle = '#1abc9c'; ctx.beginPath(); ctx.arc(0, 0, s.size/4, 0, Math.PI*2); ctx.fill();
+            } else {
+                ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'; ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(-s.size/4, -s.size/4, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(s.size/4, -s.size/4, 4, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
+            ctx.fillStyle = '#111'; ctx.fillRect(s.x, s.y - 10, s.size, 4);
+            ctx.fillStyle = '#8e44ad'; ctx.fillRect(s.x, s.y - 10, s.size * (s.health / s.maxHealth), 4);
+        });
+    }
+
     // ENNEMIS
     currentEnemies.forEach(enemy => {
         ctx.save();
@@ -205,7 +192,14 @@ if (currentRoomId === 999) {
             ctx.fillStyle = '#e67e22';
             ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill();
         }
+        
+        // Aura violette quand le monstre est ralenti par le Nécromancien
+        if (enemy.slowTimer > 0) {
+            ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 4, 0, Math.PI*2); ctx.stroke();
+        }
         ctx.restore();
+        
         if (!['troll', 'mage', 'dragon'].includes(enemy.type)) {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
@@ -215,7 +209,11 @@ if (currentRoomId === 999) {
     // PROJECTILES
     projectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
-        if (p.isFire) {
+        if (p.isNecro) {
+            // Tirs du Nécromancien (Faux/Faux-faucille)
+            ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
+        } else if (p.isFire) {
             ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
         } else {
@@ -239,12 +237,15 @@ if (currentRoomId === 999) {
         ctx.globalAlpha = isElfInvuln ? 0.4 : 1.0;
         ctx.save(); ctx.translate(player.x + player.size / 2, player.y + player.size / 2); ctx.rotate(player.faceAngle);
         
-        ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Elf' ? '#2ecc71' : (player.heroClass === 'Mage' ? '#e67e22' : '#95a5a6'));
+        ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Elf' ? '#2ecc71' : (player.heroClass === 'Mage' ? '#e67e22' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6')));
         ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
         
         if (player.heroClass === 'Elf') {
             ctx.fillStyle = '#27ae60'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
             ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(10, 0, 20, -Math.PI/2, Math.PI/2); ctx.stroke();
+        } else if (player.heroClass === 'Necromancer') {
+            ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
+            ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); ctx.stroke();
         } else if (player.heroClass === 'Knight') {
             ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-15, -15, 30, 30); ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -10, 5, 20); 
             ctx.save();
@@ -255,6 +256,14 @@ if (currentRoomId === 999) {
         }
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
+
+    // PARTICULES
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.05; 
+        if (p.life <= 0) particles.splice(i, 1);
+        else { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1.0; 
 
     // UI FINALE ET TEXTES
     ctx.restore(); 
