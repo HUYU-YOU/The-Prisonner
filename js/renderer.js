@@ -50,9 +50,7 @@ function renderGameView() {
         shakeIntensity *= 0.9; 
     }
     
-    // ==========================================
     // SOL (Arrière-plan)
-    // ==========================================
     let imageSol = assetsManager.images['sol_base'];
 
     // On affiche l'image si elle est chargée
