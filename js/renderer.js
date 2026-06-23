@@ -277,26 +277,52 @@ function renderGameView() {
     if (drawPlayer) {
         let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
         ctx.globalAlpha = isElfInvuln ? 0.4 : 1.0;
-        ctx.save(); ctx.translate(player.x + player.size / 2, player.y + player.size / 2); ctx.rotate(player.faceAngle);
         
-        ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Elf' ? '#2ecc71' : (player.heroClass === 'Mage' ? '#e67e22' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6')));
-        ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
+        ctx.save(); 
+        ctx.translate(player.x + player.size / 2, player.y + player.size / 2); 
         
         if (player.heroClass === 'Elf') {
-            ctx.fillStyle = '#27ae60'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
-            ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(10, 0, 20, -Math.PI/2, Math.PI/2); ctx.stroke();
-        } else if (player.heroClass === 'Necromancer') {
-            ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
-            ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); ctx.stroke();
-        } else if (player.heroClass === 'Knight') {
-            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-15, -15, 30, 30); ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -10, 5, 20); 
-            ctx.save();
-            if(isAttacking) { ctx.translate(15, 15); ctx.rotate(Math.PI/4); } else { ctx.translate(5, 20); }
-            ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -4, 10, 8); ctx.fillStyle = '#ecf0f1'; ctx.fillRect(10, -2, 35, 4); 
-            ctx.restore();
-            if (isAttacking) { ctx.strokeStyle = 'rgba(236, 240, 241, 0.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, player.size + 15, -Math.PI/3, Math.PI/3); ctx.stroke(); }
+            // --- GESTION DU SPRITE DE L'ELFE (SANS FAIRE TOURNER L'IMAGE) ---
+            let angle = player.faceAngle;
+            let skin = 'Elf_front'; // Par défaut = regard vers le bas (Sud)
+            
+            // Calcul de la visée avec Math.PI
+            if (angle > -Math.PI/4 && angle <= Math.PI/4) skin = 'Elf_est';             // Droite
+            else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) skin = 'Elf_front';     // Bas
+            else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) skin = 'Elf_back';    // Haut
+            else skin = 'Elf_west';                                                     // Gauche
+
+            let img = assetsManager.images[skin];
+            if (img && img.complete && img.naturalWidth > 0) {
+                // On dessine l'image parfaitement droite
+                ctx.drawImage(img, -player.size/2, -player.size/2, player.size, player.size);
+            } else {
+                // Dessin géométrique de secours si l'image n'est pas chargée
+                ctx.rotate(player.faceAngle);
+                ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#27ae60'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
+                ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(10, 0, 20, -Math.PI/2, Math.PI/2); ctx.stroke();
+            }
+        } else {
+            // --- COMPORTEMENT POUR LES AUTRES CLASSES (Avec rotation classique) ---
+            ctx.rotate(player.faceAngle);
+            ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Mage' ? '#e67e22' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6'));
+            ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
+            
+            if (player.heroClass === 'Necromancer') {
+                ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
+                ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); ctx.stroke();
+            } else if (player.heroClass === 'Knight') {
+                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-15, -15, 30, 30); ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -10, 5, 20); 
+                ctx.save();
+                if(isAttacking) { ctx.translate(15, 15); ctx.rotate(Math.PI/4); } else { ctx.translate(5, 20); }
+                ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -4, 10, 8); ctx.fillStyle = '#ecf0f1'; ctx.fillRect(10, -2, 35, 4); 
+                ctx.restore();
+                if (isAttacking) { ctx.strokeStyle = 'rgba(236, 240, 241, 0.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, player.size + 15, -Math.PI/3, Math.PI/3); ctx.stroke(); }
+            }
         }
-        ctx.restore(); ctx.globalAlpha = 1.0; 
+        ctx.restore(); 
+        ctx.globalAlpha = 1.0; 
     }
 
     // PARTICULES
