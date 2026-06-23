@@ -103,24 +103,41 @@ function renderGameView() {
         ctx.fillStyle = '#29547d'; ctx.fillRect(bookshelf.x + 20, bookshelf.y + 50, 10, 20);
     }
 
-    // PORTES
+   // PORTES
     currentDoors.forEach(door => {
         let doorImg = null;
-        if (door.face === 'north') doorImg = assetsManager.images['back_door'];
-        else if (door.face === 'south') doorImg = assetsManager.images['front_door'];
-        else if (door.face === 'west') doorImg = assetsManager.images['left_door'];
-        else if (door.face === 'east') doorImg = assetsManager.images['right_door'];
+        let isOpen = worldState.openedDoors[door.id] || false; 
+        
+        // 1. DÉTECTION DE L'ÉTAT DE LA PORTE
+        let stateStr = '_close'; // Par défaut
+        if (isOpen) {
+            stateStr = '_open';
+        } else if (door.requiresKey && door.locked) {
+            stateStr = '_key'; // <-- UTILISE TON NOUVEAU DESIGN
+        }
+        
+        // 2. SÉLECTION DE L'IMAGE
+        if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr];
+        else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr];
+        else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr];
+        else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
 
+        // 3. DESSIN DE L'IMAGE
         if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) {
             ctx.drawImage(doorImg, door.x, door.y, door.width, door.height);
         } else {
-            ctx.fillStyle = '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height);
+            // Dessin de secours si l'image charge mal
+            ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d';
+            ctx.fillRect(door.x, door.y, door.width, door.height);
             ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
             if(door.face === 'north' || door.face === 'south') { ctx.strokeRect(door.x + 10, door.y, door.width - 20, door.height); } 
             else { ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); }
         }
 
-        if (door.requiresKey && door.locked) {
+        // --- LE PETIT CADENAS JAUNE ---
+        // 💡 Astuce : Si tes nouvelles images _key.png ont DÉJÀ un cadenas dessiné dessus par tes soins, 
+        // tu peux complètement supprimer ce bloc "if" ci-dessous pour éviter un doublon visuel !
+        if (door.requiresKey && door.locked && !isOpen) {
             let lockX = door.x + door.width / 2; let lockY = door.y + door.height / 2;
             if (door.face === 'north') lockY += 15;
             ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(lockX, lockY, 10, 0, Math.PI * 2); ctx.fill();
