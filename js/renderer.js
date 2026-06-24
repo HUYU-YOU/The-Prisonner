@@ -321,7 +321,7 @@ function renderGameView() {
             else skin = 'Elf_west';                                                     
 
             let img = assetsManager.images[skin];
-            let displaySize = player.size * 6.0; 
+            let displaySize = player.size * 3.0; 
             
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
