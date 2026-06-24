@@ -187,7 +187,7 @@ function renderGameView() {
         ctx.save();
         ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
         
-      // --- ROTATION VERS LE JOUEUR ---
+        // --- ROTATION VERS LE JOUEUR ---
         let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2);
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         let angleToPlayer = Math.atan2(dy, dx);
@@ -196,10 +196,9 @@ function renderGameView() {
         if (enemy.type === 'goblin') {
             angleToPlayer -= (Math.PI / 2); // Correction, le dessin regarde vers le BAS !
         }
-        // Astuce : Quand les autres monstres, si l'un d'eux marche à l'envers ou en crabe, ajustement ici :
+        // Astuce : Quand tu auras les autres monstres, si l'un d'eux marche en crabe, ajuste l'angle ici :
         // else if (enemy.type === 'skeleton') { angleToPlayer += (Math.PI / 2); } // S'il regarde vers le HAUT
         // else if (enemy.type === 'spider') { angleToPlayer += Math.PI; } // S'il regarde vers la GAUCHE
-        // Si le monstre regarde déjà vers la DROITE d'origine, rien à écrire, ça marchera tout seul.
 
         // --- ANIMATION (Wobble & Respiration) ---
         let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; // Léger tremblement
@@ -207,7 +206,6 @@ function renderGameView() {
         
         ctx.rotate(rot);
         ctx.scale(scalePulse, scalePulse);
-        
 
         // --- EFFETS VISUELS (Ombres & Auras) ---
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -233,9 +231,6 @@ function renderGameView() {
         if (img && img.complete && img.naturalWidth > 0) {
             // Agrandissement pour bien voir les détails
             let displaySize = enemy.size * 2.5; 
-            
-             ctx.rotate(Math.PI / 2);
-            
             ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
         } else {
             // DESSIN GÉOMÉTRIQUE DE SECOURS (Si image non chargée)
@@ -270,7 +265,7 @@ function renderGameView() {
         
         ctx.restore(); 
         
-        // --- BARRES DE VIE (Affichées bien droites !) ---
+        // --- BARRES DE VIE ---
         if (!['troll', 'mage', 'dragon'].includes(enemy.type)) {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
@@ -328,7 +323,7 @@ function renderGameView() {
             else skin = 'Elf_west';                                                     
 
             let img = assetsManager.images[skin];
-            let displaySize = player.size * 4.0; 
+            let displaySize = player.size * 6.0; 
             
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
