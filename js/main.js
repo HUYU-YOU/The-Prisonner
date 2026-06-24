@@ -134,7 +134,7 @@ canvas.addEventListener('mousedown', (e) => {
         attackCooldown = 35;
     } else if (player.heroClass === 'Necromancer') {
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 6, hitTargets: [], angle: angle, isFire: false, isNecro: true });
-        attackCooldown = 15; // CADENCE DE TIR AUGMENTÉE !
+        attackCooldown = 15;
     } else if (player.heroClass === 'Knight') {
         isAttacking = true; attackCooldown = 40;
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 60 - 60, y: player.y + player.size / 2 + Math.sin(angle) * 60 - 60, size: 120 };
@@ -162,8 +162,6 @@ function update() {
 
     if (currentRoomId === 999 && waveStartDelay > 0) waveStartDelay--;
 
-    // --- LOGIQUE CHANGE ROOM ET TRANSITIONS ---
-    // Sécurité de création
     if (!worldState.openedDoors) worldState.openedDoors = {};
 
     let roomChanged = false;
@@ -233,7 +231,6 @@ function update() {
         if (arenaState === "WAITING") {
             arenaTimer--;
             if (arenaTimer <= 0) {
-                
                 if (arenaWave % 5 === 0) {
                     currentItems.push({ id: 'potion_arena_' + arenaWave, type: 'potion_green', x: canvas.width/2 - 7.5, y: canvas.height/2 - 7.5, size: 15, collected: false });
                 }
@@ -242,12 +239,9 @@ function update() {
                 else if (arenaWave === 20) spawnEnemy('mage', 1); 
                 else if (arenaWave === 30) spawnEnemy('dragon', 1);
                 else {
-                    if (arenaWave < 5) {
-                        spawnEnemy('goblin', arenaWave * 2);
-                    } else if (arenaWave < 15) {
-                        spawnEnemy('goblin', 5);
-                        spawnEnemy('skeleton', arenaWave - 4); 
-                    } else {
+                    if (arenaWave < 5) { spawnEnemy('goblin', arenaWave * 2); } 
+                    else if (arenaWave < 15) { spawnEnemy('goblin', 5); spawnEnemy('skeleton', arenaWave - 4); } 
+                    else {
                         let numGoblins = 5; let numSkeletons = 10; let numSpiders = 0;
                         let extra = arenaWave - 14; 
                         for (let i = 1; i <= extra; i++) {
@@ -259,7 +253,6 @@ function update() {
                         if (numSpiders > 0) spawnEnemy('spider', numSpiders);
                     }
                 }
-                
                 waveStartDelay = 60; 
                 arenaWave++; arenaState = "ACTIVE";
             }
@@ -285,11 +278,13 @@ function update() {
 
     player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
 
+    // --- RAMASSAGE DES ITEMS (Y COMPRIS LA CLÉ DU CRÂNE) ---
     currentItems.forEach(item => {
         if (!item.collected && checkCollision(player, item)) {
             item.collected = true; worldState.collectedItems[item.id] = true; 
             if (item.type === 'key') playerStats.inventory.keys.gold++;
             else if (item.type === 'potion_green') playerStats.inventory.potions.green++;
+            else if (item.type === 'key_skull') playerStats.inventory.keys.skull++; // Ramassage clé de fin
             updateHUD(); spawnParticles(item.x, item.y, '#f1c40f', 15);
         }
     });
@@ -336,7 +331,7 @@ function update() {
         if (s.health <= 0) { spawnParticles(s.x + s.size/2, s.y + s.size/2, '#2c3e50', 15); necroSummons.splice(i, 1); }
     }
     
-    // --- NON SUPERPOSITION DES INVOCATIONS (Repousse physique) ---
+    // --- NON SUPERPOSITION DES INVOCATIONS ---
     for (let i = 0; i < necroSummons.length; i++) {
         for (let j = i + 1; j < necroSummons.length; j++) {
             let s1 = necroSummons[i]; let s2 = necroSummons[j];
@@ -470,7 +465,6 @@ function update() {
             if (!enemy.invulnerable && checkCollision({x: targetEntity.x, y: targetEntity.y, width: targetEntity.size, height: targetEntity.size}, enemy)) {
                 if (enemy.attackCooldown === undefined) enemy.attackCooldown = 0;
                 if (enemy.attackCooldown <= 0) {
-                    // Les invocations invulnérables ne prennent pas de dégâts
                     if (!targetEntity.invulnerableTimer || targetEntity.invulnerableTimer <= 0) {
                         targetEntity.health -= (enemy.type === 'troll' ? 30 : 10);
                         spawnParticles(targetEntity.x + targetEntity.size/2, targetEntity.y + targetEntity.size/2, '#e74c3c', 10);
@@ -510,10 +504,19 @@ function update() {
         }
     }
 
+    // --- GESTION MORT DES ENNEMIS ET MORT DU BOSS (SALLE 8) ---
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
+            // --- NOUVEAU : MORT DU BOSS FINAL ---
+            if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) {
+                worldState.bossDefeated = true; // Débloque l'escalier
+                currentItems.push({ id: 'boss_key', type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 + 60, size: 20, collected: false });
+                triggerShake(20, 30);
+            }
+            // ------------------------------------
+
             if (player.heroClass === 'Necromancer' || e.killedBySummon || e.killedByNecro) {
                 necroKills.push(e.type);
             }
@@ -544,7 +547,7 @@ function update() {
                     let dmg = 0;
                     if (player.heroClass === 'Elf') dmg = 60;
                     else if (player.heroClass === 'Mage') dmg = 30;
-                    else if (p.isNecro) { dmg = 10; enemy.isPermanentlySlowed = true; } // Ralentissement définitif
+                    else if (p.isNecro) { dmg = 10; enemy.isPermanentlySlowed = true; } 
                     
                     enemy.health -= dmg;
                     
@@ -575,7 +578,6 @@ function update() {
         
         if (hitSummonIndex !== -1) {
             let s = necroSummons[hitSummonIndex];
-            // Protège des projectiles ennemis pendant l'invulnérabilité
             if (!s.invulnerableTimer || s.invulnerableTimer <= 0) {
                 s.health -= p.damage;
             }
@@ -586,6 +588,29 @@ function update() {
             if (p.type === 'poison') { playerPoisonTimer = 300; playerSlowTimer = 180; } 
             playerInvulnerableTimer = 60; enemyProjectiles.splice(i, 1); updateHUD();
             if (playerStats.health <= 0) handlePlayerDeath();
+        }
+    }
+
+    // --- GESTION DE L'ESCALIER ET MESSAGE DE FIN ---
+    if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
+        let stairsRect = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
+        if (checkCollision(player, stairsRect)) {
+            if (playerStats.inventory.keys.skull > 0) {
+                playerStats.inventory.keys.skull--; // Consomme la clé pour bloquer le déclenchement en boucle
+                setTimeout(() => {
+                    alert("FÉLICITATIONS !\n\nVous avez vaincu le Troll Corrompu et trouvé la sortie du donjon.\n\nMerci d'avoir joué !\nLa suite de l'aventure arrive très bientôt...");
+                    window.location.reload(); // Relance le jeu à zéro proprement
+                }, 100);
+                return;
+            } else {
+                // Repousse le joueur s'il essaie de descendre sans la clé
+                let dx = (player.x + player.size/2) - (canvas.width/2);
+                let dy = (player.y + player.size/2) - (canvas.height/2);
+                let dist = Math.hypot(dx, dy);
+                if(dist === 0) { dx = 1; dy = 0; dist = 1; }
+                player.x += (dx/dist) * 3;
+                player.y += (dy/dist) * 3;
+            }
         }
     }
 
