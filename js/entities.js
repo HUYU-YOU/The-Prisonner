@@ -48,8 +48,9 @@ function spawnEnemy(type, count, baseX = null, baseY = null) {
             wobble: Math.random() * Math.PI * 2,
             timeAlive: 0, phase: 1, invulnerable: false,
             isBurning: false, burnTicks: 0, burnTimer: 0,
-            slowTimer: 0, isPermanentlySlowed: false, // <-- RALENTISSEMENT INFINI NÉCRO
-            killedBySummon: false, killedByNecro: false
+            slowTimer: 0, isPermanentlySlowed: false, 
+            killedBySummon: false, killedByNecro: false,
+            attackAnimTimer: 0, blockAnimTimer: 0, ultiAnimTimer: 0
         });
     }
 }
@@ -124,7 +125,7 @@ function loadRoom(roomId) {
     currentItems = [];
   }
 
-currentEnemies = [];
+  currentEnemies = [];
   if (roomId !== 999) {
       if (worldState.enemyStates[roomId]) {
           currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId]));
@@ -150,82 +151,54 @@ function activateUltimate() {
 
     if (player.heroClass === 'Necromancer') {
         if (necroSummons.length > 0) {
-            let totalHP = 0;
-            necroSummons.forEach(s => totalHP += s.health);
-            necroSummons = []; 
-            totalHP *= 2; // PV DOUBLÉS POUR LA FUSION
-            
-            // FUSION INVULNÉRABLE (3 SECS = 180 frames)
+            let totalHP = 0; necroSummons.forEach(s => totalHP += s.health);
+            necroSummons = []; totalHP *= 2; 
             necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 4.5, attackCooldown: 0, invulnerableTimer: 180 }); 
             spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 80, true);
         } else if (necroKills.length > 0) {
             necroKills.forEach(kill => {
-                let sz = 30, hp = 40, dmg = 15, spd = 4.5; // INVOCATIONS PLUS RAPIDES
+                let sz = 30, hp = 40, dmg = 15, spd = 4.5;
                 if(kill === 'troll') { hp = 200; sz = 60; dmg = 30; spd = 3.5; }
                 else if(kill === 'mage') { hp = 100; sz = 45; dmg = 20; spd = 4; }
                 else if(kill === 'dragon') { hp = 500; sz = 80; dmg = 50; spd = 3; }
                 else if(kill === 'spider') { sz = 20; hp = 20; dmg = 10; spd = 6; }
                 necroSummons.push({ type: kill, x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: hp, maxHealth: hp, damage: dmg, size: sz, speed: spd, attackCooldown: 0, invulnerableTimer: 0 });
             });
-            necroKills = []; 
-            spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
-        } else {
-            return; 
-        }
+            necroKills = []; spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
+        } else { return; }
     }
     
-    isUltimateActive = true;
-    playerStats.mana = 0;
-    ultimateTimer = 600; 
-    elfStealthBroken = false; 
+    isUltimateActive = true; playerStats.mana = 0; ultimateTimer = 600; elfStealthBroken = false; 
     
     if (player.heroClass === 'Knight') {
-        playerInvulnerableTimer = 300; 
-        spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 50, true);
+        playerInvulnerableTimer = 300; spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 50, true);
     } else if (player.heroClass === 'Elf') {
         spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
     } else if (player.heroClass === 'Mage') {
         currentEnemies.forEach(enemy => {
             let ultDmg = enemy.isBurning ? 100 : 50; 
-            if (!enemy.invulnerable) enemy.health -= ultDmg;
-            enemy.isBurning = true;
-            enemy.burnTicks = 10;
-            enemy.burnTimer = 60;
+            if (!enemy.invulnerable) {
+                enemy.health -= ultDmg;
+                enemy.ultiAnimTimer = 30; // DÉCLENCHE L'EXPLOSION DU MAGE
+            }
+            enemy.isBurning = true; enemy.burnTicks = 10; enemy.burnTimer = 60;
             spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#e67e22', 30, true);
         });
     }
     
-    triggerShake(12, 15);
-    updateHUD();
+    triggerShake(12, 15); updateHUD();
 }
 
 function handlePlayerDeath() {
     gameState = "GAMEOVER"; 
-    
     setTimeout(() => {
-        gameState = "MENU";
-        isArenaMode = false;
-        isUltimateActive = false;
+        gameState = "MENU"; isArenaMode = false; isUltimateActive = false;
         currentEnemies = []; bloodStains = []; projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
         shakeTimer = 0; shakeIntensity = 0; playerPoisonTimer = 0; playerSlowTimer = 0; arenaShrink = 0; 
-        
         spaceHoldTimer = 0; waveStartDelay = 0; necroKills = []; necroSummons = [];
-        
-        worldState.unlockedDoors = {};
-        worldState.collectedItems = {};
-        worldState.clearedRooms = {};
-        worldState.bloodStains = {};
-        worldState.enemyStates = {}; 
-        
-        playerStats.inventory.keys.gold = 0;
-        playerStats.inventory.potions.green = 0;
-        playerStats.inventory.potions.yellow = 0;
-        playerStats.inventory.potions.blue = 0;
-        playerStats.inventory.potions.red = 0;
-        
+        worldState = { unlockedDoors: {}, collectedItems: {}, clearedRooms: {}, bloodStains: {}, enemyStates: {} }; 
+        playerStats.inventory = { keys: { gold: 0, skull: 0, orb: 0 }, potions: { green: 0, yellow: 0, blue: 0, red: 0 } };
         document.getElementById('menu-screen').style.display = 'flex';
-        playerStats.health = playerStats.maxHealth;
-        playerStats.mana = 0;
-        updateHUD();
+        playerStats.health = playerStats.maxHealth; playerStats.mana = 0; updateHUD();
     }, 3000); 
 }
