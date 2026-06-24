@@ -100,9 +100,11 @@ assetsManager.load('left_wall', 'assets/tiles/left_wall.png');
 assetsManager.load('right_wall', 'assets/tiles/right_wall.png');
 assetsManager.load('back_wall', 'assets/tiles/back_wall.png');   
 assetsManager.load('front_wall', 'assets/tiles/front_wall.png'); 
+
 assetsManager.load('card_knight', 'assets/card/Knight.png');
 assetsManager.load('card_elf', 'assets/card/Elf.png');
 assetsManager.load('card_burned', 'assets/card/Burned.png');
+
 assetsManager.load('left_door', 'assets/decors/left_door.png');
 assetsManager.load('right_door', 'assets/decors/right_door.png');
 assetsManager.load('back_door', 'assets/decors/back_door.png');   // Porte du NORD (Haut)
@@ -119,6 +121,7 @@ assetsManager.load('front_door_key', 'assets/decors/front_door_key.png');
 assetsManager.load('back_door_close', 'assets/decors/back_door_close.png');
 assetsManager.load('back_door_open', 'assets/decors/back_door_open.png');
 assetsManager.load('back_door_key', 'assets/decors/back_door_key.png'); 
+
 assetsManager.load('Elf_west', 'assets/skins/Elf_west.png');
 assetsManager.load('Elf_est', 'assets/skins/Elf_est.png');
 assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
@@ -127,7 +130,8 @@ assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); //A FAIRE!!
 assetsManager.load('goblin_top_view', 'assets/skins/goblin_top_view.png');//A FAIRE!!
 assetsManager.load('goblin_top_attack', 'assets/skins/goblin_top_attack.png');
 assetsManager.load('goblin_top_block', 'assets/skins/goblin_top_block.png');
-assetsManager.load('squelette_top_view', 'assets/skins/squelette_top_view.png');//A FAIRE!!
+assetsManager.load('Skeleton_top_view', 'assets/skins/Skeleton_top_view.png');
+assetsManager.load('Skeleton_top_attack', 'assets/skins/Skeleton_top_attack.png');
 assetsManager.load('spider_top_view', 'assets/skins/spider_top_view.png');//A FAIRE!!
 assetsManager.load('troll_top_view_', 'assets/skins/troll_top_view_.png'); // Avec le _ à la fin
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');//A FAIRE!!
