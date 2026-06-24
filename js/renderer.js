@@ -305,7 +305,7 @@ function renderGameView() {
             let img = assetsManager.images[skin];
             
             // --- TAILLE GÉANTE --- (Multiplicateur de 6.0 !)
-            let displaySize = player.size * 6.0; 
+            let displaySize = player.size * 4.0; 
             
             if (img && img.complete && img.naturalWidth > 0) {
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
