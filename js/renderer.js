@@ -191,7 +191,7 @@ function renderGameView() {
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         
         // 🛠️ CORRECTION DU MOONWALK : On AJOUTE 90 degrés (+ Math.PI / 2)
-        let angleToPlayer = Math.atan2(dy, dx) + (Math.PI / 2); 
+        let angleToPlayer = Math.atan2(dy, dx) - (Math.PI / 2); 
 
         let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; 
         let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
