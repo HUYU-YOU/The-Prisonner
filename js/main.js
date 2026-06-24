@@ -324,6 +324,7 @@ function update() {
                         closestEnemy.blockAnimTimer = 20; 
                         spawnParticles(closestEnemy.x + closestEnemy.size/2, closestEnemy.y + closestEnemy.size/2, '#bdc3c7', 15);
                     } else {
+                        if (closestEnemy.type === 'skeleton') closestEnemy.attackAnimTimer = 15;
                         closestEnemy.health -= s.damage; 
                         if (closestEnemy.health <= 0) closestEnemy.killedBySummon = true;
                     }
@@ -358,7 +359,6 @@ function update() {
     }
 
     currentEnemies.forEach((enemy) => {
-        // --- CHRONOS DES ANIMATIONS (ATTAQUE & PARADE) ---
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0;
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0;
         if (enemy.attackAnimTimer > 0) enemy.attackAnimTimer--;
@@ -414,9 +414,16 @@ function update() {
             }
             if (enemy.shootCooldown > 0) enemy.shootCooldown--;
             if (enemy.shootCooldown <= 0 && dist < 600) {
-                let pSize = enemy.type === 'spider' ? 6 : 8; let pSpeed = enemy.type === 'spider' ? 8 : 6; let pColor = enemy.type === 'spider' ? '#8e44ad' : '#ecf0f1';
-                enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*pSpeed, vy: (dy/dist)*pSpeed, size: pSize, color: pColor, damage: 20, type: enemy.type === 'spider' ? 'poison' : 'normal' });
+                // --- PROJECTILES OS ET TOILES DE CHAUVE-SOURIS ---
+                let pSize = enemy.type === 'spider' ? 12 : 8; 
+                let pSpeed = enemy.type === 'spider' ? 8 : 6; 
+                let pType = enemy.type === 'spider' ? 'bat_web' : 'bone';
+                let pColor = enemy.type === 'spider' ? '#8e44ad' : '#ecf0f1';
+                
+                enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*pSpeed, vy: (dy/dist)*pSpeed, size: pSize, color: pColor, damage: 20, type: pType, angle: Math.atan2(dy, dx) });
                 enemy.shootCooldown = 120;
+                
+                if (enemy.type === 'skeleton') enemy.attackAnimTimer = 25; 
             }
         } else if (enemy.type === 'troll') {
             if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
@@ -430,7 +437,7 @@ function update() {
             enemy.timeAlive++; 
             if (enemy.shootCooldown > 0) enemy.shootCooldown--;
             if (enemy.shootCooldown <= 0 && dist < 800) {
-                enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*6, vy: (dy/dist)*6, size: 10, color: '#9b59b6', damage: 40, type: 'normal' });
+                enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*6, vy: (dy/dist)*6, size: 10, color: '#9b59b6', damage: 40, type: 'normal', angle: Math.atan2(dy, dx) });
                 enemy.shootCooldown = Math.max(30, 90 - (enemy.timeAlive / 20)); 
             }
             enemy.summonTimer--;
@@ -447,7 +454,7 @@ function update() {
                     let baseAngle = Math.atan2(dy, dx);
                     for(let a = -Math.PI/4; a <= Math.PI/4 + 0.01; a += Math.PI/8) {
                         let fireAngle = baseAngle + a;
-                        enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: Math.cos(fireAngle)*7, vy: Math.sin(fireAngle)*7, size: 14, color: '#e67e22', damage: playerStats.maxHealth * 0.20, type: 'fire' });
+                        enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: Math.cos(fireAngle)*7, vy: Math.sin(fireAngle)*7, size: 14, color: '#e67e22', damage: playerStats.maxHealth * 0.20, type: 'fire', angle: fireAngle });
                     }
                     enemy.shootCooldown = 90;
                 }
@@ -463,7 +470,7 @@ function update() {
                 }
                 if (enemy.shootCooldown > 0) enemy.shootCooldown--;
                 if (enemy.shootCooldown <= 0 && dist < 9999) {
-                    enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*8, vy: (dy/dist)*8, size: 12, color: '#c0392b', damage: 30, type: 'fire' });
+                    enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*8, vy: (dy/dist)*8, size: 12, color: '#c0392b', damage: 30, type: 'fire', angle: Math.atan2(dy, dx) });
                     enemy.shootCooldown = enemy.phase2Timer < 600 ? 15 : 40;
                 }
                 if (enemy.phase2Timer <= 0) enemy.health = 0; 
@@ -472,7 +479,7 @@ function update() {
 
         if (targetEntity === player) {
             if (playerInvulnerableTimer <= 0 && !isElfInvuln && !enemy.invulnerable && checkCollision(player, enemy)) {
-                if (enemy.type === 'goblin') enemy.attackAnimTimer = 15; // DÉCLENCHE L'ANIMATION D'ATTAQUE
+                if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
                 playerStats.health -= (enemy.type === 'troll' ? 50 : (enemy.type === 'dragon' ? 0 : 20)); 
                 triggerShake(12, 20); spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
                 playerInvulnerableTimer = 60; updateHUD();
@@ -482,7 +489,7 @@ function update() {
             if (!enemy.invulnerable && checkCollision({x: targetEntity.x, y: targetEntity.y, width: targetEntity.size, height: targetEntity.size}, enemy)) {
                 if (enemy.attackCooldown === undefined) enemy.attackCooldown = 0;
                 if (enemy.attackCooldown <= 0) {
-                    if (enemy.type === 'goblin') enemy.attackAnimTimer = 15; // DÉCLENCHE L'ANIMATION D'ATTAQUE
+                    if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
                     if (!targetEntity.invulnerableTimer || targetEntity.invulnerableTimer <= 0) {
                         targetEntity.health -= (enemy.type === 'troll' ? 30 : 10);
                         spawnParticles(targetEntity.x + targetEntity.size/2, targetEntity.y + targetEntity.size/2, '#e74c3c', 10);
@@ -561,10 +568,9 @@ function update() {
                 if (!enemy.invulnerable) {
                     let isBlocked = false;
                     
-                    // --- NOUVEAU : PARADE SUR PROJECTILES (10%) ---
                     if (enemy.type === 'goblin' && Math.random() < 0.10) {
                         isBlocked = true;
-                        enemy.blockAnimTimer = 20; // Affiche le bouclier
+                        enemy.blockAnimTimer = 20; 
                         spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15);
                     }
                     
@@ -585,7 +591,13 @@ function update() {
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 if (isPiercingElf || player.heroClass === 'Mage') {
                     if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
-                } else { projectileHit = true; break; } 
+                } else { 
+                    if (!enemy.invulnerable && enemy.type === 'goblin' && enemy.blockAnimTimer > 0) {
+                        projectileHit = true; break; 
+                    } else if (!enemy.invulnerable) {
+                        projectileHit = true; break; 
+                    }
+                } 
             }
         }
         if (projectileHit) projectiles.splice(i, 1); 
@@ -611,7 +623,7 @@ function update() {
         } else if (playerInvulnerableTimer <= 0 && !isElfInvuln && checkCollision(arrowHitbox, player)) {
             playerStats.health -= p.damage; triggerShake(10, 15);
             spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
-            if (p.type === 'poison') { playerPoisonTimer = 300; playerSlowTimer = 180; } 
+            if (p.type === 'bat_web' || p.type === 'poison') { playerPoisonTimer = 300; playerSlowTimer = 180; } 
             playerInvulnerableTimer = 60; enemyProjectiles.splice(i, 1); updateHUD();
             if (playerStats.health <= 0) handlePlayerDeath();
         }
