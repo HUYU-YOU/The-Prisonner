@@ -220,9 +220,9 @@ function renderGameView() {
         // --- SÉLECTION DU SKIN ---
         let skinName = '';
         if (enemy.type === 'goblin') skinName = 'goblin_top_view';
-        else if (enemy.type === 'skeleton') skinName = 'squelette_top_view';
+        else if (enemy.type === 'skeleton') skinName = 'Skeleton_top_view';
         else if (enemy.type === 'spider') skinName = 'spider_top_view';
-        else if (enemy.type === 'troll') skinName = 'troll_top_view_';
+        else if (enemy.type === 'troll') skinName = 'troll_top_view';
         else if (enemy.type === 'mage') skinName = 'mage_top_view';
         else if (enemy.type === 'dragon') skinName = 'drake_top_view';
 
