@@ -28,8 +28,6 @@ window.endHeroHold = function(heroClass) {
 };
 
 window.selectHero = function(heroClass) {
-    if (heroClass === 'Mage') return;
-
     player.heroClass = heroClass;
     if (heroClass === 'Knight') {
         playerStats.name = "CHEVALIER"; playerStats.weapon = "ÉPÉE LOURDE"; player.speed = 4;
@@ -37,6 +35,12 @@ window.selectHero = function(heroClass) {
     } else if (heroClass === 'Elf') {
         playerStats.name = "KEBRA"; playerStats.weapon = "ARC D'EMERYN"; player.speed = 6;
         playerStats.maxHealth = 100; playerStats.health = 100;
+    } else if (heroClass === 'Mage') {
+        playerStats.name = "MAGE BRÛLEUR"; playerStats.weapon = "BOULES DE FEU"; player.speed = 5;
+        playerStats.maxHealth = 100; playerStats.health = 100;
+    } else if (heroClass === 'Necromancer') {
+        playerStats.name = "NÉCROMANCIEN"; playerStats.weapon = "FAUX DES ÂMES"; player.speed = 4.5;
+        playerStats.maxHealth = 120; playerStats.health = 120;
     }
     
     document.getElementById('p-name').innerText = playerStats.name;
@@ -359,10 +363,14 @@ function update() {
     }
 
     currentEnemies.forEach((enemy) => {
+        // --- CHRONOS DES ANIMATIONS ---
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0;
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0;
+        if (enemy.ultiAnimTimer === undefined) enemy.ultiAnimTimer = 0;
+
         if (enemy.attackAnimTimer > 0) enemy.attackAnimTimer--;
         if (enemy.blockAnimTimer > 0) enemy.blockAnimTimer--;
+        if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; // Diminue le chrono de l'explosion
 
         enemy.wobble += 0.1; 
         
@@ -414,7 +422,6 @@ function update() {
             }
             if (enemy.shootCooldown > 0) enemy.shootCooldown--;
             if (enemy.shootCooldown <= 0 && dist < 600) {
-                // --- PROJECTILES OS ET TOILES DE CHAUVE-SOURIS ---
                 let pSize = enemy.type === 'spider' ? 12 : 8; 
                 let pSpeed = enemy.type === 'spider' ? 8 : 6; 
                 let pType = enemy.type === 'spider' ? 'bat_web' : 'bone';
