@@ -145,8 +145,8 @@ canvas.addEventListener('mousedown', (e) => {
         currentEnemies.forEach(enemy => { 
             if (checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
-                    if (enemy.type === 'goblin' && Math.random() < 0.10) {
-                        enemy.blockAnimTimer = 20; 
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) { // 15% de chance de parade
+                        enemy.blockAnimTimer = 30; 
                         spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15);
                     } else {
                         enemy.health -= 50;
@@ -324,11 +324,11 @@ function update() {
             if (minDist < (s.size + closestEnemy.size) / 2 + 10) {
                 if (s.attackCooldown === undefined) s.attackCooldown = 0;
                 if (s.attackCooldown <= 0) {
-                    if (closestEnemy.type === 'goblin' && Math.random() < 0.10) {
-                        closestEnemy.blockAnimTimer = 20; 
+                    if (closestEnemy.type === 'goblin' && Math.random() < 0.15) {
+                        closestEnemy.blockAnimTimer = 30; 
                         spawnParticles(closestEnemy.x + closestEnemy.size/2, closestEnemy.y + closestEnemy.size/2, '#bdc3c7', 15);
                     } else {
-                        if (closestEnemy.type === 'skeleton') closestEnemy.attackAnimTimer = 15;
+                        if (closestEnemy.type === 'skeleton' || closestEnemy.type === 'goblin') closestEnemy.attackAnimTimer = 30;
                         closestEnemy.health -= s.damage; 
                         if (closestEnemy.health <= 0) closestEnemy.killedBySummon = true;
                     }
@@ -363,14 +363,13 @@ function update() {
     }
 
     currentEnemies.forEach((enemy) => {
-        // --- CHRONOS DES ANIMATIONS ---
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0;
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0;
         if (enemy.ultiAnimTimer === undefined) enemy.ultiAnimTimer = 0;
 
         if (enemy.attackAnimTimer > 0) enemy.attackAnimTimer--;
         if (enemy.blockAnimTimer > 0) enemy.blockAnimTimer--;
-        if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; // Diminue le chrono de l'explosion
+        if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; 
 
         enemy.wobble += 0.1; 
         
@@ -412,6 +411,8 @@ function update() {
         } 
 
         if (enemy.type === 'goblin') {
+            // NOUVEAU: Le Gobelin dégaine quand il est près, même s'il ne touche pas encore !
+            if (dist < 70) { enemy.attackAnimTimer = 10; }
             if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
         } else if (enemy.type === 'spider' || enemy.type === 'skeleton') {
             if (enemy.type === 'spider') {
@@ -430,7 +431,7 @@ function update() {
                 enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*pSpeed, vy: (dy/dist)*pSpeed, size: pSize, color: pColor, damage: 20, type: pType, angle: Math.atan2(dy, dx) });
                 enemy.shootCooldown = 120;
                 
-                if (enemy.type === 'skeleton') enemy.attackAnimTimer = 25; 
+                if (enemy.type === 'skeleton') enemy.attackAnimTimer = 30; // Animation de tir du squelette
             }
         } else if (enemy.type === 'troll') {
             if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
@@ -486,7 +487,6 @@ function update() {
 
         if (targetEntity === player) {
             if (playerInvulnerableTimer <= 0 && !isElfInvuln && !enemy.invulnerable && checkCollision(player, enemy)) {
-                if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
                 playerStats.health -= (enemy.type === 'troll' ? 50 : (enemy.type === 'dragon' ? 0 : 20)); 
                 triggerShake(12, 20); spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
                 playerInvulnerableTimer = 60; updateHUD();
@@ -496,7 +496,7 @@ function update() {
             if (!enemy.invulnerable && checkCollision({x: targetEntity.x, y: targetEntity.y, width: targetEntity.size, height: targetEntity.size}, enemy)) {
                 if (enemy.attackCooldown === undefined) enemy.attackCooldown = 0;
                 if (enemy.attackCooldown <= 0) {
-                    if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
+                    if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 30; 
                     if (!targetEntity.invulnerableTimer || targetEntity.invulnerableTimer <= 0) {
                         targetEntity.health -= (enemy.type === 'troll' ? 30 : 10);
                         spawnParticles(targetEntity.x + targetEntity.size/2, targetEntity.y + targetEntity.size/2, '#e74c3c', 10);
@@ -575,9 +575,9 @@ function update() {
                 if (!enemy.invulnerable) {
                     let isBlocked = false;
                     
-                    if (enemy.type === 'goblin' && Math.random() < 0.10) {
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) {
                         isBlocked = true;
-                        enemy.blockAnimTimer = 20; 
+                        enemy.blockAnimTimer = 30; // Blocage dure plus longtemps
                         spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15);
                     }
                     
