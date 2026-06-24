@@ -139,3 +139,7 @@ assetsManager.load('troll_top_view', 'assets/skins/troll_top_view.png');
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
 assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 
+assetsManager.load('Burned_top_view', 'assets/skins/Burned_top_view.jpeg');
+assetsManager.load('Attack_fire_mage', 'assets/skins/Attack_fire_mage.jpeg');
+assetsManager.load('Ulti_fire_mage', 'assets/skins/Ulti_fire_mage.jpeg');
+
