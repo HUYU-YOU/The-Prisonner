@@ -225,8 +225,8 @@ function renderGameView() {
             let displaySize = enemy.size * 2.5; 
             
             // ⚠️ ATTENTION ORIENTATION ! ⚠️
-            // Si tes monstres marchent en crabe, c'est que ton dessin regarde vers le HAUT.
-            // Si c'est le cas, enlève les '//' au début de la ligne en dessous :
+            // Si les monstres marchent en crabe, c'est que le dessin regarde vers le HAUT.
+            // Si c'est le cas, je doit enlèver les '//' au début de la ligne en dessous :
             // ctx.rotate(Math.PI / 2);
             
             ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
@@ -261,7 +261,7 @@ function renderGameView() {
             ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); ctx.stroke();
         }
         
-        ctx.restore(); // Très important : On annule la rotation ICI
+        ctx.restore(); 
         
         // --- BARRES DE VIE (Affichées bien droites !) ---
         if (!['troll', 'mage', 'dragon'].includes(enemy.type)) {
@@ -321,7 +321,7 @@ function renderGameView() {
             else skin = 'Elf_west';                                                     
 
             let img = assetsManager.images[skin];
-            let displaySize = player.size * 3.0; 
+            let displaySize = player.size * 2.0; 
             
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
