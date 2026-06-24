@@ -208,12 +208,6 @@ function renderGameView() {
         ctx.rotate(rot);
         ctx.scale(scalePulse, scalePulse);
         
-        // --- ANIMATION (Wobble & Respiration) ---
-        let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; // Léger tremblement
-        let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  // Respiration
-        
-        ctx.rotate(rot);
-        ctx.scale(scalePulse, scalePulse);
 
         // --- EFFETS VISUELS (Ombres & Auras) ---
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
