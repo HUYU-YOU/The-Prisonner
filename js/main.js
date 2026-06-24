@@ -145,8 +145,8 @@ canvas.addEventListener('mousedown', (e) => {
         currentEnemies.forEach(enemy => { 
             if (checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
-                    if (enemy.type === 'goblin' && Math.random() < 0.15) { // 15% de chance de parade
-                        enemy.blockAnimTimer = 30; 
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) { 
+                        enemy.blockAnimTimer = 45; // BOUCLIER VISIBLE PLUS LONGTEMPS
                         spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15);
                     } else {
                         enemy.health -= 50;
@@ -177,6 +177,14 @@ function update() {
 
     let roomChanged = false;
     currentDoors.forEach(door => {
+        // --- NOUVEAU: SALLE DU BOSS BLOQUÉE TANT QU'IL EST EN VIE ! ---
+        if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
+            if (checkCollision(player, door)) {
+                player.y = door.y - player.size - 5; // Repousse le joueur en arrière (impossible de fuir)
+            }
+            return;
+        }
+
         if (!roomChanged && checkCollision(player, door)) { 
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
@@ -271,10 +279,33 @@ function update() {
     }
 
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
-    if (keys['z'] || keys['w'] || keys['arrowup'])    player.y -= currentSpeedPlayer;
-    if (keys['s'] || keys['arrowdown'])               player.y += currentSpeedPlayer;
+    
+    // --- NOUVEAU : GLISSADE SUR L'ESCALIER GÉANT (OBSTACLE) ---
+    let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
+    
+    let oldPx = player.x;
     if (keys['q'] || keys['a'] || keys['arrowleft'])  player.x -= currentSpeedPlayer;
     if (keys['d'] || keys['arrowright'])              player.x += currentSpeedPlayer;
+
+    if (currentRoomId === 8 && checkCollision(player, centerStairs)) {
+        if (worldState.bossDefeated && playerStats.inventory.keys.skull > 0) {
+            // Zone de sortie activée
+        } else {
+            player.x = oldPx; // Bloque X contre l'escalier
+        }
+    }
+
+    let oldPy = player.y;
+    if (keys['z'] || keys['w'] || keys['arrowup'])    player.y -= currentSpeedPlayer;
+    if (keys['s'] || keys['arrowdown'])               player.y += currentSpeedPlayer;
+
+    if (currentRoomId === 8 && checkCollision(player, centerStairs)) {
+        if (worldState.bossDefeated && playerStats.inventory.keys.skull > 0) {
+            // Zone de sortie activée
+        } else {
+            player.y = oldPy; // Bloque Y contre l'escalier
+        }
+    }
 
     let minLimitX = wallMargin + arenaShrink; let minLimitY = wallMargin + arenaShrink;
     let maxLimitX = canvas.width - wallMargin - arenaShrink - player.size;
@@ -319,7 +350,13 @@ function update() {
             let dx = (closestEnemy.x + closestEnemy.size/2) - (s.x + s.size/2);
             let dy = (closestEnemy.y + closestEnemy.size/2) - (s.y + s.size/2);
             let angle = Math.atan2(dy, dx);
-            s.x += Math.cos(angle) * s.speed; s.y += Math.sin(angle) * s.speed;
+            
+            // Invocations esquivent l'escalier
+            let oldSx = s.x; s.x += Math.cos(angle) * s.speed;
+            if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.x = oldSx;
+            
+            let oldSy = s.y; s.y += Math.sin(angle) * s.speed;
+            if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.y = oldSy;
             
             if (minDist < (s.size + closestEnemy.size) / 2 + 10) {
                 if (s.attackCooldown === undefined) s.attackCooldown = 0;
@@ -340,7 +377,11 @@ function update() {
              let dy = (player.y + player.size/2) - (s.y + s.size/2);
              if (Math.hypot(dx, dy) > 100) {
                  let angle = Math.atan2(dy, dx);
-                 s.x += Math.cos(angle) * s.speed; s.y += Math.sin(angle) * s.speed;
+                 let oldSx = s.x; s.x += Math.cos(angle) * s.speed;
+                 if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.x = oldSx;
+                 
+                 let oldSy = s.y; s.y += Math.sin(angle) * s.speed;
+                 if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.y = oldSy;
              }
         }
         if (s.attackCooldown > 0) s.attackCooldown--;
@@ -366,17 +407,13 @@ function update() {
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0;
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0;
         if (enemy.ultiAnimTimer === undefined) enemy.ultiAnimTimer = 0;
+        if (enemy.dashTimer === undefined) { enemy.dashTimer = 180; enemy.isDashing = 0; }
 
         if (enemy.attackAnimTimer > 0) enemy.attackAnimTimer--;
         if (enemy.blockAnimTimer > 0) enemy.blockAnimTimer--;
         if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; 
 
         enemy.wobble += 0.1; 
-        
-        let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size;
-        let eMaxY = canvas.height - wallMargin - arenaShrink - enemy.size;
-        if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY;
-        if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
 
         if (currentRoomId === 999 && waveStartDelay > 0) return; 
 
@@ -405,89 +442,141 @@ function update() {
         if (dist !== 9999) { dx = targetX - enemy.x; dy = targetY - enemy.y; }
 
         let currentEnemySpeed = enemy.speed;
-        if (enemy.isPermanentlySlowed || enemy.slowTimer > 0) { 
-            currentEnemySpeed *= 0.5; 
-            if (enemy.slowTimer > 0) enemy.slowTimer--;
-        } 
+        let isPhase2 = (enemy.health <= enemy.maxHealth / 2); // DECLENCHE L'ENRAGE !
 
-        if (enemy.type === 'goblin') {
-            // NOUVEAU: Le Gobelin dégaine quand il est près, même s'il ne touche pas encore !
-            if (dist < 70) { enemy.attackAnimTimer = 10; }
-            if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
-        } else if (enemy.type === 'spider' || enemy.type === 'skeleton') {
-            if (enemy.type === 'spider') {
-                if (dist > 100 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
-            } else { 
-                if (dist > 300 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
-                else if (dist < 200) { enemy.x -= (dx / dist) * currentEnemySpeed; enemy.y -= (dy / dist) * currentEnemySpeed; }
-            }
-            if (enemy.shootCooldown > 0) enemy.shootCooldown--;
-            if (enemy.shootCooldown <= 0 && dist < 600) {
-                let pSize = enemy.type === 'spider' ? 12 : 8; 
-                let pSpeed = enemy.type === 'spider' ? 8 : 6; 
-                let pType = enemy.type === 'spider' ? 'bat_web' : 'bone';
-                let pColor = enemy.type === 'spider' ? '#8e44ad' : '#ecf0f1';
+        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
+
+        let dx_mov = 0, dy_mov = 0;
+
+        // --- DASHES ET MOUVEMENTS DES BOSS ---
+        if (enemy.isDashing && enemy.isDashing > 0) {
+            enemy.isDashing--;
+            dx_mov = enemy.dashVx;
+            dy_mov = enemy.dashVy;
+            if (enemy.type === 'troll' && enemy.isDashing % 3 === 0) spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#27ae60', 3);
+            if (enemy.type === 'mage' && enemy.isDashing % 3 === 0) spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#9b59b6', 3);
+        } else {
+            if (enemy.type === 'goblin') {
+                if (dist < 80) enemy.attackAnimTimer = 20; // Plus large et plus long !
+                if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+            } else if (enemy.type === 'spider' || enemy.type === 'skeleton') {
+                if (enemy.type === 'spider') {
+                    if (dist > 100 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+                } else {
+                    if (dist > 300 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+                    else if (dist < 200) { dx_mov = -(dx / dist) * currentEnemySpeed; dy_mov = -(dy / dist) * currentEnemySpeed; }
+                }
+                if (enemy.shootCooldown > 0) enemy.shootCooldown--;
+                if (enemy.shootCooldown <= 0 && dist < 600) {
+                    let pSize = enemy.type === 'spider' ? 12 : 8; 
+                    let pSpeed = enemy.type === 'spider' ? 8 : 6; 
+                    let pType = enemy.type === 'spider' ? 'bat_web' : 'bone';
+                    let pColor = enemy.type === 'spider' ? '#8e44ad' : '#ecf0f1';
+                    
+                    enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*pSpeed, vy: (dy/dist)*pSpeed, size: pSize, color: pColor, damage: 20, type: pType, angle: Math.atan2(dy, dx) });
+                    enemy.shootCooldown = 120;
+                    if (enemy.type === 'skeleton') enemy.attackAnimTimer = 30; 
+                }
+            } else if (enemy.type === 'troll') {
+                if (isPhase2) {
+                    currentEnemySpeed = player.speed - 0.5; // Plus rapide, mais un peu plus lent que toi !
+                    if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5;
+                    if (enemy.dashTimer === undefined) enemy.dashTimer = 180;
+                    enemy.dashTimer--;
+                    if (enemy.dashTimer <= 0) {
+                        enemy.isDashing = 15; enemy.dashTimer = 180;
+                        enemy.dashVx = (dx/dist) * 12; enemy.dashVy = (dy/dist) * 12; // Dash Vers Joueur
+                    }
+                }
+                if (!enemy.isDashing || enemy.isDashing <= 0) {
+                    if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+                }
+                enemy.summonTimer--;
+                if (enemy.summonTimer <= 0) {
+                    spawnEnemy('goblin', 1, enemy.x, enemy.y); enemy.summonTimer = isPhase2 ? 120 : 180; spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#27ae60', 20);
+                }
+            } else if (enemy.type === 'mage') {
+                if (isPhase2) {
+                    currentEnemySpeed = player.speed - 0.5; 
+                    if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5;
+                    if (enemy.dashTimer === undefined) enemy.dashTimer = 180;
+                    enemy.dashTimer--;
+                    if (enemy.dashTimer <= 0) {
+                        enemy.isDashing = 15; enemy.dashTimer = 180;
+                        enemy.dashVx = -(dx/dist) * 12; enemy.dashVy = -(dy/dist) * 12; // Dash Fuite (Loin du joueur)
+                    }
+                }
+                if (!enemy.isDashing || enemy.isDashing <= 0) {
+                    if (dist > 300 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+                    else if (dist < 200) { dx_mov = -(dx / dist) * currentEnemySpeed; dy_mov = -(dy / dist) * currentEnemySpeed; }
+                }
+
+                enemy.timeAlive++; 
+                if (enemy.shootCooldown > 0) enemy.shootCooldown--;
+                if (enemy.shootCooldown <= 0 && dist < 800) {
+                    enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*6, vy: (dy/dist)*6, size: 10, color: '#9b59b6', damage: 40, type: 'normal', angle: Math.atan2(dy, dx) });
+                    enemy.shootCooldown = isPhase2 ? 20 : Math.max(30, 90 - (enemy.timeAlive / 20)); // Tire plus vite en Phase 2
+                }
+                enemy.summonTimer--;
+                if (enemy.summonTimer <= 0) {
+                    spawnEnemy('skeleton', 1, enemy.x+50, enemy.y); spawnEnemy('spider', 1, enemy.x-50, enemy.y);
+                    enemy.summonTimer = isPhase2 ? 90 : 180; // Invoque 2 fois plus vite
+                    spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#9b59b6', 20);
+                }
+            } else if (enemy.type === 'dragon') {
+                if (isPhase2) {
+                    currentEnemySpeed = player.speed - 0.5; // Rapide !
+                    if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5;
+                }
+
+                if (dist > 150 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
                 
-                enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*pSpeed, vy: (dy/dist)*pSpeed, size: pSize, color: pColor, damage: 20, type: pType, angle: Math.atan2(dy, dx) });
-                enemy.shootCooldown = 120;
-                
-                if (enemy.type === 'skeleton') enemy.attackAnimTimer = 30; // Animation de tir du squelette
-            }
-        } else if (enemy.type === 'troll') {
-            if (dist > 0 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
-            enemy.summonTimer--;
-            if (enemy.summonTimer <= 0) {
-                spawnEnemy('goblin', 1, enemy.x, enemy.y); enemy.summonTimer = 180; spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#27ae60', 20);
-            }
-        } else if (enemy.type === 'mage') {
-            if (dist > 300 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
-            else if (dist < 200) { enemy.x -= (dx / dist) * currentEnemySpeed; enemy.y -= (dy / dist) * currentEnemySpeed; }
-            enemy.timeAlive++; 
-            if (enemy.shootCooldown > 0) enemy.shootCooldown--;
-            if (enemy.shootCooldown <= 0 && dist < 800) {
-                enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*6, vy: (dy/dist)*6, size: 10, color: '#9b59b6', damage: 40, type: 'normal', angle: Math.atan2(dy, dx) });
-                enemy.shootCooldown = Math.max(30, 90 - (enemy.timeAlive / 20)); 
-            }
-            enemy.summonTimer--;
-            if (enemy.summonTimer <= 0) {
-                spawnEnemy('skeleton', 1, enemy.x+50, enemy.y); spawnEnemy('spider', 1, enemy.x-50, enemy.y);
-                enemy.summonTimer = 180; spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#9b59b6', 20);
-            }
-        } else if (enemy.type === 'dragon') {
-            if (enemy.phase2Timer === undefined) enemy.phase2Timer = 1800; 
-            if (enemy.phase === 1) {
-                if (dist > 150 && dist < 9999) { enemy.x += (dx / dist) * currentEnemySpeed; enemy.y += (dy / dist) * currentEnemySpeed; }
                 if (enemy.shootCooldown > 0) enemy.shootCooldown--;
                 if (enemy.shootCooldown <= 0 && dist < 500) {
                     let baseAngle = Math.atan2(dy, dx);
-                    for(let a = -Math.PI/4; a <= Math.PI/4 + 0.01; a += Math.PI/8) {
-                        let fireAngle = baseAngle + a;
-                        enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: Math.cos(fireAngle)*7, vy: Math.sin(fireAngle)*7, size: 14, color: '#e67e22', damage: playerStats.maxHealth * 0.20, type: 'fire', angle: fireAngle });
+                    if (isPhase2) {
+                        // Spread plus serré mais plus rapide
+                        for(let a = -Math.PI/12; a <= Math.PI/12 + 0.01; a += Math.PI/12) {
+                            let fireAngle = baseAngle + a;
+                            enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: Math.cos(fireAngle)*9, vy: Math.sin(fireAngle)*9, size: 12, color: '#c0392b', damage: 30, type: 'fire', angle: fireAngle });
+                        }
+                        enemy.shootCooldown = 40;
+                    } else {
+                        for(let a = -Math.PI/4; a <= Math.PI/4 + 0.01; a += Math.PI/8) {
+                            let fireAngle = baseAngle + a;
+                            enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: Math.cos(fireAngle)*7, vy: Math.sin(fireAngle)*7, size: 14, color: '#e67e22', damage: playerStats.maxHealth * 0.20, type: 'fire', angle: fireAngle });
+                        }
+                        enemy.shootCooldown = 90;
                     }
-                    enemy.shootCooldown = 90;
                 }
-                if (enemy.health <= enemy.maxHealth / 2) {
-                    enemy.phase = 2; enemy.invulnerable = true;
-                    spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#c0392b', 100); triggerShake(20, 40);
-                }
-            } else if (enemy.phase === 2) {
-                enemy.phase2Timer--; enemy.health = (enemy.phase2Timer / 1800) * (enemy.maxHealth / 2); 
-                let rate = enemy.phase2Timer < 600 ? 0.12 : 0.04; 
-                if (Math.random() < rate) {
-                    hazards.push({ x: wallMargin + arenaShrink + Math.random() * (canvas.width - wallMargin*2 - arenaShrink*2), y: wallMargin + arenaShrink + Math.random() * (canvas.height - wallMargin*2 - arenaShrink*2), radius: 70, timer: 60, maxTimer: 60, damage: 40 });
-                }
-                if (enemy.shootCooldown > 0) enemy.shootCooldown--;
-                if (enemy.shootCooldown <= 0 && dist < 9999) {
-                    enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*8, vy: (dy/dist)*8, size: 12, color: '#c0392b', damage: 30, type: 'fire', angle: Math.atan2(dy, dx) });
-                    enemy.shootCooldown = enemy.phase2Timer < 600 ? 15 : 40;
-                }
-                if (enemy.phase2Timer <= 0) enemy.health = 0; 
             }
         }
 
+        // --- GLISSADE DES ENNEMIS SUR L'ESCALIER GÉANT ---
+        let oldEx = enemy.x;
+        enemy.x += dx_mov;
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        
+        let oldEy = enemy.y;
+        enemy.y += dy_mov;
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+
+        // Limites de map
+        let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size;
+        let eMaxY = canvas.height - wallMargin - arenaShrink - enemy.size;
+        if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY;
+        if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
+
+        // --- DÉGATS AU JOUEUR ---
         if (targetEntity === player) {
             if (playerInvulnerableTimer <= 0 && !isElfInvuln && !enemy.invulnerable && checkCollision(player, enemy)) {
-                playerStats.health -= (enemy.type === 'troll' ? 50 : (enemy.type === 'dragon' ? 0 : 20)); 
+                if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
+                
+                let dmg = 20;
+                if (enemy.type === 'troll') dmg = isPhase2 ? 25 : 50; // Troll frappe MOINS fort en P2 (25)
+                else if (enemy.type === 'dragon') dmg = 30;
+
+                playerStats.health -= dmg; 
                 triggerShake(12, 20); spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
                 playerInvulnerableTimer = 60; updateHUD();
                 if (playerStats.health <= 0) handlePlayerDeath();
@@ -496,7 +585,7 @@ function update() {
             if (!enemy.invulnerable && checkCollision({x: targetEntity.x, y: targetEntity.y, width: targetEntity.size, height: targetEntity.size}, enemy)) {
                 if (enemy.attackCooldown === undefined) enemy.attackCooldown = 0;
                 if (enemy.attackCooldown <= 0) {
-                    if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 30; 
+                    if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
                     if (!targetEntity.invulnerableTimer || targetEntity.invulnerableTimer <= 0) {
                         targetEntity.health -= (enemy.type === 'troll' ? 30 : 10);
                         spawnParticles(targetEntity.x + targetEntity.size/2, targetEntity.y + targetEntity.size/2, '#e74c3c', 10);
@@ -542,7 +631,7 @@ function update() {
             
             if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) {
                 worldState.bossDefeated = true; 
-                currentItems.push({ id: 'boss_key', type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 + 60, size: 20, collected: false });
+                currentItems.push({ id: 'boss_key', type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 + 80, size: 20, collected: false });
                 triggerShake(20, 30);
             }
 
@@ -562,6 +651,12 @@ function update() {
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i]; p.x += p.vx; p.y += p.vy;
+        
+        // Projectile bloqué par l'escalier !
+        if (currentRoomId === 8 && checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) {
+            projectiles.splice(i, 1); continue; 
+        }
+
         if (p.x < wallMargin || p.y < wallMargin || p.x > canvas.width - wallMargin || p.y > canvas.height - wallMargin) { projectiles.splice(i, 1); continue; }
         
         let projectileHit = false;
@@ -577,7 +672,7 @@ function update() {
                     
                     if (enemy.type === 'goblin' && Math.random() < 0.15) {
                         isBlocked = true;
-                        enemy.blockAnimTimer = 30; // Blocage dure plus longtemps
+                        enemy.blockAnimTimer = 45; 
                         spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15);
                     }
                     
@@ -612,6 +707,12 @@ function update() {
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         let p = enemyProjectiles[i]; p.x += p.vx; p.y += p.vy;
+        
+        // Bloqué par l'escalier !
+        if (currentRoomId === 8 && checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) {
+            enemyProjectiles.splice(i, 1); continue; 
+        }
+
         if (p.x < wallMargin || p.y < wallMargin || p.x > canvas.width - wallMargin || p.y > canvas.height - wallMargin) { enemyProjectiles.splice(i, 1); continue; }
         let arrowHitbox = { x: p.x - p.size, y: p.y - p.size, size: p.size * 2 };
         
@@ -636,9 +737,10 @@ function update() {
         }
     }
 
+    // --- ACCÈS À L'ESCALIER LORS DE LA VICTOIRE ---
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
-        let stairsRect = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
-        if (checkCollision(player, stairsRect)) {
+        let triggerStairs = { x: canvas.width/2 - 45, y: canvas.height/2 - 45, width: 90, height: 90 };
+        if (checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
                 setTimeout(() => {
@@ -646,19 +748,82 @@ function update() {
                     window.location.reload(); 
                 }, 100);
                 return;
-            } else {
-                let dx = (player.x + player.size/2) - (canvas.width/2);
-                let dy = (player.y + player.size/2) - (canvas.height/2);
-                let dist = Math.hypot(dx, dy);
-                if(dist === 0) { dx = 1; dy = 0; dist = 1; }
-                player.x += (dx/dist) * 3;
-                player.y += (dy/dist) * 3;
             }
         }
     }
 
     renderGameView();
     requestAnimationFrame(update);
+}
+
+// Fonction spéciale pour gérer l'entrée dans la salle du boss (Porte fermée derrière soi)
+function loadRoom(roomId) {
+  currentRoomId = roomId;
+  projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
+  necroSummons = []; necroKills = []; 
+  
+  if (!worldState.bloodStains[roomId]) worldState.bloodStains[roomId] = [];
+  bloodStains = worldState.bloodStains[roomId];
+  
+  const doorN = { x: 1200/2 - 75, y: 0, width: 150, height: wallMargin, face: 'north' };
+  const doorS = { x: 1200/2 - 75, y: 800 - wallMargin, width: 150, height: wallMargin, face: 'south' };
+  const doorW = { x: 0, y: 800/2 - 75, width: wallMargin, height: 150, face: 'west' };
+  const doorE = { x: 1200 - wallMargin, y: 800/2 - 75, width: wallMargin, height: 150, face: 'east' };
+
+  const spawnN = { x: 1200/2 - 20, y: wallMargin + 20 };        
+  const spawnS = { x: 1200/2 - 20, y: 800 - wallMargin - 60 }; 
+  const spawnW = { x: wallMargin + 20, y: 800/2 - 20 };        
+  const spawnE = { x: 1200 - wallMargin - 60, y: 800/2 - 20 }; 
+
+  if (roomId === 1) { 
+    currentDoors = [ { ...doorN, id: 'door_1_2', requiresKey: true, locked: !worldState.unlockedDoors['door_1_2'], dest: 2, spawnX: spawnS.x, spawnY: spawnS.y } ];
+    currentItems = [];
+    if (!worldState.collectedItems['potion_room1']) currentItems.push({ id: 'potion_room1', type: 'potion_green', x: 250, y: 650, size: 15, collected: false });
+    if (!worldState.collectedItems['key_tuto']) currentItems.push({ id: 'key_tuto', type: 'key', x: 800, y: 400, size: 20, collected: false });
+  } 
+  else if (roomId === 2) { 
+    currentDoors = [
+      { ...doorS, id: 'door_2_1', requiresKey: false, locked: false, dest: 1, spawnX: spawnN.x, spawnY: spawnN.y },
+      { ...doorW, id: 'door_2_3', requiresKey: false, locked: false, dest: 3, spawnX: spawnE.x, spawnY: spawnE.y },
+      { ...doorE, id: 'door_2_4', requiresKey: false, locked: false, dest: 4, spawnX: spawnW.x, spawnY: spawnW.y },
+      { ...doorN, id: 'door_2_8', requiresKey: true, locked: !worldState.unlockedDoors['door_2_8'], dest: 8, spawnX: spawnS.x, spawnY: spawnS.y } 
+    ];
+    currentItems = [];
+  }
+  else if (roomId === 3) { currentDoors = [ { ...doorE, id: 'door_3_2', dest: 2, spawnX: spawnW.x, spawnY: spawnW.y }, { ...doorN, id: 'door_3_5', dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } ]; currentItems = []; }
+  else if (roomId === 4) { currentDoors = [ { ...doorW, id: 'door_4_2', dest: 2, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorN, id: 'door_4_6', dest: 6, spawnX: spawnS.x, spawnY: spawnS.y } ]; currentItems = []; }
+  else if (roomId === 5) { currentDoors = [ { ...doorS, id: 'door_5_3', dest: 3, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_5_7', dest: 7, spawnX: 275, spawnY: spawnS.y } ]; currentItems = []; }
+  else if (roomId === 6) { currentDoors = [ { ...doorS, id: 'door_6_4', dest: 4, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_6_7', dest: 7, spawnX: 875, spawnY: spawnS.y } ]; currentItems = []; }
+  else if (roomId === 7) { 
+    currentDoors = [ { x: 200, y: 800 - wallMargin, width: 150, height: wallMargin, face: 'south', id: 'door_7_5', dest: 5, spawnX: spawnN.x, spawnY: spawnN.y }, { x: 800, y: 800 - wallMargin, width: 150, height: wallMargin, face: 'south', id: 'door_7_6', dest: 6, spawnX: spawnN.x, spawnY: spawnN.y } ];
+    currentItems = [];
+    if (!worldState.collectedItems['key_boss']) currentItems.push({ id: 'key_boss', type: 'key', x: 600, y: 400, size: 20, collected: false });
+  }
+  else if (roomId === 8) { 
+    // On conserve la porte de sortie, mais elle est bloquée pendant le combat dans le update()
+    currentDoors = [ { ...doorS, id: 'door_8_2', dest: 2, spawnX: spawnN.x, spawnY: spawnN.y } ];
+    currentItems = [];
+  }
+
+  currentEnemies = [];
+  if (roomId !== 999) {
+      if (worldState.enemyStates[roomId]) {
+          currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId]));
+      } else if (!worldState.clearedRooms[roomId]) {
+          if (roomId === 2) spawnEnemy('goblin', 1, 600, 400);
+          else if (roomId === 3) spawnEnemy('goblin', 2, 400, 400);
+          else if (roomId === 4) spawnEnemy('goblin', 2, 800, 400);
+          else if (roomId === 5) spawnEnemy('goblin', 2, 400, 300);
+          else if (roomId === 6) spawnEnemy('goblin', 2, 800, 300);
+          else if (roomId === 7) spawnEnemy('goblin', 5, 450, 200);
+          else if (roomId === 8) spawnEnemy('troll', 1, 600, 250); 
+      }
+  } else if (roomId === 999) {
+      currentDoors = []; currentItems = [];
+      arenaShrink = 0; 
+      player.x = canvas.width / 2 - player.size / 2;
+      player.y = canvas.height / 2 - player.size / 2;
+  }
 }
 
 update();
