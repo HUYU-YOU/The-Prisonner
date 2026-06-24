@@ -88,15 +88,29 @@ function renderGameView() {
         ctx.strokeRect(x, y, w, h);
     }
 
-    if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
+    // L'ESCALIER EST MAINTENANT UN DÉCOR PERMANENT (C'est le pilier)
+    if (currentRoomId === 8) {
         let sImg = assetsManager.images['stairs_down'];
-        let sx = canvas.width/2 - 40, sy = canvas.height/2 - 40, sw = 80, sh = 80;
+        let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; // Grand !
+        
+        ctx.save();
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
             ctx.drawImage(sImg, sx, sy, sw, sh);
+            if (!worldState.bossDefeated) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // Grisé pendant le combat
+                ctx.fillRect(sx, sy, sw, sh);
+            }
         } else {
             ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh);
-            ctx.strokeStyle = '#555'; ctx.strokeRect(sx+10, sy+10, sw-20, sh-20);
+            ctx.strokeStyle = '#555'; ctx.strokeRect(sx, sy, sw, sh);
         }
+        
+        // Brille quand la victoire est là
+        if (worldState.bossDefeated) {
+            ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30;
+            ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh);
+        }
+        ctx.restore();
     }
 
     if (currentRoomId === 1) {
@@ -119,6 +133,9 @@ function renderGameView() {
         let stateStr = '_close'; 
         if (isOpen) { stateStr = '_open'; } else if (door.requiresKey && door.locked) { stateStr = '_key'; }
         
+        // Ferme visuellement la porte Sud en salle 8 si le boss vit !
+        if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+
         if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr];
         else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr];
         else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr];
@@ -126,6 +143,9 @@ function renderGameView() {
 
         if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) {
             ctx.drawImage(doorImg, door.x, door.y, door.width, door.height);
+            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
+                ctx.fillStyle = 'rgba(192, 57, 43, 0.4)'; ctx.fillRect(door.x, door.y, door.width, door.height);
+            }
         } else {
             ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height);
             ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
@@ -153,7 +173,6 @@ function renderGameView() {
         }
     });
 
-    // --- 5. DANGERS ET INVOCATIONS ---
     hazards.forEach(h => {
         ctx.fillStyle = 'rgba(192, 57, 43, 0.3)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'rgba(192, 57, 43, 0.8)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius * (1 - h.timer/h.maxTimer), 0, Math.PI*2); ctx.fill();
@@ -190,7 +209,8 @@ function renderGameView() {
         let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2);
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         
-        // 🛠️ CORRECTION DU MOONWALK : On AJOUTE 90 degrés (+ Math.PI / 2)
+        // 🛠️ CORRECTION MAGIQUE DU MOONWALK ! On SOUSTRAIT 90 DEGRÉS (- Math.PI / 2)
+        // L'image de base regarde vers le BAS, ça la remettra parfaitement face à la cible.
         let angleToPlayer = Math.atan2(dy, dx) - (Math.PI / 2); 
 
         let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; 
@@ -217,12 +237,12 @@ function renderGameView() {
         }
         else if (enemy.type === 'spider') skinName = 'spider_top_view';
         else if (enemy.type === 'troll') skinName = 'troll_top_view';
-        else if (enemy.type === 'mage') skinName = 'Burned_top_view'; // <-- Corrigé pour le Mage
+        else if (enemy.type === 'mage') skinName = 'Burned_top_view'; 
         else if (enemy.type === 'dragon') skinName = 'drake_top_view';
 
         let img = assetsManager.images[skinName];
 
-        // Sécurité si l'image n'est pas chargée
+        // 🛡️ SÉCURITÉ INFAILLIBLE : Si le block ne s'affiche pas, on affiche l'image de base
         if (!img || !img.complete || img.naturalWidth === 0) {
             let fallbackName = '';
             if (enemy.type === 'goblin') fallbackName = 'goblin_top_view';
@@ -234,7 +254,6 @@ function renderGameView() {
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 2.5; 
             
-            // Masque circulaire si c'est le Mage (JPEG) ou l'Araignée (JPEG) pour cacher les bords
             if (enemy.type === 'mage' || enemy.type === 'spider') {
                 ctx.save();
                 ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip();
@@ -251,7 +270,6 @@ function renderGameView() {
         
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
         
-        // Explosion Ultime du Mage
         if (enemy.ultiAnimTimer > 0) {
             ctx.save();
             ctx.globalCompositeOperation = 'screen'; 
@@ -279,11 +297,12 @@ function renderGameView() {
         
         ctx.restore(); 
         
-        // Barres de vie
+        // Barres de vie standards (Mobiles)
         if (!['troll', 'mage', 'dragon'].includes(enemy.type)) {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
-        } else {
+        } else if (currentRoomId !== 8) {
+            // Dans l'arène, les boss ont une petite barre au dessus d'eux
             let bossName = enemy.type === 'troll' ? "Troll Corrompu" : (enemy.type === 'mage' ? "Mage Exilé" : "Dragon Maudit");
             ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; 
             ctx.fillText(bossName, enemy.x + enemy.size/2, enemy.y - 25); 
@@ -294,7 +313,33 @@ function renderGameView() {
         }
     });
 
-    // --- 7. PROJECTILES DU JOUEUR ---
+    // --- 7. BARRE DE VIE GLOBALE DU BOSS (EN HAUT DE L'ÉCRAN) ---
+    let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon'].includes(e.type));
+    if (boss && currentRoomId === 8 && !worldState.bossDefeated) {
+        let bossName = boss.type === 'troll' ? "TROLL CORROMPU" : (boss.type === 'mage' ? "MAGE EXILÉ" : "DRAGON MAUDIT");
+        let isPhase2 = boss.health <= boss.maxHealth / 2;
+        
+        let barWidth = 600;
+        let barHeight = 24;
+        let bx = canvas.width/2 - barWidth/2;
+        let by = 30; // Positionnée majestueusement en haut !
+
+        ctx.fillStyle = '#111';
+        ctx.fillRect(bx, by, barWidth, barHeight);
+        
+        ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; // Violet si enragé !
+        let hpPercent = Math.max(0, boss.health) / boss.maxHealth;
+        ctx.fillRect(bx + 2, by + 2, (barWidth - 4) * hpPercent, barHeight - 4);
+        
+        // Nom du Boss
+        ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; 
+        ctx.font = 'bold 22px Arial'; 
+        ctx.textAlign = 'center'; 
+        ctx.fillText(bossName + (isPhase2 ? " (ENRAGÉ)" : ""), canvas.width/2, by - 8);
+        ctx.textAlign = 'left';
+    }
+
+    // --- 8. PROJECTILES DU JOUEUR ---
     projectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
         ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); ctx.shadowBlur = 10;
@@ -318,7 +363,7 @@ function renderGameView() {
     });
     
     // ========================================================================
-    // --- 8. PROJECTILES ENNEMIS (OS ALLONGÉS & TOILES) ---
+    // --- 9. PROJECTILES ENNEMIS (OS ALLONGÉS & TOILES) ---
     // ========================================================================
     enemyProjectiles.forEach(p => { 
         ctx.save();
@@ -328,19 +373,13 @@ function renderGameView() {
         ctx.shadowColor = p.color; ctx.shadowBlur = 10;
         
         if (p.type === 'bone') {
-            ctx.rotate(pAngle); // L'os pointe vers l'avant, comme une flèche !
+            ctx.rotate(pAngle); // L'os pointe droit devant comme une flèche
             ctx.fillStyle = '#ecf0f1';
-            
-            // Un os bien allongé
-            let l = p.size * 1.8; // Longueur
-            let w = p.size * 0.4; // Épaisseur
-            
+            let l = p.size * 1.8; let w = p.size * 0.4; 
             ctx.fillRect(-l, -w, l * 2, w * 2); 
             ctx.beginPath(); ctx.arc(-l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(-l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill(); 
             ctx.beginPath(); ctx.arc(l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill();   
-            
-            ctx.fillStyle = '#bdc3c7';
-            ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
         } 
         else if (p.type === 'bat_web') {
             ctx.rotate(pAngle); 
@@ -364,7 +403,7 @@ function renderGameView() {
         ctx.restore();
     });
 
-    // --- 9. JOUEUR ---
+    // --- 10. JOUEUR ---
     let drawPlayer = true;
     if (playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
 
@@ -432,7 +471,6 @@ function renderGameView() {
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
 
-    // --- 10. PARTICULES ---
     for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.05; 
         if (p.life <= 0) particles.splice(i, 1);
@@ -445,7 +483,6 @@ function renderGameView() {
     }
     ctx.globalAlpha = 1.0; 
 
-    // --- 11. UI (ARÈNE) ---
     if (currentRoomId === 999) {
         ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
         let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
