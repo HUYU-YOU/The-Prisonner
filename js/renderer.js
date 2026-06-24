@@ -74,7 +74,7 @@ function renderGameView() {
     let wallB = assetsManager.images['front_wall'];
     if (wallB && wallB.complete && wallB.naturalWidth > 0) { ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin); }
 
-    // --- 2. SANG (Tout en bas pour marcher dessus) ---
+    // --- 2. SANG ---
     bloodStains.forEach(blood => {
         ctx.fillStyle = 'rgba(100, 0, 0, 0.7)'; 
         ctx.beginPath(); ctx.arc(blood.x + 10, blood.y + 10, blood.r, 0, Math.PI * 2); ctx.fill();
@@ -181,77 +181,91 @@ function renderGameView() {
     }
 
     // ========================================================================
-    // --- 6. ENNEMIS (VUE TOUPIE DYNAMIQUE + EFFETS "JUICE") ---
+    // --- 6. ENNEMIS (VUE TOUPIE DYNAMIQUE) ---
     // ========================================================================
     currentEnemies.forEach(enemy => {
         ctx.save();
         ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
         
-        // --- ROTATION VERS LE JOUEUR ---
         let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2);
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
-        let angleToPlayer = Math.atan2(dy, dx);
         
-        // 🛠️ GESTION DES ORIENTATIONS DES IMAGES (Individuelle par monstre)
-        if (enemy.type === 'goblin') {
-            angleToPlayer += (Math.PI / 2); // Correction, le dessin regarde vers le BAS !
-        }
-        // Astuce : Quand tu auras les autres monstres, si l'un d'eux marche en crabe, ajuste l'angle ici :
-        // else if (enemy.type === 'skeleton') { angleToPlayer += (Math.PI / 2); } // S'il regarde vers le HAUT
-        // else if (enemy.type === 'spider') { angleToPlayer += Math.PI; } // S'il regarde vers la GAUCHE
+        // 🛠️ CORRECTION DU MOONWALK : On AJOUTE 90 degrés (+ Math.PI / 2)
+        let angleToPlayer = Math.atan2(dy, dx) + (Math.PI / 2); 
 
-        // --- ANIMATION (Wobble & Respiration) ---
-        let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; // Léger tremblement
-        let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  // Respiration
+        let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; 
+        let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
         
         ctx.rotate(rot);
         ctx.scale(scalePulse, scalePulse);
 
-        // --- EFFETS VISUELS (Ombres & Auras) ---
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 4;
-        ctx.shadowOffsetY = 4;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
 
         if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
         else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
 
-        // --- SÉLECTION DU SKIN ---
         let skinName = '';
-        if (enemy.type === 'goblin') skinName = 'goblin_top_view';
-        else if (enemy.type === 'skeleton') skinName = 'Skeleton_top_view';
+        if (enemy.type === 'goblin') {
+            if (enemy.blockAnimTimer > 0) skinName = 'goblin_top_block'; 
+            else if (enemy.attackAnimTimer > 0) skinName = 'goblin_top_attack'; 
+            else skinName = 'goblin_top_view'; 
+        }
+        else if (enemy.type === 'skeleton') {
+            if (enemy.attackAnimTimer > 0) skinName = 'Skeleton_top_attack'; 
+            else skinName = 'Skeleton_top_view';
+        }
         else if (enemy.type === 'spider') skinName = 'spider_top_view';
         else if (enemy.type === 'troll') skinName = 'troll_top_view';
-        else if (enemy.type === 'mage') skinName = 'mage_top_view';
+        else if (enemy.type === 'mage') skinName = 'Burned_top_view'; // <-- Corrigé pour le Mage
         else if (enemy.type === 'dragon') skinName = 'drake_top_view';
 
         let img = assetsManager.images[skinName];
 
+        // Sécurité si l'image n'est pas chargée
+        if (!img || !img.complete || img.naturalWidth === 0) {
+            let fallbackName = '';
+            if (enemy.type === 'goblin') fallbackName = 'goblin_top_view';
+            else if (enemy.type === 'skeleton') fallbackName = 'Skeleton_top_view';
+            else fallbackName = skinName;
+            img = assetsManager.images[fallbackName];
+        }
+
         if (img && img.complete && img.naturalWidth > 0) {
-            // Agrandissement pour bien voir les détails
             let displaySize = enemy.size * 2.5; 
-            ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
-        } else {
-            // DESSIN GÉOMÉTRIQUE DE SECOURS (Si image non chargée)
-            ctx.shadowColor = 'transparent'; // On enlève l'ombre pour le secours
-            if (enemy.type === 'dragon') {
-                ctx.fillStyle = enemy.phase === 2 ? '#e67e22' : '#8b0000'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(15, -15, 8, 0, Math.PI*2); ctx.arc(15, 15, 8, 0, Math.PI*2); ctx.fill(); 
-            } else if(enemy.type === 'spider') {
-                ctx.fillStyle = '#2c3e50'; for(let l=0; l<4; l++) { ctx.fillRect(-enemy.size/4 + l*5, -enemy.size, 2, enemy.size*2); }
-                ctx.beginPath(); ctx.arc(0, 0, enemy.size/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(5, -3, 2, 0, Math.PI*2); ctx.arc(5, 3, 2, 0, Math.PI*2); ctx.fill();
-            } else if (enemy.type === 'skeleton') {
-                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size);
-                ctx.fillStyle = '#2c3e50'; ctx.fillRect(5, -6, 6, 6); ctx.fillRect(5, 2, 6, 6);
+            
+            // Masque circulaire si c'est le Mage (JPEG) ou l'Araignée (JPEG) pour cacher les bords
+            if (enemy.type === 'mage' || enemy.type === 'spider') {
+                ctx.save();
+                ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip();
+                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
+                ctx.restore();
             } else {
-                ctx.fillStyle = enemy.type === 'mage' ? '#8e44ad' : '#27ae60'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size);
-                ctx.fillStyle = '#111'; ctx.fillRect(5, -8, 8, 8); ctx.fillRect(5, 2, 8, 8);
+                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
             }
+            
+        } else {
+            ctx.shadowColor = 'transparent'; 
+            ctx.fillStyle = '#e74c3c'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size);
         }
         
-        ctx.shadowColor = 'transparent'; // Désactive l'ombre pour la suite
-        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+        
+        // Explosion Ultime du Mage
+        if (enemy.ultiAnimTimer > 0) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen'; 
+            let imgUlt = assetsManager.images['Ulti_fire_mage'];
+            
+            if (imgUlt && imgUlt.complete && imgUlt.naturalWidth > 0) {
+                let progress = 1 - (enemy.ultiAnimTimer / 30); 
+                let expSize = enemy.size * 2 + (enemy.size * 4 * progress); 
+                ctx.globalAlpha = enemy.ultiAnimTimer / 30; 
+                ctx.rotate(progress * Math.PI); 
+                ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize);
+            }
+            ctx.restore();
+        }
 
         if (enemy.isBurning) {
             ctx.fillStyle = 'rgba(230, 126, 34, 0.5)';
@@ -265,7 +279,7 @@ function renderGameView() {
         
         ctx.restore(); 
         
-        // --- BARRES DE VIE ---
+        // Barres de vie
         if (!['troll', 'mage', 'dragon'].includes(enemy.type)) {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
@@ -280,24 +294,77 @@ function renderGameView() {
         }
     });
 
-    // --- 7. PROJECTILES ---
+    // --- 7. PROJECTILES DU JOUEUR ---
     projectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
         ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); ctx.shadowBlur = 10;
-        if (p.isNecro) { ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
-        } else if (p.isFire) { ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
-        } else { ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-8, -1, 16, 2); ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(14, 0); ctx.lineTo(8, 3); ctx.fill(); ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.moveTo(-8, -3); ctx.lineTo(-12, -3); ctx.lineTo(-8, 0); ctx.lineTo(-12, 3); ctx.lineTo(-8, 3); ctx.fill(); }
+        
+        if (p.isNecro) { 
+            ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
+        } else if (p.isFire) { 
+            let imgFire = assetsManager.images['Attack_fire_mage'];
+            if (imgFire && imgFire.complete && imgFire.naturalWidth > 0) {
+                ctx.globalCompositeOperation = 'screen'; 
+                ctx.rotate(Math.PI / 2); 
+                let pSize = p.size * 5; 
+                ctx.drawImage(imgFire, -pSize/2, -pSize/2, pSize, pSize);
+            } else {
+                ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill();
+            }
+        } else { 
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-8, -1, 16, 2); ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(14, 0); ctx.lineTo(8, 3); ctx.fill(); ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.moveTo(-8, -3); ctx.lineTo(-12, -3); ctx.lineTo(-8, 0); ctx.lineTo(-12, 3); ctx.lineTo(-8, 3); ctx.fill(); 
+        }
         ctx.restore();
     });
     
+    // ========================================================================
+    // --- 8. PROJECTILES ENNEMIS (OS ALLONGÉS & TOILES) ---
+    // ========================================================================
     enemyProjectiles.forEach(p => { 
         ctx.save();
+        ctx.translate(p.x, p.y);
+        let pAngle = Math.atan2(p.vy, p.vx);
+        
         ctx.shadowColor = p.color; ctx.shadowBlur = 10;
-        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); 
+        
+        if (p.type === 'bone') {
+            ctx.rotate(pAngle); // L'os pointe vers l'avant, comme une flèche !
+            ctx.fillStyle = '#ecf0f1';
+            
+            // Un os bien allongé
+            let l = p.size * 1.8; // Longueur
+            let w = p.size * 0.4; // Épaisseur
+            
+            ctx.fillRect(-l, -w, l * 2, w * 2); 
+            ctx.beginPath(); ctx.arc(-l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(-l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill();   
+            
+            ctx.fillStyle = '#bdc3c7';
+            ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
+        } 
+        else if (p.type === 'bat_web') {
+            ctx.rotate(pAngle); 
+            ctx.fillStyle = 'rgba(142, 68, 173, 0.8)';
+            ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, -8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, 8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 8); ctx.stroke();
+        } 
+        else if (p.type === 'fire') {
+            let fireImg = assetsManager.images['Attack_fire_mage'];
+            if (fireImg && fireImg.complete && fireImg.naturalWidth > 0) {
+                ctx.rotate(pAngle + Math.PI / 2);
+                ctx.globalCompositeOperation = 'screen';
+                let dSize = p.size * 5.0;
+                ctx.drawImage(fireImg, -dSize/2, -dSize/2, dSize, dSize);
+            } else {
+                ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
+            }
+        } else {
+            ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
+        }
         ctx.restore();
     });
 
-    // --- 8. JOUEUR ---
+    // --- 9. JOUEUR ---
     let drawPlayer = true;
     if (playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
 
@@ -311,7 +378,6 @@ function renderGameView() {
         
         ctx.save(); 
         ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
-        
         ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
 
         if (player.heroClass === 'Elf') {
@@ -328,12 +394,27 @@ function renderGameView() {
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
                 ctx.rotate(player.faceAngle); ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#27ae60'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill();
-                ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(10, 0, 20, -Math.PI/2, Math.PI/2); ctx.stroke();
             }
-        } else {
+        } 
+        else if (player.heroClass === 'Mage') {
+            ctx.rotate(player.faceAngle + tilt - (Math.PI / 2)); 
+            let imgMage = assetsManager.images['Burned_top_view'];
+            let displaySize = player.size * 3.5; 
+            
+            if (imgMage && imgMage.complete && imgMage.naturalWidth > 0) { 
+                ctx.save();
+                ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
+                ctx.drawImage(imgMage, -displaySize/2, -displaySize/2, displaySize, displaySize);
+                ctx.restore();
+            } else {
+                ctx.rotate(Math.PI / 2); 
+                ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : '#e67e22'; 
+                ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
+            }
+        }
+        else {
             ctx.rotate(player.faceAngle + tilt);
-            ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Mage' ? '#e67e22' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6'));
+            ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6');
             ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
             
             if (player.heroClass === 'Necromancer') {
@@ -351,7 +432,7 @@ function renderGameView() {
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
 
-    // --- 9. PARTICULES ---
+    // --- 10. PARTICULES ---
     for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.05; 
         if (p.life <= 0) particles.splice(i, 1);
@@ -364,7 +445,7 @@ function renderGameView() {
     }
     ctx.globalAlpha = 1.0; 
 
-    // --- 10. UI (ARÈNE) ---
+    // --- 11. UI (ARÈNE) ---
     if (currentRoomId === 999) {
         ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
         let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
