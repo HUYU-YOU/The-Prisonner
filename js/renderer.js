@@ -224,10 +224,7 @@ function renderGameView() {
             // Agrandissement pour bien voir les détails
             let displaySize = enemy.size * 2.5; 
             
-            // ⚠️ ATTENTION ORIENTATION ! ⚠️
-            // Si les monstres marchent en crabe, c'est que le dessin regarde vers le HAUT.
-            // Si c'est le cas, je doit enlèver les '//' au début de la ligne en dessous :
-            // ctx.rotate(Math.PI / 2);
+             ctx.rotate(Math.PI / 2);
             
             ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize);
         } else {
