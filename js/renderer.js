@@ -194,7 +194,7 @@ function renderGameView() {
         
         // 🛠️ GESTION DES ORIENTATIONS DES IMAGES (Individuelle par monstre)
         if (enemy.type === 'goblin') {
-            angleToPlayer -= (Math.PI / 2); // Correction, le dessin regarde vers le BAS !
+            angleToPlayer += (Math.PI / 2); // Correction, le dessin regarde vers le BAS !
         }
         // Astuce : Quand tu auras les autres monstres, si l'un d'eux marche en crabe, ajuste l'angle ici :
         // else if (enemy.type === 'skeleton') { angleToPlayer += (Math.PI / 2); } // S'il regarde vers le HAUT
