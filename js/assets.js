@@ -125,8 +125,11 @@ assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
 assetsManager.load('Elf_front', 'assets/skins/Elf_front.png');
 assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); //A FAIRE!!
 assetsManager.load('goblin_top_view', 'assets/skins/goblin_top_view.png');//A FAIRE!!
+assetsManager.load('goblin_top_attack', 'assets/skins/goblin_top_attack.png');
+assetsManager.load('goblin_top_block', 'assets/skins/goblin_top_block.png');
 assetsManager.load('squelette_top_view', 'assets/skins/squelette_top_view.png');//A FAIRE!!
 assetsManager.load('spider_top_view', 'assets/skins/spider_top_view.png');//A FAIRE!!
 assetsManager.load('troll_top_view_', 'assets/skins/troll_top_view_.png'); // Avec le _ à la fin
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');//A FAIRE!!
 assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');//A FAIRE!!
+
