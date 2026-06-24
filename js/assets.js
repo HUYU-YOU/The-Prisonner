@@ -123,3 +123,4 @@ assetsManager.load('Elf_west', 'assets/skins/Elf_west.png');
 assetsManager.load('Elf_est', 'assets/skins/Elf_est.png');
 assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
 assetsManager.load('Elf_front', '/Elf_front.png');
+assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); //A FAIRE!!
