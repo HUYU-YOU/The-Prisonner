@@ -180,7 +180,7 @@ function update() {
         // --- NOUVEAU: SALLE DU BOSS BLOQUÉE TANT QU'IL EST EN VIE ! ---
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
             if (checkCollision(player, door)) {
-                player.y = door.y - player.size - 5; // Repousse le joueur en arrière (impossible de fuir)
+                player.y = door.y - player.size - 5; // Repousse le joueur en arrière !
             }
             return;
         }
@@ -448,7 +448,7 @@ function update() {
 
         let dx_mov = 0, dy_mov = 0;
 
-        // --- DASHES ET MOUVEMENTS DES BOSS ---
+        // --- DASHES ET IA INTELLIGENTE DES BOSS ---
         if (enemy.isDashing && enemy.isDashing > 0) {
             enemy.isDashing--;
             dx_mov = enemy.dashVx;
@@ -457,7 +457,7 @@ function update() {
             if (enemy.type === 'mage' && enemy.isDashing % 3 === 0) spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#9b59b6', 3);
         } else {
             if (enemy.type === 'goblin') {
-                if (dist < 80) enemy.attackAnimTimer = 20; // Plus large et plus long !
+                if (dist < 80) enemy.attackAnimTimer = 20; 
                 if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
             } else if (enemy.type === 'spider' || enemy.type === 'skeleton') {
                 if (enemy.type === 'spider') {
@@ -479,7 +479,7 @@ function update() {
                 }
             } else if (enemy.type === 'troll') {
                 if (isPhase2) {
-                    currentEnemySpeed = player.speed - 0.5; // Plus rapide, mais un peu plus lent que toi !
+                    currentEnemySpeed = player.speed - 0.5; // Rapide mais on peut le fuir !
                     if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5;
                     if (enemy.dashTimer === undefined) enemy.dashTimer = 180;
                     enemy.dashTimer--;
@@ -552,14 +552,14 @@ function update() {
             }
         }
 
-        // --- GLISSADE DES ENNEMIS SUR L'ESCALIER GÉANT ---
+        // --- GLISSADE PARFAITE SUR L'ESCALIER GÉANT ---
         let oldEx = enemy.x;
         enemy.x += dx_mov;
-        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.x = oldEx; 
         
         let oldEy = enemy.y;
         enemy.y += dy_mov;
-        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.y = oldEy; 
 
         // Limites de map
         let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size;
@@ -756,7 +756,7 @@ function update() {
     requestAnimationFrame(update);
 }
 
-// Fonction spéciale pour gérer l'entrée dans la salle du boss (Porte fermée derrière soi)
+// Fonction spéciale pour gérer le Spawn du Boss (Loin de l'escalier)
 function loadRoom(roomId) {
   currentRoomId = roomId;
   projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
@@ -800,7 +800,6 @@ function loadRoom(roomId) {
     if (!worldState.collectedItems['key_boss']) currentItems.push({ id: 'key_boss', type: 'key', x: 600, y: 400, size: 20, collected: false });
   }
   else if (roomId === 8) { 
-    // On conserve la porte de sortie, mais elle est bloquée pendant le combat dans le update()
     currentDoors = [ { ...doorS, id: 'door_8_2', dest: 2, spawnX: spawnN.x, spawnY: spawnN.y } ];
     currentItems = [];
   }
@@ -816,7 +815,9 @@ function loadRoom(roomId) {
           else if (roomId === 5) spawnEnemy('goblin', 2, 400, 300);
           else if (roomId === 6) spawnEnemy('goblin', 2, 800, 300);
           else if (roomId === 7) spawnEnemy('goblin', 5, 450, 200);
-          else if (roomId === 8) spawnEnemy('troll', 1, 600, 250); 
+          
+          // --- APPARAÎT EN BAS À DROITE POUR NE PAS TOUCHER L'ESCALIER ! ---
+          else if (roomId === 8) spawnEnemy('troll', 1, 950, 550); 
       }
   } else if (roomId === 999) {
       currentDoors = []; currentItems = [];
