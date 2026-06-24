@@ -88,10 +88,10 @@ function renderGameView() {
         ctx.strokeRect(x, y, w, h);
     }
 
-    // L'ESCALIER EST MAINTENANT UN DÉCOR PERMANENT (C'est le pilier)
+    // --- L'ESCALIER CENTRAL (PILIER GEANT) ---
     if (currentRoomId === 8) {
         let sImg = assetsManager.images['stairs_down'];
-        let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; // Grand !
+        let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
         
         ctx.save();
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
@@ -101,11 +101,24 @@ function renderGameView() {
                 ctx.fillRect(sx, sy, sw, sh);
             }
         } else {
+            // OPTION B: Un bel escalier géométrique (pyramide de carrés)
             ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh);
-            ctx.strokeStyle = '#555'; ctx.strokeRect(sx, sy, sw, sh);
+            ctx.fillStyle = '#2c3e50';
+            for(let i=0; i<6; i++) {
+                let stepOff = i * 12;
+                ctx.fillRect(sx + stepOff, sy + stepOff, sw - stepOff*2, sh - stepOff*2);
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+                ctx.strokeRect(sx + stepOff, sy + stepOff, sw - stepOff*2, sh - stepOff*2);
+            }
+            // Si la porte est fermée, on met un effet rouge menaçant
+            if (!worldState.bossDefeated) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(sx, sy, sw, sh);
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)'; ctx.lineWidth = 4;
+                ctx.strokeRect(sx+4, sy+4, sw-8, sh-8);
+            }
         }
         
-        // Brille quand la victoire est là
         if (worldState.bossDefeated) {
             ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30;
             ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh);
@@ -209,9 +222,9 @@ function renderGameView() {
         let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2);
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         
-        // 🛠️ CORRECTION MAGIQUE DU MOONWALK ! On SOUSTRAIT 90 DEGRÉS (- Math.PI / 2)
-        // L'image de base regarde vers le BAS, ça la remettra parfaitement face à la cible.
-        let angleToPlayer = Math.atan2(dy, dx) - (Math.PI / 2); 
+        // 🛠️ ROTATION MAGIQUE INVERSÉE À 180 DEGRÉS !
+        // (Si tes personnages continuaient à te tourner le dos, cela les remettra de face)
+        let angleToPlayer = Math.atan2(dy, dx) + (Math.PI / 2); 
 
         let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; 
         let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
@@ -242,7 +255,6 @@ function renderGameView() {
 
         let img = assetsManager.images[skinName];
 
-        // 🛡️ SÉCURITÉ INFAILLIBLE : Si le block ne s'affiche pas, on affiche l'image de base
         if (!img || !img.complete || img.naturalWidth === 0) {
             let fallbackName = '';
             if (enemy.type === 'goblin') fallbackName = 'goblin_top_view';
@@ -302,7 +314,7 @@ function renderGameView() {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
         } else if (currentRoomId !== 8) {
-            // Dans l'arène, les boss ont une petite barre au dessus d'eux
+            // Dans l'arène, les boss ont une petite barre
             let bossName = enemy.type === 'troll' ? "Troll Corrompu" : (enemy.type === 'mage' ? "Mage Exilé" : "Dragon Maudit");
             ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; 
             ctx.fillText(bossName, enemy.x + enemy.size/2, enemy.y - 25); 
@@ -362,9 +374,7 @@ function renderGameView() {
         ctx.restore();
     });
     
-    // ========================================================================
     // --- 9. PROJECTILES ENNEMIS (OS ALLONGÉS & TOILES) ---
-    // ========================================================================
     enemyProjectiles.forEach(p => { 
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -375,11 +385,15 @@ function renderGameView() {
         if (p.type === 'bone') {
             ctx.rotate(pAngle); // L'os pointe droit devant comme une flèche
             ctx.fillStyle = '#ecf0f1';
-            let l = p.size * 1.8; let w = p.size * 0.4; 
+            let l = p.size * 2.5; // Bien allongé !
+            let w = p.size * 0.4; 
+            
             ctx.fillRect(-l, -w, l * 2, w * 2); 
             ctx.beginPath(); ctx.arc(-l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(-l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill(); 
             ctx.beginPath(); ctx.arc(l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill();   
-            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
+            
+            ctx.fillStyle = '#bdc3c7';
+            ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
         } 
         else if (p.type === 'bat_web') {
             ctx.rotate(pAngle); 
