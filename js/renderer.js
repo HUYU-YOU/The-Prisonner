@@ -187,10 +187,26 @@ function renderGameView() {
         ctx.save();
         ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
         
-        // --- ROTATION VERS LE JOUEUR ---
+      // --- ROTATION VERS LE JOUEUR ---
         let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2);
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         let angleToPlayer = Math.atan2(dy, dx);
+        
+        // 🛠️ GESTION DES ORIENTATIONS DES IMAGES (Individuelle par monstre)
+        if (enemy.type === 'goblin') {
+            angleToPlayer -= (Math.PI / 2); // Correction, le dessin regarde vers le BAS !
+        }
+        // Astuce : Quand les autres monstres, si l'un d'eux marche à l'envers ou en crabe, ajustement ici :
+        // else if (enemy.type === 'skeleton') { angleToPlayer += (Math.PI / 2); } // S'il regarde vers le HAUT
+        // else if (enemy.type === 'spider') { angleToPlayer += Math.PI; } // S'il regarde vers la GAUCHE
+        // Si le monstre regarde déjà vers la DROITE d'origine, rien à écrire, ça marchera tout seul.
+
+        // --- ANIMATION (Wobble & Respiration) ---
+        let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; // Léger tremblement
+        let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  // Respiration
+        
+        ctx.rotate(rot);
+        ctx.scale(scalePulse, scalePulse);
         
         // --- ANIMATION (Wobble & Respiration) ---
         let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; // Léger tremblement
