@@ -127,6 +127,13 @@ assetsManager.load('Elf_est', 'assets/skins/Elf_est.png');
 assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
 assetsManager.load('Elf_front', 'assets/skins/Elf_front.png');
 assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); //A FAIRE!!
+
+// --- SKINS MAGE ---
+assetsManager.load('Burned_top_view', 'assets/skins/Burned_top_view.jpeg');
+assetsManager.load('Attack_fire_mage', 'assets/skins/Attack_fire_mage.jpeg');
+assetsManager.load('Ulti_fire_mage', 'assets/skins/Ulti_fire_mage.jpeg');
+
+// --- SKINS ENNEMIS ET ANIMATIONS ---
 assetsManager.load('goblin_top_view', 'assets/skins/goblin_top_view.png');
 assetsManager.load('goblin_top_attack', 'assets/skins/goblin_top_attack.png');
 assetsManager.load('goblin_top_block', 'assets/skins/goblin_top_block.png');
@@ -134,12 +141,9 @@ assetsManager.load('goblin_top_block', 'assets/skins/goblin_top_block.png');
 assetsManager.load('Skeleton_top_view', 'assets/skins/Skeleton_top_view.png');
 assetsManager.load('Skeleton_top_attack', 'assets/skins/Skeleton_top_attack.png');
 
-assetsManager.load('spider_top_view', 'assets/skins/spider_top_view.png');
-assetsManager.load('troll_top_view', 'assets/skins/troll_top_view.png');
+assetsManager.load('spider_top_view', 'assets/skins/spider_top_view.jpeg');
+assetsManager.load('troll_top_view', 'assets/skins/troll_top_view.png');    
+assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
 assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
-
-assetsManager.load('Burned_top_view', 'assets/skins/Burned_top_view.jpeg');
-assetsManager.load('Attack_fire_mage', 'assets/skins/Attack_fire_mage.jpeg');
-assetsManager.load('Ulti_fire_mage', 'assets/skins/Ulti_fire_mage.jpeg');
 
