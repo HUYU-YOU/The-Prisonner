@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // Le navigateur exige un clic avant d'autoriser l'audio
 document.body.addEventListener('click', () => {
     if (bgMusic.paused && !isMuted) {
-        bgMusic.play().catch(e => console.log("Attente d'interaction"));
+        bgMusic.play().catch(e => console.log("Attente d'interaction audio"));
     }
 }, { once: true });
 
@@ -76,7 +76,7 @@ window.togglePause = function() {
         gameState = "PLAYING";
         let pauseScreen = document.getElementById('pause-screen');
         if (pauseScreen) pauseScreen.style.display = 'none';
-        lastClickTime = Date.now(); // Sécurité
+        lastClickTime = Date.now(); 
         requestAnimationFrame(update);
     }
 };
@@ -89,18 +89,12 @@ function drawMiniMap() {
     
     // Disposition fictive de la grille
     const mapGrid = {
-        1: {x: 2, y: 4}, 
-        2: {x: 2, y: 3}, 
-        3: {x: 1, y: 3}, 
-        4: {x: 3, y: 3}, 
-        5: {x: 1, y: 2}, 
-        6: {x: 3, y: 2}, 
-        7: {x: 2, y: 1},
-        8: {x: 2, y: 0}
+        1: {x: 2, y: 4}, 2: {x: 2, y: 3}, 3: {x: 1, y: 3}, 4: {x: 3, y: 3}, 
+        5: {x: 1, y: 2}, 6: {x: 3, y: 2}, 7: {x: 2, y: 1}, 8: {x: 2, y: 0}
     };
 
-    let boxSize = 40;
-    let offsetX = 50;
+    let boxSize = 40; 
+    let offsetX = 50; 
     let offsetY = 30;
 
     for (let id in mapGrid) {
@@ -124,11 +118,11 @@ function drawMiniMap() {
             }
 
             mctx.fillRect(px, py, width - 5, height - 5);
-            mctx.strokeStyle = '#2c3e50';
+            mctx.strokeStyle = '#2c3e50'; 
             mctx.lineWidth = 2;
             mctx.strokeRect(px, py, width - 5, height - 5);
 
-            mctx.fillStyle = '#111';
+            mctx.fillStyle = '#111'; 
             mctx.font = 'bold 16px Arial';
             mctx.fillText(roomId, px + 15, py + 25);
         }
@@ -370,10 +364,13 @@ canvas.addEventListener('mousemove', (e) => {
     mouse.y = (e.clientY - rect.top) * scaleY;
 });
 
+// Variable globale pour stocker les caisses dans la salle
+let currentCrates = []; 
+
 canvas.addEventListener('mousedown', (e) => {
     if (gameState !== "PLAYING") return;
     
-    // Clic droit = Dash
+    // Clic droit = Dash !
     if (e.button === 2) { 
         triggerDash(); 
         return; 
@@ -441,19 +438,18 @@ canvas.addEventListener('mousedown', (e) => {
             } 
         });
 
-        // Casse les caisses au CàC
-        if (typeof currentCrates !== 'undefined') {
-            for (let i = currentCrates.length - 1; i >= 0; i--) {
-                if (checkCollision(hitBox, currentCrates[i])) {
-                    currentCrates[i].health -= 50;
+        // --- CASSAGE DE CAISSES ET COFFRES AU CÀC ---
+        for (let i = 0; i < currentCrates.length; i++) {
+            let obj = currentCrates[i];
+            if (checkCollision(hitBox, obj)) {
+                if (!obj.isBroken) {
+                    obj.health -= 50;
                 }
             }
         }
     }
 });
 
-
-let currentCrates = []; // Variable globale pour stocker les caisses
 
 function spawnEnemy(type, count, baseX = null, baseY = null) {
     for (let i = 0; i < count; i++) {
@@ -545,7 +541,7 @@ function update() {
 
     if (gameState === "PAUSED") {
         requestAnimationFrame(update);
-        return; // Le jeu est figé !
+        return; 
     }
 
     if (gameState !== "PLAYING" && gameState !== "GAMEOVER") { 
@@ -663,7 +659,7 @@ function update() {
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
-    // --- GESTION DU DÉPLACEMENT (AVEC CAISSES) ---
+    // --- GESTION DU DÉPLACEMENT (AVEC COLLISIONS CAISSES) ---
     let dx_mov = 0;
     let dy_mov = 0;
     
@@ -690,7 +686,8 @@ function update() {
     } 
     
     for (let i = 0; i < currentCrates.length; i++) {
-        if (checkCollision(player, currentCrates[i])) { 
+        let obj = currentCrates[i];
+        if ( (!obj.isBroken || obj.type === 'chest') && checkCollision(player, obj)) { 
             player.x = oldPx; 
             player.dashTimer = 0; 
             break; 
@@ -706,7 +703,8 @@ function update() {
     } 
     
     for (let i = 0; i < currentCrates.length; i++) {
-        if (checkCollision(player, currentCrates[i])) { 
+        let obj = currentCrates[i];
+        if ( (!obj.isBroken || obj.type === 'chest') && checkCollision(player, obj)) { 
             player.y = oldPy; 
             player.dashTimer = 0; 
             break; 
@@ -759,23 +757,25 @@ function update() {
 
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
     
-    // --- GESTION DES CAISSES CASSÉES ---
-    for (let i = currentCrates.length - 1; i >= 0; i--) {
+    // --- GESTION DES CAISSES ET COFFRES CASSÉS ---
+    for (let i = 0; i < currentCrates.length; i++) {
         let crate = currentCrates[i];
-        if (crate.health <= 0) {
-            // Fait tomber une pièce
-            currentItems.push({ 
-                id: 'coin_c_' + Date.now() + i, 
-                type: 'coin', 
-                x: crate.x + crate.size/2, 
-                y: crate.y + crate.size/2, 
-                size: 8, 
-                collected: false 
-            });
+        if (!crate.isBroken && crate.health <= 0) {
+            crate.isBroken = true; 
             
-            spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#8B4513', 20);
-            worldState.brokenCrates[crate.id] = true;
-            currentCrates.splice(i, 1);
+            if (crate.type === 'chest') {
+                worldState.openedChests[crate.id] = true;
+                // Le coffre donne la Potion ET de l'Or
+                currentItems.push({ id: 'potion_chest_' + Date.now(), type: 'potion_green', x: crate.x + 30, y: crate.y + 40, size: 15, collected: false });
+                currentItems.push({ id: 'coin_chest1_' + Date.now(), type: 'coin', x: crate.x + 40, y: crate.y + 10, size: 8, collected: false });
+                currentItems.push({ id: 'coin_chest2_' + Date.now(), type: 'coin', x: crate.x + 10, y: crate.y + 40, size: 8, collected: false });
+                spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#f1c40f', 30);
+            } else {
+                worldState.brokenCrates[crate.id] = true;
+                // Tonneau ou Caisse donne une pièce
+                currentItems.push({ id: 'coin_' + Date.now() + i, type: 'coin', x: crate.x + crate.size/2, y: crate.y + crate.size/2, size: 8, collected: false });
+                spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#8B4513', 20);
+            }
         }
     }
     
@@ -826,14 +826,16 @@ function update() {
         enemy.x += dx_mov; 
         if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         for (let c = 0; c < currentCrates.length; c++) {
-            if (checkCollision(enemy, currentCrates[c])) { enemy.x = oldEx; break; }
+            let obj = currentCrates[c];
+            if ((!obj.isBroken || obj.type === 'chest') && checkCollision(enemy, obj)) { enemy.x = oldEx; break; }
         }
         
         let oldEy = enemy.y; 
         enemy.y += dy_mov; 
         if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.y = oldEy;
         for (let c = 0; c < currentCrates.length; c++) {
-            if (checkCollision(enemy, currentCrates[c])) { enemy.y = oldEy; break; }
+            let obj = currentCrates[c];
+            if ((!obj.isBroken || obj.type === 'chest') && checkCollision(enemy, obj)) { enemy.y = oldEy; break; }
         }
 
         let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size;
@@ -907,8 +909,9 @@ function update() {
 
         // Dégâts sur les caisses à l'arc / magie
         for (let c = 0; c < currentCrates.length; c++) {
-            if (checkCollision(arrowHitbox, currentCrates[c])) {
-                currentCrates[c].health -= 50;
+            let obj = currentCrates[c];
+            if (!obj.isBroken && checkCollision(arrowHitbox, obj)) {
+                obj.health -= 50;
                 projectileHit = true;
                 break;
             }
@@ -969,17 +972,20 @@ function update() {
 
 function loadRoom(roomId, entryFace = 'south') {
   currentRoomId = roomId;
-  projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
+  projectiles = []; 
+  enemyProjectiles = []; 
+  hazards = []; 
+  particles = [];
   currentCrates = [];
   
   if (!worldState.bloodStains) worldState.bloodStains = {};
   if (!worldState.visitedRooms) worldState.visitedRooms = {};
   if (!worldState.brokenCrates) worldState.brokenCrates = {};
+  if (!worldState.openedChests) worldState.openedChests = {};
   
   if (!worldState.bloodStains[roomId]) worldState.bloodStains[roomId] = [];
   bloodStains = worldState.bloodStains[roomId];
 
-  // Noter la salle comme visitée pour la Minimap
   worldState.visitedRooms[roomId] = true;
   
   let bTop = (roomId === 2 || roomId === 3) ? 250 : wallMargin;
@@ -993,8 +999,14 @@ function loadRoom(roomId, entryFace = 'south') {
   if (roomId === 1) { 
     currentDoors = [ { ...doorN, id: 'door_1_2', requiresKey: true, locked: !worldState.unlockedDoors['door_1_2'], dest: 2, spawnX: doorS.x, spawnY: doorS.y - 60 } ];
     currentItems = [];
-    if (!worldState.collectedItems['potion_room1']) currentItems.push({ id: 'potion_room1', type: 'potion_green', x: 250, y: 650, size: 15, collected: false });
     if (!worldState.collectedItems['key_tuto']) currentItems.push({ id: 'key_tuto', type: 'key', x: 800, y: 400, size: 20, collected: false });
+    
+    // --- LE COFFRE DU TUTO (Remplace la potion !) ---
+    let isOpened = worldState.openedChests && worldState.openedChests['chest_1'];
+    currentCrates.push({ 
+        id: 'chest_1', type: 'chest', x: 250, y: 650, size: 60, 
+        health: isOpened ? 0 : 1, opened: isOpened, isBroken: isOpened
+    });
   } 
   else if (roomId === 2) { 
     currentDoors = [
@@ -1007,37 +1019,58 @@ function loadRoom(roomId, entryFace = 'south') {
   }
   else if (roomId === 3) { currentDoors = [ { ...doorE, id: 'door_3_2', dest: 2, spawnX: doorW.x + wallMargin + 20, spawnY: doorW.y + 20 }, { ...doorN, id: 'door_3_5', dest: 5, spawnX: doorS.x, spawnY: doorS.y - 60 } ]; currentItems = []; }
   else if (roomId === 4) { currentDoors = [ { ...doorW, id: 'door_4_2', dest: 2, spawnX: doorE.x - 60, spawnY: doorE.y + 20 }, { ...doorN, id: 'door_4_6', dest: 6, spawnX: doorS.x, spawnY: doorS.y - 60 } ]; currentItems = []; }
-  
-  // --- GÉNÉRATION DES CAISSES (Si la salle n'est pas "vide" et que la caisse n'est pas détruite) ---
-  if (!worldState.clearedRooms[roomId] && roomId !== 1 && roomId !== 8) {
-      if (!worldState.brokenCrates[roomId + "_0"]) {
-          currentCrates.push({ id: roomId + "_0", x: 150, y: bTop + 50, size: 40, health: 30 });
-      }
-      if (!worldState.brokenCrates[roomId + "_1"]) {
-          currentCrates.push({ id: roomId + "_1", x: 1050, y: bBot - 90, size: 40, health: 30 });
+  else if (roomId === 5) { currentDoors = [ { ...doorS, id: 'door_5_3', dest: 3, spawnX: doorN.x, spawnY: doorN.y + wallMargin + 20 }, { ...doorN, id: 'door_5_7', dest: 7, spawnX: 275, spawnY: doorS.y - 60 } ]; currentItems = []; }
+  else if (roomId === 6) { currentDoors = [ { ...doorS, id: 'door_6_4', dest: 4, spawnX: doorN.x, spawnY: doorN.y + wallMargin + 20 }, { ...doorN, id: 'door_6_7', dest: 7, spawnX: 875, spawnY: doorS.y - 60 } ]; currentItems = []; }
+  else if (roomId === 7) { 
+    currentDoors = [ { x: 200, y: 800 - wallMargin, width: 150, height: wallMargin, face: 'south', id: 'door_7_5', dest: 5, spawnX: doorN.x, spawnY: doorN.y + wallMargin + 20 }, { x: 800, y: 800 - wallMargin, width: 150, height: wallMargin, face: 'south', id: 'door_7_6', dest: 6, spawnX: doorN.x, spawnY: doorN.y + wallMargin + 20 } ];
+    currentItems = [];
+    if (!worldState.collectedItems['key_boss']) currentItems.push({ id: 'key_boss', type: 'key', x: 600, y: 400, size: 20, collected: false });
+  }
+  else if (roomId === 8) { currentDoors = [ { ...doorS, id: 'door_8_2', dest: 2, spawnX: doorN.x, spawnY: doorN.y + wallMargin + 20 } ]; currentItems = []; }
+
+  // --- GÉNÉRATION DÉCORS (TONNEAUX ET CAISSES) ---
+  if (!worldState.clearedRooms[roomId] || true) {
+      if (roomId !== 1 && roomId !== 8 && roomId !== 999) {
+          let broken0 = worldState.brokenCrates && worldState.brokenCrates[roomId + "_0"];
+          currentCrates.push({ 
+              id: roomId + "_0", type: 'barrel', x: 150, y: bTop + 50, size: 45, 
+              health: broken0 ? 0 : 30, isBroken: broken0 
+          });
+          
+          let broken1 = worldState.brokenCrates && worldState.brokenCrates[roomId + "_1"];
+          currentCrates.push({ 
+              id: roomId + "_1", type: 'box', x: 1050, y: bBot - 90, size: 45, 
+              health: broken1 ? 0 : 30, isBroken: broken1 
+          });
       }
   }
 
   currentEnemies = [];
-  if (worldState.enemyStates && worldState.enemyStates[roomId]) {
-      currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId]));
-  } else if (!worldState.clearedRooms[roomId]) {
-      
-      let spawnX = canvas.width / 2; 
-      let spawnY = (bTop + bBot) / 2 - 20;
-      
-      if (roomId === 2 || roomId === 3) {
-          if (entryFace === 'west') spawnX = 1200 - wallMargin - 100;
-          else if (entryFace === 'east') spawnX = wallMargin + 100;
-      }
+  if (roomId !== 999) {
+      if (worldState.enemyStates && worldState.enemyStates[roomId]) {
+          currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId]));
+      } else if (!worldState.clearedRooms[roomId]) {
+          
+          let spawnX = canvas.width / 2; 
+          let spawnY = (bTop + bBot) / 2 - 20;
+          
+          if (roomId === 2 || roomId === 3) {
+              if (entryFace === 'west') spawnX = 1200 - wallMargin - 100;
+              else if (entryFace === 'east') spawnX = wallMargin + 100;
+          }
 
-      if (roomId === 2) { spawnEnemy('goblin', 3, spawnX, spawnY); spawnEnemy('skeleton', 1, spawnX, spawnY); }
-      else if (roomId === 3) { spawnEnemy('goblin', 3, spawnX, spawnY); spawnEnemy('spider', 1, spawnX, spawnY); }
-      else if (roomId === 4) { spawnEnemy('goblin', 2, 800, 400); }
-      else if (roomId === 5) { spawnEnemy('goblin', 2, 400, 300); }
-      else if (roomId === 6) { spawnEnemy('goblin', 2, 800, 300); }
-      else if (roomId === 7) { spawnEnemy('goblin', 5, 450, 200); }
-      else if (roomId === 8) { spawnEnemy('troll', 1, 950, 550); } 
+          if (roomId === 2) { spawnEnemy('goblin', 3, spawnX, spawnY); spawnEnemy('skeleton', 1, spawnX, spawnY); }
+          else if (roomId === 3) { spawnEnemy('goblin', 3, spawnX, spawnY); spawnEnemy('spider', 1, spawnX, spawnY); }
+          else if (roomId === 4) { spawnEnemy('goblin', 2, 800, 400); }
+          else if (roomId === 5) { spawnEnemy('goblin', 2, 400, 300); }
+          else if (roomId === 6) { spawnEnemy('goblin', 2, 800, 300); }
+          else if (roomId === 7) { spawnEnemy('goblin', 5, 450, 200); }
+          else if (roomId === 8) { spawnEnemy('troll', 1, 950, 550); } 
+      }
+  } else {
+      currentDoors = []; currentItems = []; arenaShrink = 0; 
+      player.x = canvas.width / 2 - player.size / 2; 
+      player.y = canvas.height / 2 - player.size / 2;
   }
 }
 
