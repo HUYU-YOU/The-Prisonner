@@ -135,16 +135,58 @@ function renderGameView() {
         ctx.restore();
     }
 
+    // --- SALLE 1 : BANC ET BIBLIOTHÈQUE ---
     if (currentRoomId === 1) {
-        let benchX = 400; let benchY = canvas.height - wallMargin - 30; 
-        ctx.fillStyle = '#3e2a1d'; ctx.fillRect(benchX, benchY, 200, 20); 
-        ctx.fillStyle = '#111'; ctx.fillRect(benchX - 10, benchY - 10, 10, 30); ctx.fillRect(benchX + 200, benchY - 10, 10, 30); 
-        ctx.fillStyle = '#4a2f26'; ctx.fillRect(bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height); 
-        ctx.fillStyle = '#2a1a15'; ctx.fillRect(bookshelf.x + 5, bookshelf.y + 30, bookshelf.width - 5, 4); 
-        ctx.fillRect(bookshelf.x + 5, bookshelf.y + 70, bookshelf.width - 5, 4); 
-        ctx.fillRect(bookshelf.x + 5, bookshelf.y + 110, bookshelf.width - 5, 4); 
-        ctx.fillStyle = '#8c1c1c'; ctx.fillRect(bookshelf.x + 10, bookshelf.y + 10, 8, 20); 
-        ctx.fillStyle = '#29547d'; ctx.fillRect(bookshelf.x + 20, bookshelf.y + 50, 10, 20);
+        // Le Banc (Position fixe à droite)
+        let benchX = 400; let benchY = canvas.height - wallMargin - 60; 
+        let imgBench = assetsManager.images['bench'];
+        if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) {
+            ctx.drawImage(imgBench, benchX, benchY, 200, 80); 
+        } else {
+            ctx.fillStyle = '#3e2a1d'; ctx.fillRect(benchX, benchY + 20, 200, 20); 
+            ctx.fillStyle = '#111'; ctx.fillRect(benchX - 10, benchY + 10, 10, 30); ctx.fillRect(benchX + 200, benchY + 10, 10, 30); 
+        }
+
+        // La Bibliothèque (Gérée globalement dans main.js)
+        if (typeof bookshelf !== 'undefined') {
+            let imgBiblio = assetsManager.images['bibliotheque'];
+            if (imgBiblio && imgBiblio.complete && imgBiblio.naturalWidth > 0) {
+                ctx.drawImage(imgBiblio, bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height);
+            } else {
+                ctx.fillStyle = '#4a2f26'; ctx.fillRect(bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height); 
+                ctx.fillStyle = '#2a1a15'; ctx.fillRect(bookshelf.x + 5, bookshelf.y + 30, bookshelf.width - 5, 4); 
+                ctx.fillRect(bookshelf.x + 5, bookshelf.y + 70, bookshelf.width - 5, 4); 
+                ctx.fillRect(bookshelf.x + 5, bookshelf.y + 110, bookshelf.width - 5, 4); 
+                ctx.fillStyle = '#8c1c1c'; ctx.fillRect(bookshelf.x + 10, bookshelf.y + 10, 8, 20); 
+                ctx.fillStyle = '#29547d'; ctx.fillRect(bookshelf.x + 20, bookshelf.y + 50, 10, 20);
+            }
+
+            // --- MESSAGE AU SURVOL DE LA BIBLIOTHÈQUE ---
+            let distToBiblio = Math.hypot((player.x + player.size/2) - (bookshelf.x + bookshelf.width/2), (player.y + player.size/2) - (bookshelf.y + bookshelf.height/2));
+            if (distToBiblio < 120) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.strokeStyle = '#f1c40f';
+                ctx.lineWidth = 2;
+                
+                let popW = 320; let popH = 40;
+                let popX = bookshelf.x + bookshelf.width/2 - popW/2;
+                let popY = bookshelf.y - popH - 15;
+                
+                // Petit effet de lévitation douce
+                popY += Math.sin(Date.now() / 200) * 3;
+                
+                ctx.fillRect(popX, popY, popW, popH);
+                ctx.strokeRect(popX, popY, popW, popH);
+                
+                ctx.fillStyle = '#ecf0f1';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText("Appuyez sur 'E' pour lire un vieux grimoire...", popX + popW/2, popY + 25);
+                ctx.textAlign = 'left';
+                ctx.restore();
+            }
+        }
     }
 
     // --- 4. CAISSES ET COFFRES (Rendu par-dessus le sol) ---
@@ -152,7 +194,6 @@ function renderGameView() {
         currentCrates.forEach(crate => {
             let imgName = '';
             
-            // Logique d'affichage des skins selon le type et l'état
             if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1';
             else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3';
             else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
@@ -397,19 +438,43 @@ function renderGameView() {
         ctx.restore();
     });
     
+    // ========================================================================
+    // --- L'OS CLASSIQUE (SANS AUCUNE BRILLANCE) ---
+    // ========================================================================
     enemyProjectiles.forEach(p => { 
-        ctx.save(); ctx.translate(p.x, p.y); let pAngle = Math.atan2(p.vy, p.vx); ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+        ctx.save(); 
+        ctx.translate(p.x, p.y); 
+        let pAngle = Math.atan2(p.vy, p.vx); 
+        
         if (p.type === 'bone') { 
-            ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 2.5; let w = p.size * 0.4; 
+            ctx.rotate(pAngle); // L'os pointe droit devant comme une flèche
+            ctx.shadowBlur = 0; // AUCUNE BRILLANCE !
+            ctx.fillStyle = '#ecf0f1'; // Couleur de l'os (blanc mat)
+            
+            let l = p.size * 1.5; // Longueur
+            let w = p.size * 0.3; // Épaisseur
+            let r = p.size * 0.6; // Taille des articulations
+            
+            // Le corps de l'os
             ctx.fillRect(-l, -w, l * 2, w * 2); 
-            ctx.beginPath(); ctx.arc(-l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(-l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill(); 
-            ctx.beginPath(); ctx.arc(l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill(); 
-            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-l + 2, -w/2, l*2 - 4, w); 
+            
+            // Les 4 articulations 
+            ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            
+            // Liseré interne gris clair pour donner un léger volume très propre
+            ctx.fillStyle = '#bdc3c7'; 
+            ctx.fillRect(-l + 2, -w/4, l*2 - 4, w/2); 
+            
         } else if (p.type === 'bat_web') { 
+            ctx.shadowColor = p.color; ctx.shadowBlur = 10;
             ctx.rotate(pAngle); ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; 
             ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); 
             ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, -8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, 8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 8); ctx.stroke(); 
         } else if (p.type === 'fire') { 
+            ctx.shadowColor = p.color; ctx.shadowBlur = 10;
             let fireImg = assetsManager.images['Attack_fire_mage']; 
             if (fireImg && fireImg.complete && fireImg.naturalWidth > 0) { 
                 ctx.rotate(pAngle + Math.PI / 2); ctx.globalCompositeOperation = 'screen'; let dSize = p.size * 5.0; ctx.drawImage(fireImg, -dSize/2, -dSize/2, dSize, dSize); 
@@ -417,6 +482,7 @@ function renderGameView() {
                 ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
             } 
         } else { 
+            ctx.shadowColor = p.color; ctx.shadowBlur = 10;
             ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
         }
         ctx.restore();
@@ -475,7 +541,6 @@ function renderGameView() {
     });
     ctx.globalAlpha = 1.0; 
 
-    // --- COMPTEUR DE PIÈCES DIRECTEMENT SUR LE CANVAS ---
     if (playerStats.inventory.coins !== undefined) {
         ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 10, 0, Math.PI*2); ctx.fill();
@@ -483,18 +548,17 @@ function renderGameView() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 60, 43);
     }
 
-    // --- EFFET DE BROUILLARD (VIGNETTE DE LUMIÈRE DYNAMIQUE) ---
     ctx.save();
     let gradient = ctx.createRadialGradient(
         player.x + player.size/2, player.y + player.size/2, 100, 
         player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
     );
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');       // Lumière totale au centre
-    gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   // Pénombre douce
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     // Noirceur dense dans les coins
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');       
+    gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height); // L'ombre couvre tout l'écran
+    ctx.fillRect(0, 0, canvas.width, canvas.height); 
     ctx.restore();
 
     if (currentRoomId === 999) {
