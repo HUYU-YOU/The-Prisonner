@@ -2,6 +2,13 @@
 // CORE LOOP CONTROLLER, ENGINE TICKS & USER INTERACTION LISTENERS
 // ============================================================================
 
+// 🛠️ CORRECTION COLLISION : Le signe "<" permet de glisser sans s'accrocher aux murs !
+function checkCollision(rect1, rect2) {
+  let w1 = rect1.width || rect1.size; let h1 = rect1.height || rect1.size;
+  let w2 = rect2.width || rect2.size; let h2 = rect2.height || rect2.size;
+  return (rect1.x < rect2.x + w2 && rect1.x + w1 > rect2.x && rect1.y < rect2.y + h2 && rect1.y + h1 > rect2.y);
+}
+
 function updatePortrait(heroClass) {
     const portrait = document.getElementById('portrait');
     const imgMap = {
@@ -145,8 +152,8 @@ canvas.addEventListener('mousedown', (e) => {
         currentEnemies.forEach(enemy => { 
             if (checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
-                    if (enemy.type === 'goblin' && Math.random() < 0.15) { 
-                        enemy.blockAnimTimer = 45; // BOUCLIER VISIBLE PLUS LONGTEMPS
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) {
+                        enemy.blockAnimTimer = 45; 
                         spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15);
                     } else {
                         enemy.health -= 50;
@@ -157,6 +164,53 @@ canvas.addEventListener('mousedown', (e) => {
         });
     }
 });
+
+function spawnEnemy(type, count, baseX = null, baseY = null) {
+    for (let i = 0; i < count; i++) {
+        let ex = baseX; let ey = baseY;
+        
+        if (ex === null || ey === null) {
+            let minSpawnX = wallMargin + arenaShrink;
+            let maxSpawnX = canvas.width - wallMargin - arenaShrink - 40;
+            let minSpawnY = wallMargin + arenaShrink;
+            let maxSpawnY = canvas.height - wallMargin - arenaShrink - 40;
+
+            if (arenaWave >= 41) {
+                let side = Math.floor(Math.random() * 4);
+                if (side === 0) { ex = minSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); }
+                else if (side === 1) { ex = maxSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); } 
+                else if (side === 2) { ex = minSpawnX + Math.random() * (maxSpawnX - minSpawnX); ey = minSpawnY; } 
+                else { ex = minSpawnX + Math.random() * (maxSpawnX - minSpawnX); ey = maxSpawnY; } 
+            } else {
+                let side = Math.floor(Math.random() * 2);
+                if (side === 0) { ex = minSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); } 
+                else { ex = maxSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); } 
+            }
+        }
+        
+        let size = 40, hp = 90, spd = 3.5, col = '#27ae60';
+        if (type === 'skeleton') { hp = 50; spd = 2; col = '#bdc3c7'; }
+        else if (type === 'spider') { size = 30; hp = 1; spd = 7; col = '#8e44ad'; }
+        else if (type === 'troll') { size = 80; hp = 900; spd = 2.5; col = '#117a65'; }
+        else if (type === 'mage') { size = 60; hp = 900; spd = 2; col = '#9b59b6'; }
+        else if (type === 'dragon') { size = 150; hp = 3000; spd = 1.0; col = '#8b0000'; }
+
+        if (isArenaMode && arenaWave >= 25 && type !== 'spider' && type !== 'dragon') {
+            hp += (arenaWave - 24) * 30;
+        }
+
+        currentEnemies.push({ 
+            x: ex, y: ey, size: size, health: hp, maxHealth: hp, 
+            speed: spd, color: col, type: type, shootCooldown: 0, summonTimer: 180,
+            wobble: Math.random() * Math.PI * 2,
+            timeAlive: 0, phase: 1, invulnerable: false,
+            isBurning: false, burnTicks: 0, burnTimer: 0,
+            slowTimer: 0, isPermanentlySlowed: false, 
+            killedBySummon: false, killedByNecro: false,
+            attackAnimTimer: 0, blockAnimTimer: 0, ultiAnimTimer: 0
+        });
+    }
+}
 
 function update() {
     if (gameState === "MENU") {
@@ -177,10 +231,9 @@ function update() {
 
     let roomChanged = false;
     currentDoors.forEach(door => {
-        // --- NOUVEAU: SALLE DU BOSS BLOQUÉE TANT QU'IL EST EN VIE ! ---
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
             if (checkCollision(player, door)) {
-                player.y = door.y - player.size - 5; // Repousse le joueur en arrière !
+                player.y = door.y - player.size - 5; 
             }
             return;
         }
@@ -280,7 +333,7 @@ function update() {
 
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     
-    // --- NOUVEAU : GLISSADE SUR L'ESCALIER GÉANT (OBSTACLE) ---
+    // --- JOUEUR ET ESCALIER CENTRAL ---
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
     let oldPx = player.x;
@@ -288,10 +341,8 @@ function update() {
     if (keys['d'] || keys['arrowright'])              player.x += currentSpeedPlayer;
 
     if (currentRoomId === 8 && checkCollision(player, centerStairs)) {
-        if (worldState.bossDefeated && playerStats.inventory.keys.skull > 0) {
-            // Zone de sortie activée
-        } else {
-            player.x = oldPx; // Bloque X contre l'escalier
+        if (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0) {
+            player.x = oldPx; 
         }
     }
 
@@ -300,10 +351,8 @@ function update() {
     if (keys['s'] || keys['arrowdown'])               player.y += currentSpeedPlayer;
 
     if (currentRoomId === 8 && checkCollision(player, centerStairs)) {
-        if (worldState.bossDefeated && playerStats.inventory.keys.skull > 0) {
-            // Zone de sortie activée
-        } else {
-            player.y = oldPy; // Bloque Y contre l'escalier
+        if (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0) {
+            player.y = oldPy; 
         }
     }
 
@@ -335,6 +384,7 @@ function update() {
 
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
     
+    // --- IA GLISSADE POUR INVOCATIONS ---
     for (let i = necroSummons.length - 1; i >= 0; i--) {
         let s = necroSummons[i];
         if (s.invulnerableTimer && s.invulnerableTimer > 0) s.invulnerableTimer--; 
@@ -351,11 +401,29 @@ function update() {
             let dy = (closestEnemy.y + closestEnemy.size/2) - (s.y + s.size/2);
             let angle = Math.atan2(dy, dx);
             
-            // Invocations esquivent l'escalier
-            let oldSx = s.x; s.x += Math.cos(angle) * s.speed;
+            let moveX = Math.cos(angle) * s.speed;
+            let moveY = Math.sin(angle) * s.speed;
+            
+            let canMoveX = true; let canMoveY = true;
+            if (currentRoomId === 8) {
+                canMoveX = !checkCollision({x: s.x + moveX, y: s.y, size: s.size}, centerStairs);
+                canMoveY = !checkCollision({x: s.x, y: s.y + moveY, size: s.size}, centerStairs);
+                
+                if (!canMoveY && canMoveX && Math.abs(moveX) < s.speed * 0.5) {
+                    let targetX = closestEnemy ? closestEnemy.x : player.x;
+                    let dir = targetX > s.x ? 1 : -1;
+                    moveX = dir * s.speed; moveY = 0;
+                } else if (!canMoveX && canMoveY && Math.abs(moveY) < s.speed * 0.5) {
+                    let targetY = closestEnemy ? closestEnemy.y : player.y;
+                    let dir = targetY > s.y ? 1 : -1;
+                    moveX = 0; moveY = dir * s.speed;
+                }
+            }
+
+            let oldSx = s.x; s.x += moveX;
             if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.x = oldSx;
             
-            let oldSy = s.y; s.y += Math.sin(angle) * s.speed;
+            let oldSy = s.y; s.y += moveY;
             if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.y = oldSy;
             
             if (minDist < (s.size + closestEnemy.size) / 2 + 10) {
@@ -377,10 +445,28 @@ function update() {
              let dy = (player.y + player.size/2) - (s.y + s.size/2);
              if (Math.hypot(dx, dy) > 100) {
                  let angle = Math.atan2(dy, dx);
-                 let oldSx = s.x; s.x += Math.cos(angle) * s.speed;
+                 
+                 let moveX = Math.cos(angle) * s.speed;
+                 let moveY = Math.sin(angle) * s.speed;
+                 
+                 let canMoveX = true; let canMoveY = true;
+                 if (currentRoomId === 8) {
+                     canMoveX = !checkCollision({x: s.x + moveX, y: s.y, size: s.size}, centerStairs);
+                     canMoveY = !checkCollision({x: s.x, y: s.y + moveY, size: s.size}, centerStairs);
+                     
+                     if (!canMoveY && canMoveX && Math.abs(moveX) < s.speed * 0.5) {
+                         let dir = player.x > s.x ? 1 : -1;
+                         moveX = dir * s.speed; moveY = 0;
+                     } else if (!canMoveX && canMoveY && Math.abs(moveY) < s.speed * 0.5) {
+                         let dir = player.y > s.y ? 1 : -1;
+                         moveX = 0; moveY = dir * s.speed;
+                     }
+                 }
+
+                 let oldSx = s.x; s.x += moveX;
                  if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.x = oldSx;
                  
-                 let oldSy = s.y; s.y += Math.sin(angle) * s.speed;
+                 let oldSy = s.y; s.y += moveY;
                  if (currentRoomId === 8 && checkCollision(s, centerStairs)) s.y = oldSy;
              }
         }
@@ -442,13 +528,12 @@ function update() {
         if (dist !== 9999) { dx = targetX - enemy.x; dy = targetY - enemy.y; }
 
         let currentEnemySpeed = enemy.speed;
-        let isPhase2 = (enemy.health <= enemy.maxHealth / 2); // DECLENCHE L'ENRAGE !
+        let isPhase2 = (enemy.health <= enemy.maxHealth / 2); 
 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
 
         let dx_mov = 0, dy_mov = 0;
 
-        // --- DASHES ET IA INTELLIGENTE DES BOSS ---
         if (enemy.isDashing && enemy.isDashing > 0) {
             enemy.isDashing--;
             dx_mov = enemy.dashVx;
@@ -479,13 +564,13 @@ function update() {
                 }
             } else if (enemy.type === 'troll') {
                 if (isPhase2) {
-                    currentEnemySpeed = player.speed - 0.5; // Rapide mais on peut le fuir !
+                    currentEnemySpeed = player.speed - 0.5; 
                     if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5;
                     if (enemy.dashTimer === undefined) enemy.dashTimer = 180;
                     enemy.dashTimer--;
                     if (enemy.dashTimer <= 0) {
                         enemy.isDashing = 15; enemy.dashTimer = 180;
-                        enemy.dashVx = (dx/dist) * 12; enemy.dashVy = (dy/dist) * 12; // Dash Vers Joueur
+                        enemy.dashVx = (dx/dist) * 12; enemy.dashVy = (dy/dist) * 12; 
                     }
                 }
                 if (!enemy.isDashing || enemy.isDashing <= 0) {
@@ -503,7 +588,7 @@ function update() {
                     enemy.dashTimer--;
                     if (enemy.dashTimer <= 0) {
                         enemy.isDashing = 15; enemy.dashTimer = 180;
-                        enemy.dashVx = -(dx/dist) * 12; enemy.dashVy = -(dy/dist) * 12; // Dash Fuite (Loin du joueur)
+                        enemy.dashVx = -(dx/dist) * 12; enemy.dashVy = -(dy/dist) * 12; 
                     }
                 }
                 if (!enemy.isDashing || enemy.isDashing <= 0) {
@@ -515,17 +600,17 @@ function update() {
                 if (enemy.shootCooldown > 0) enemy.shootCooldown--;
                 if (enemy.shootCooldown <= 0 && dist < 800) {
                     enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: (dx/dist)*6, vy: (dy/dist)*6, size: 10, color: '#9b59b6', damage: 40, type: 'normal', angle: Math.atan2(dy, dx) });
-                    enemy.shootCooldown = isPhase2 ? 20 : Math.max(30, 90 - (enemy.timeAlive / 20)); // Tire plus vite en Phase 2
+                    enemy.shootCooldown = isPhase2 ? 20 : Math.max(30, 90 - (enemy.timeAlive / 20)); 
                 }
                 enemy.summonTimer--;
                 if (enemy.summonTimer <= 0) {
                     spawnEnemy('skeleton', 1, enemy.x+50, enemy.y); spawnEnemy('spider', 1, enemy.x-50, enemy.y);
-                    enemy.summonTimer = isPhase2 ? 90 : 180; // Invoque 2 fois plus vite
+                    enemy.summonTimer = isPhase2 ? 90 : 180; 
                     spawnParticles(enemy.x+enemy.size/2, enemy.y+enemy.size/2, '#9b59b6', 20);
                 }
             } else if (enemy.type === 'dragon') {
                 if (isPhase2) {
-                    currentEnemySpeed = player.speed - 0.5; // Rapide !
+                    currentEnemySpeed = player.speed - 0.5; 
                     if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5;
                 }
 
@@ -535,7 +620,6 @@ function update() {
                 if (enemy.shootCooldown <= 0 && dist < 500) {
                     let baseAngle = Math.atan2(dy, dx);
                     if (isPhase2) {
-                        // Spread plus serré mais plus rapide
                         for(let a = -Math.PI/12; a <= Math.PI/12 + 0.01; a += Math.PI/12) {
                             let fireAngle = baseAngle + a;
                             enemyProjectiles.push({ x: enemy.x+enemy.size/2, y: enemy.y+enemy.size/2, vx: Math.cos(fireAngle)*9, vy: Math.sin(fireAngle)*9, size: 12, color: '#c0392b', damage: 30, type: 'fire', angle: fireAngle });
@@ -552,16 +636,52 @@ function update() {
             }
         }
 
-        // --- GLISSADE PARFAITE SUR L'ESCALIER GÉANT ---
+        // --- SMART PATHFINDING IA : GLISSADE SUR LES OBSTACLES ---
+        let canMoveX = true; let canMoveY = true;
+        if (currentRoomId === 8) {
+            canMoveX = !checkCollision({x: enemy.x + dx_mov, y: enemy.y, size: enemy.size}, centerStairs);
+            canMoveY = !checkCollision({x: enemy.x, y: enemy.y + dy_mov, size: enemy.size}, centerStairs);
+        }
+
+        // Si le monstre fonce dans le mur, on transforme sa trajectoire en glissade !
+        if (currentRoomId === 8 && !enemy.isDashing) {
+            if (!canMoveY && canMoveX && Math.abs(dx_mov) < currentEnemySpeed * 0.5) {
+                let pushDir = (targetX > enemy.x) ? 1 : -1;
+                if (Math.abs(targetX - enemy.x) < enemy.size) {
+                    pushDir = (enemy.x + enemy.size/2 > centerStairs.x + centerStairs.width/2) ? 1 : -1;
+                }
+                dx_mov = pushDir * currentEnemySpeed;
+                dy_mov = 0; 
+            } 
+            else if (!canMoveX && canMoveY && Math.abs(dy_mov) < currentEnemySpeed * 0.5) {
+                let pushDir = (targetY > enemy.y) ? 1 : -1;
+                if (Math.abs(targetY - enemy.y) < enemy.size) {
+                    pushDir = (enemy.y + enemy.size/2 > centerStairs.y + centerStairs.height/2) ? 1 : -1;
+                }
+                dx_mov = 0;
+                dy_mov = pushDir * currentEnemySpeed;
+            }
+        }
+
         let oldEx = enemy.x;
         enemy.x += dx_mov;
-        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.x = oldEx; 
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         
         let oldEy = enemy.y;
         enemy.y += dy_mov;
-        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.y = oldEy; 
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) enemy.y = oldEy;
 
-        // Limites de map
+        // Anti-Encastrement (Si un Gobelin apparaît sur l'escalier, il est violemment expulsé !)
+        if (currentRoomId === 8 && checkCollision(enemy, centerStairs)) {
+            let cx = centerStairs.x + centerStairs.width/2;
+            let cy = centerStairs.y + centerStairs.height/2;
+            if (Math.abs((enemy.x + enemy.size/2) - cx) > Math.abs((enemy.y + enemy.size/2) - cy)) {
+                enemy.x += (enemy.x + enemy.size/2 > cx) ? 10 : -10;
+            } else {
+                enemy.y += (enemy.y + enemy.size/2 > cy) ? 10 : -10;
+            }
+        }
+
         let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size;
         let eMaxY = canvas.height - wallMargin - arenaShrink - enemy.size;
         if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY;
@@ -573,7 +693,7 @@ function update() {
                 if (enemy.type === 'goblin' || enemy.type === 'skeleton') enemy.attackAnimTimer = 15; 
                 
                 let dmg = 20;
-                if (enemy.type === 'troll') dmg = isPhase2 ? 25 : 50; // Troll frappe MOINS fort en P2 (25)
+                if (enemy.type === 'troll') dmg = isPhase2 ? 25 : 50; 
                 else if (enemy.type === 'dragon') dmg = 30;
 
                 playerStats.health -= dmg; 
@@ -737,7 +857,6 @@ function update() {
         }
     }
 
-    // --- ACCÈS À L'ESCALIER LORS DE LA VICTOIRE ---
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 45, y: canvas.height/2 - 45, width: 90, height: 90 };
         if (checkCollision(player, triggerStairs)) {
@@ -756,7 +875,6 @@ function update() {
     requestAnimationFrame(update);
 }
 
-// Fonction spéciale pour gérer le Spawn du Boss (Loin de l'escalier)
 function loadRoom(roomId) {
   currentRoomId = roomId;
   projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
@@ -815,9 +933,7 @@ function loadRoom(roomId) {
           else if (roomId === 5) spawnEnemy('goblin', 2, 400, 300);
           else if (roomId === 6) spawnEnemy('goblin', 2, 800, 300);
           else if (roomId === 7) spawnEnemy('goblin', 5, 450, 200);
-          
-          // --- APPARAÎT EN BAS À DROITE POUR NE PAS TOUCHER L'ESCALIER ! ---
-          else if (roomId === 8) spawnEnemy('troll', 1, 950, 550); 
+          else if (roomId === 8) spawnEnemy('troll', 1, 950, 550); // LE BOSS APPARAÎT EN BAS À DROITE !
       }
   } else if (roomId === 999) {
       currentDoors = []; currentItems = [];
