@@ -8,7 +8,7 @@ document.addEventListener('contextmenu', event => event.preventDefault());
 // ============================================================================
 // --- GESTION DE LA MUSIQUE (PLAYLIST) ---
 // ============================================================================
- playlist = [
+ const playlist = [
     'assets/audio/track1.mp3', 
     'assets/audio/track2.mp3', 
     'assets/audio/track3.mp3'  
