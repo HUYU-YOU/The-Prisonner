@@ -147,3 +147,4 @@ assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
 assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 
+assetsManager.load('crate', 'assets/skins/crate.png'); //CAISSE
