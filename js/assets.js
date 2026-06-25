@@ -1,86 +1,6 @@
 // ============================================================================
-// ENGINE INITIALIZATION & GLOBAL VARIABLES MANAGEMENT
-// ============================================================================
-
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-canvas.width = 1200;
-canvas.height = 800;
-
-// --- ETATS GENERAUX DU JEU ---
-let gameState = "MENU";
-const wallMargin = 50; 
-let player = { x: 150, y: 150, size: 40, speed: 5, heroClass: null, faceAngle: 0 };
-let keys = {};
-let mouse = { x: 0, y: 0 };
-let leftClickHeld = false;
-let leftClickHoldTime = 0;
-
-// --- NÉCROMANCIEN & VAGUES (NOUVEAUTÉS) ---
-let spaceHoldTimer = 0;       // Chrono touche espace pour le menu secret
-let waveStartDelay = 0;       // Délai de 1 sec avant attaque des ennemis
-let necroKills = [];          // Le "Cimetière" (réserve d'âmes)
-let necroSummons = [];        // Invocations sur le terrain
-
-// --- SESSIONS DE COMBAT & EFFETS ---
-let projectiles = [];
-let enemyProjectiles = []; 
-let hazards = []; 
-let isAttacking = false;
-let attackCooldown = 0;
-let playerInvulnerableTimer = 0; 
-let playerPoisonTimer = 0; 
-let playerSlowTimer = 0; 
-let bloodStains = []; 
-let particles = [];
-let shakeTimer = 0;
-let shakeIntensity = 0;
-
-// --- PARAMETRES DES COMPETANCES ULTIMES ---
-let isUltimateActive = false;
-let ultimateTimer = 0;
-let elfStealthBroken = false;
-let lastClickTime = 0;
-
-// --- CARTOGRAPHIE ET SAUVEGARDE DU MONDE ---
-let currentRoomId = 1;
-let currentDoors = [];
-let currentItems = [];
-let currentEnemies = [];
-
-let worldState = {
-    unlockedDoors: {},
-    openedDoors: {},
-    collectedItems: {},
-    clearedRooms: {},
-    bloodStains: {},
-    enemyStates: {} 
-};
-
-// --- CONFIGURATION DU MODE ARENE (VAGUES) ---
-let holdTimer = null;
-let isHolding = false;
-let holdCompleted = false;
-let isArenaMode = false;
-let arenaWave = 1;
-let arenaTimer = 0; 
-let arenaState = "WAITING"; 
-let arenaShrink = 0; 
-
-// --- DECORATIONS ET STATISTIQUES JOUEUR ---
-let bookshelf = { x: canvas.width - wallMargin - 40, y: 200, width: 40, height: 150 };
-
-let playerStats = {
-  name: "???", weapon: "???", health: 100, maxHealth: 100, mana: 0,
-  inventory: {
-    keys: { gold: 0, skull: 0, orb: 0 },
-    potions: { green: 0, yellow: 0, blue: 0, red: 0 } 
-  }
-};
-
-// ============================================================================
-// ASSETS MANAGER - CHARGEMENT DES IMAGES
+// ASSETS MANAGER - CHARGEMENT DES IMAGES (js/assets.js)
+// Ne contient désormais plus aucune variable pour éviter les bugs !
 // ============================================================================
 
 const assetsManager = {
@@ -107,8 +27,8 @@ assetsManager.load('card_burned', 'assets/card/Burned.png');
 
 assetsManager.load('left_door', 'assets/decors/left_door.png');
 assetsManager.load('right_door', 'assets/decors/right_door.png');
-assetsManager.load('back_door', 'assets/decors/back_door.png');   // Porte du NORD (Haut)
-assetsManager.load('front_door', 'assets/decors/front_door.png'); // Porte du SUD (Bas)
+assetsManager.load('back_door', 'assets/decors/back_door.png');   
+assetsManager.load('front_door', 'assets/decors/front_door.png'); 
 assetsManager.load('left_door_close', 'assets/decors/left_door_close.png');
 assetsManager.load('left_door_open', 'assets/decors/left_door_open.png');
 assetsManager.load('left_door_key', 'assets/decors/left_door_key.png'); 
@@ -126,7 +46,7 @@ assetsManager.load('Elf_west', 'assets/skins/Elf_west.png');
 assetsManager.load('Elf_est', 'assets/skins/Elf_est.png');
 assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
 assetsManager.load('Elf_front', 'assets/skins/Elf_front.png');
-assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); //A FAIRE!!
+assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); 
 
 // --- SKINS BURNED ---
 assetsManager.load('Burned_top_view', 'assets/skins/Burned_top_view.jpeg');
@@ -145,16 +65,15 @@ assetsManager.load('spider_top_view', 'assets/skins/spider_top_view.jpeg');
 assetsManager.load('troll_top_view', 'assets/skins/troll_top_view.png');    
 assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
-assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 
 // --- DÉCORS ET CAISSES ---
-assetsManager.load('crate1', 'assets/decorations/crate.png');     // Tonneau intact
-assetsManager.load('crate2', 'assets/decorations/crate2.png');    // Tonneau cassé
-assetsManager.load('crate3', 'assets/decorations/crate3.png');    // Caisse intacte
-assetsManager.load('crate4', 'assets/decorations/crate4.png');    // Caisse cassée
+assetsManager.load('crate1', 'assets/decorations/crate.png');     
+assetsManager.load('crate2', 'assets/decorations/crate2.png');    
+assetsManager.load('crate3', 'assets/decorations/crate3.png');    
+assetsManager.load('crate4', 'assets/decorations/crate4.png');    
 
-assetsManager.load('chest1', 'assets/decorations/chest1.png');    // Coffre fermé
-assetsManager.load('chest2', 'assets/decorations/chest2.png');    // Coffre ouvert
+assetsManager.load('chest1', 'assets/decorations/chest1.png');    
+assetsManager.load('chest2', 'assets/decorations/chest2.png');    
 
 assetsManager.load('bibliotheque', 'assets/decorations/bibliotheque.png');
 assetsManager.load('bench', 'assets/decorations/bench.png');
