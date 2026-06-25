@@ -128,7 +128,7 @@ assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
 assetsManager.load('Elf_front', 'assets/skins/Elf_front.png');
 assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); //A FAIRE!!
 
-// --- SKINS MAGE ---
+// --- SKINS BURNED ---
 assetsManager.load('Burned_top_view', 'assets/skins/Burned_top_view.jpeg');
 assetsManager.load('Attack_fire_mage', 'assets/skins/Attack_fire_mage.jpeg');
 assetsManager.load('Ulti_fire_mage', 'assets/skins/Ulti_fire_mage.jpeg');
