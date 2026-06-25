@@ -1,10 +1,12 @@
 // ============================================================================
 // VISUAL EFFECTS ENGINE, LIGHTING, HUD REFRESH & CANVAS GRAPHICS LAYER
 // ============================================================================
+
 function triggerShake(intensity, duration) { 
     shakeIntensity = intensity; 
     shakeTimer = duration; 
 }
+
 function spawnParticles(x, y, color, count, isGlow = false) {
     for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2; 
@@ -21,6 +23,7 @@ function spawnParticles(x, y, color, count, isGlow = false) {
         });
     }
 }
+
 function updateHUD() {
     let healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
     document.getElementById('health-bar').style.width = healthPercent + "%";
@@ -34,6 +37,7 @@ function updateHUD() {
     document.getElementById('p-blue').innerText = playerStats.inventory.potions.blue;
     document.getElementById('p-red').innerText = playerStats.inventory.potions.red;
 }
+
 function renderGameView() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
@@ -63,35 +67,35 @@ function renderGameView() {
             }
         } 
     }
-    
-    // --- 2. COULOIRS : CORRIGÉ UNIQUEMENT SALLE 5 ET 6 ---
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
-    if (isVertCorridor) {
+
+    // --- 2. COULOIRS (MURS NOIRS DYNAMIQUES) ---
+    let bTop = (currentRoomId === 2 || currentRoomId === 3) ? 250 : wallMargin;
+    let bBot = (currentRoomId === 2 || currentRoomId === 3) ? 550 : canvas.height - wallMargin;
+
+    if (currentRoomId === 2 || currentRoomId === 3) {
         ctx.fillStyle = '#0a0a0a'; 
-        ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
-        ctx.fillRect(canvas.width - 350 + wallMargin, 0, 350, canvas.height); 
+        ctx.fillRect(0, 0, canvas.width, bTop - wallMargin); 
+        ctx.fillRect(0, bBot + wallMargin, canvas.width, canvas.height - bBot - wallMargin); 
         
         ctx.strokeStyle = '#3d342c'; 
         ctx.lineWidth = 6;
-        ctx.beginPath(); ctx.moveTo(350 - wallMargin, 0); ctx.lineTo(350 - wallMargin, canvas.height); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(canvas.width - 350 + wallMargin, 0); ctx.lineTo(canvas.width - 350 + wallMargin, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, bTop - wallMargin); ctx.lineTo(canvas.width, bTop - wallMargin); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, bBot + wallMargin); ctx.lineTo(canvas.width, bBot + wallMargin); ctx.stroke();
     }
-    
+
+    // --- 3. DÉCORS ET ARÈNE ---
     let wallL = assetsManager.images['left_wall']; 
-    if (wallL && wallL.complete) ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
+    if (wallL && wallL.complete) ctx.drawImage(wallL, 0, 0, wallMargin, canvas.height);
     let wallR = assetsManager.images['right_wall']; 
-    if (wallR && wallR.complete) ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
+    if (wallR && wallR.complete) ctx.drawImage(wallR, canvas.width - wallMargin, 0, wallMargin, canvas.height);
     let wallT = assetsManager.images['back_wall']; 
-    if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
+    if (wallT && wallT.complete) ctx.drawImage(wallT, 0, bTop - wallMargin, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; 
-    if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
-    
-    // FIX : LE SANG OPAQUE ET GORE EST DE RETOUR
+    if (wallB && wallB.complete) ctx.drawImage(wallB, 0, bBot, canvas.width, wallMargin);
+
     bloodStains.forEach(blood => { 
-        ctx.fillStyle = 'rgba(138, 3, 3, 1.0)'; // Rouge sang opaque
-        ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.fill(); 
-        ctx.fillStyle = 'rgba(80, 0, 0, 1.0)'; // Coeur plus sombre
-        ctx.beginPath(); ctx.arc(blood.x, blood.y, (blood.r || 15) * 0.6, 0, Math.PI * 2); ctx.fill(); 
+        ctx.fillStyle = 'rgba(100, 0, 0, 0.7)'; 
+        ctx.beginPath(); ctx.arc(blood.x + 10, blood.y + 10, blood.r, 0, Math.PI * 2); ctx.fill(); 
     });
 
     if (currentRoomId === 999) { 
@@ -99,6 +103,7 @@ function renderGameView() {
         ctx.lineWidth = 6; 
         ctx.strokeRect(wallMargin + arenaShrink, wallMargin + arenaShrink, canvas.width - (wallMargin + arenaShrink) * 2, canvas.height - (wallMargin + arenaShrink) * 2);
     }
+
     if (currentRoomId === 8) {
         let sImg = assetsManager.images['stairs_down']; 
         let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
@@ -129,8 +134,10 @@ function renderGameView() {
         }
         ctx.restore();
     }
+
     // --- SALLE 1 : BANC ET BIBLIOTHÈQUE ---
     if (currentRoomId === 1) {
+        // Le Banc (Position fixe à droite)
         let benchX = 400; let benchY = canvas.height - wallMargin - 60; 
         let imgBench = assetsManager.images['bench'];
         if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) {
@@ -139,6 +146,8 @@ function renderGameView() {
             ctx.fillStyle = '#3e2a1d'; ctx.fillRect(benchX, benchY + 20, 200, 20); 
             ctx.fillStyle = '#111'; ctx.fillRect(benchX - 10, benchY + 10, 10, 30); ctx.fillRect(benchX + 200, benchY + 10, 10, 30); 
         }
+
+        // La Bibliothèque (Gérée globalement dans main.js)
         if (typeof bookshelf !== 'undefined') {
             let imgBiblio = assetsManager.images['bibliotheque'];
             if (imgBiblio && imgBiblio.complete && imgBiblio.naturalWidth > 0) {
@@ -151,6 +160,8 @@ function renderGameView() {
                 ctx.fillStyle = '#8c1c1c'; ctx.fillRect(bookshelf.x + 10, bookshelf.y + 10, 8, 20); 
                 ctx.fillStyle = '#29547d'; ctx.fillRect(bookshelf.x + 20, bookshelf.y + 50, 10, 20);
             }
+
+            // --- MESSAGE AU SURVOL DE LA BIBLIOTHÈQUE ---
             let distToBiblio = Math.hypot((player.x + player.size/2) - (bookshelf.x + bookshelf.width/2), (player.y + player.size/2) - (bookshelf.y + bookshelf.height/2));
             if (distToBiblio < 120) {
                 ctx.save();
@@ -161,6 +172,8 @@ function renderGameView() {
                 let popW = 320; let popH = 40;
                 let popX = bookshelf.x + bookshelf.width/2 - popW/2;
                 let popY = bookshelf.y - popH - 15;
+                
+                // Petit effet de lévitation douce
                 popY += Math.sin(Date.now() / 200) * 3;
                 
                 ctx.fillRect(popX, popY, popW, popH);
@@ -175,19 +188,25 @@ function renderGameView() {
             }
         }
     }
-    // --- 4. CAISSES ET COFFRES ---
+
+    // --- 4. CAISSES ET COFFRES (Rendu par-dessus le sol) ---
     if (typeof currentCrates !== 'undefined') {
         currentCrates.forEach(crate => {
             let imgName = '';
+            
             if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1';
             else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3';
             else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
+
             let img = assetsManager.images[imgName];
             ctx.save();
             ctx.translate(crate.x + crate.size/2, crate.y + crate.size/2);
+
+            // Secousse si on a tapé dessus mais pas encore cassé
             if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') {
                 ctx.rotate(Math.sin(Date.now() / 20) * 0.1);
             }
+
             if (img && img.complete && img.naturalWidth > 0) {
                 ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size);
             } else {
@@ -202,6 +221,7 @@ function renderGameView() {
             ctx.restore();
         });
     }
+
     // --- 5. PORTES ET RAMASSABLES ---
     currentDoors.forEach(door => {
         let doorImg = null; 
@@ -212,10 +232,12 @@ function renderGameView() {
         else if (door.requiresKey && door.locked) { stateStr = '_key'; }
         
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+
         if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
         else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
         else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; 
         else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
+
         if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { 
             ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); 
             if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { 
@@ -233,6 +255,7 @@ function renderGameView() {
             } 
         }
     });
+
     currentItems.forEach(item => {
         if (!item.collected) {
             let floatY = Math.sin(Date.now() / 200) * 3; 
@@ -261,15 +284,10 @@ function renderGameView() {
         }
     });
 
-    // --- MÉTÉORES DU DRAGON DESSINÉS ICI ---
-    if (typeof hazards !== 'undefined') {
-        hazards.forEach(h => { 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill(); 
-            let fallH = (h.timer / h.maxTimer) * 150;
-            ctx.fillStyle = 'rgba(192, 57, 43, 0.9)'; ctx.beginPath(); ctx.arc(h.x, h.y - fallH, h.radius * (1 - (h.timer/h.maxTimer)*0.5), 0, Math.PI*2); ctx.fill(); 
-            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.stroke(); 
-        });
-    }
+    hazards.forEach(h => { 
+        ctx.fillStyle = 'rgba(192, 57, 43, 0.3)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill(); 
+        ctx.fillStyle = 'rgba(192, 57, 43, 0.8)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius * (1 - h.timer/h.maxTimer), 0, Math.PI*2); ctx.fill(); 
+    });
 
     if (typeof necroSummons !== 'undefined') {
         necroSummons.forEach(s => {
@@ -292,6 +310,7 @@ function renderGameView() {
             ctx.fillStyle = '#8e44ad'; ctx.fillRect(s.x, s.y - 10, s.size * (s.health / s.maxHealth), 4);
         });
     }
+
     currentEnemies.forEach(enemy => {
         ctx.save(); 
         ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
@@ -303,9 +322,11 @@ function renderGameView() {
         ctx.rotate(rot); 
         ctx.scale(scalePulse, scalePulse); 
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
+
         if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } 
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } 
         else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+
         let skinName = '';
         if (enemy.type === 'goblin') { 
             if (enemy.blockAnimTimer > 0) skinName = 'goblin_top_block'; 
@@ -320,6 +341,7 @@ function renderGameView() {
         else if (enemy.type === 'troll') skinName = 'troll_top_view'; 
         else if (enemy.type === 'mage') skinName = 'Burned_top_view'; 
         else if (enemy.type === 'dragon') skinName = 'drake_top_view';
+
         let img = assetsManager.images[skinName];
         if (!img || !img.complete || img.naturalWidth === 0) { 
             let fallbackName = ''; 
@@ -328,6 +350,7 @@ function renderGameView() {
             else fallbackName = skinName; 
             img = assetsManager.images[fallbackName]; 
         }
+
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 2.5; 
             if (enemy.type === 'mage' || enemy.type === 'spider') { 
@@ -375,8 +398,7 @@ function renderGameView() {
             ctx.textAlign = 'left'; 
         }
     });
-    
-    // FIX : AFFICHAGE DU STATUT INVINCIBLE
+
     let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon'].includes(e.type));
     if (boss && currentRoomId === 8 && !worldState.bossDefeated) {
         let bossName = boss.type === 'troll' ? "TROLL CORROMPU" : (boss.type === 'mage' ? "MAGE EXILÉ" : "DRAGON MAUDIT"); 
@@ -389,9 +411,10 @@ function renderGameView() {
         ctx.fillRect(bx + 2, by + 2, (barWidth - 4) * hpPercent, barHeight - 4); 
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; 
         ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; 
-        ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, by - 8); 
+        ctx.fillText(bossName + (isPhase2 ? " (ENRAGÉ)" : ""), canvas.width/2, by - 8); 
         ctx.textAlign = 'left';
     }
+
     projectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle); 
         ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); ctx.shadowBlur = 10;
@@ -415,7 +438,9 @@ function renderGameView() {
         ctx.restore();
     });
     
+    // ========================================================================
     // --- L'OS CLASSIQUE (SANS AUCUNE BRILLANCE) ---
+    // ========================================================================
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -462,8 +487,10 @@ function renderGameView() {
         }
         ctx.restore();
     });
+
     let drawPlayer = true;
     if (playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
+
     if (drawPlayer) {
         let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5; 
@@ -474,23 +501,23 @@ function renderGameView() {
         let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
         let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
         if (player.dashTimer > 0) tilt = Math.PI / 8; 
+
         ctx.save(); 
         ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
         ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
+
         if (player.dashTimer > 0) { 
             ctx.fillStyle = 'rgba(236, 240, 241, 0.4)'; ctx.beginPath(); ctx.arc(-player.dashVx*2, -player.dashVy*2, player.size/2, 0, Math.PI*2); ctx.fill(); 
         }
+
         if (player.heroClass === 'Elf') {
             ctx.rotate(tilt); let angle = player.faceAngle; let skin = 'Elf_front'; 
             if (angle > -Math.PI/4 && angle <= Math.PI/4) skin = 'Elf_est'; else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) skin = 'Elf_front'; else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) skin = 'Elf_back'; else skin = 'Elf_west';                                                     
             let img = assetsManager.images[skin]; let displaySize = player.size * 6.0; 
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); } 
             else { ctx.rotate(player.faceAngle); ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); }
-        } 
-        // FIX : LE MAGE REGARDE ENFIN DU BON CÔTÉ (+ Math.PI / 2 AU LIEU DE - )
-        else if (player.heroClass === 'Mage') {
-            ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
-            let imgMage = assetsManager.images['Burned_top_view']; let displaySize = player.size * 3.5; 
+        } else if (player.heroClass === 'Mage') {
+            ctx.rotate(player.faceAngle + tilt - (Math.PI / 2)); let imgMage = assetsManager.images['Burned_top_view']; let displaySize = player.size * 3.5; 
             if (imgMage && imgMage.complete && imgMage.naturalWidth > 0) { ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); ctx.drawImage(imgMage, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); } 
             else { ctx.rotate(Math.PI / 2); ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : '#e67e22'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); }
         } else {
@@ -505,6 +532,7 @@ function renderGameView() {
         }
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
+
     particles.forEach(p => { 
         ctx.globalAlpha = p.life; 
         if (p.glow) { ctx.save(); ctx.shadowColor = p.color; ctx.shadowBlur = 10; } 
@@ -512,12 +540,14 @@ function renderGameView() {
         if (p.glow) ctx.restore(); 
     });
     ctx.globalAlpha = 1.0; 
+
     if (playerStats.inventory.coins !== undefined) {
         ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 10, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left';
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 60, 43);
     }
+
     ctx.save();
     let gradient = ctx.createRadialGradient(
         player.x + player.size/2, player.y + player.size/2, 100, 
@@ -526,9 +556,11 @@ function renderGameView() {
     gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');       
     gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
     gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
+
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height); 
     ctx.restore();
+
     if (currentRoomId === 999) {
         ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
         let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
@@ -536,5 +568,6 @@ function renderGameView() {
         else if (displayWave > 0) ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
         ctx.textAlign = 'left';
     }
+
     ctx.restore(); 
 }
