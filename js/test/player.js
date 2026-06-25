@@ -86,21 +86,20 @@ window.triggerDash = function() {
         let dist = Math.hypot(dx, dy); if (dist === 0) { dx = 1; dy = 0; dist = 1; }
         player.dashVx = (dx/dist) * (player.speed * 4); player.dashVy = (dy/dist) * (player.speed * 4);
         player.dashTimer = 12; player.dashCooldown = 60; playerInvulnerableTimer = 15; 
-        if (typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#ecf0f1', 15);
+        // L'effet dégueulasse des particules grises au démarrage a été retiré.
     }
 };
 
-// --- TES ULTIMATES COMPLETS RÉTABLIS ICI ! ---
 window.activateUltimate = function() {
     if (playerStats.mana < 100) return;
 
     if (player.heroClass === 'Necromancer') {
-        if (necroSummons.length > 0) {
+        if (typeof necroSummons !== 'undefined' && necroSummons.length > 0) {
             let totalHP = 0; necroSummons.forEach(s => totalHP += s.health);
             necroSummons = []; totalHP *= 2; 
             necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 4.5, attackCooldown: 0, invulnerableTimer: 180 }); 
             if(typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 80, true);
-        } else if (necroKills.length > 0) {
+        } else if (typeof necroKills !== 'undefined' && necroKills.length > 0) {
             necroKills.forEach(kill => {
                 let sz = 30, hp = 40, dmg = 15, spd = 4.5;
                 if(kill === 'troll') { hp = 200; sz = 60; dmg = 30; spd = 3.5; }
@@ -126,7 +125,7 @@ window.activateUltimate = function() {
             let ultDmg = enemy.isBurning ? 100 : 50; 
             if (!enemy.invulnerable) {
                 enemy.health -= ultDmg;
-                enemy.ultiAnimTimer = 30; // DÉCLENCHE L'EXPLOSION DU MAGE
+                enemy.ultiAnimTimer = 30;
             }
             enemy.isBurning = true; enemy.burnTicks = 10; enemy.burnTimer = 60;
             if(typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#e67e22', 30, true);
@@ -137,7 +136,6 @@ window.activateUltimate = function() {
     if (typeof window.updateHUD === 'function') window.updateHUD();
 };
 
-// --- TA FONCTION DE MORT FLUIDE SANS RELOAD DE PAGE ---
 window.handlePlayerDeath = function() {
     gameState = "GAMEOVER"; 
     setTimeout(() => {
