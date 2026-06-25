@@ -147,4 +147,11 @@ assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
 assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 
-assetsManager.load('crate', 'assets/skins/crate.png'); //CAISSE
+// --- DÉCORS ET CAISSES ---
+assetsManager.load('crate1', 'assets/decorations/crate.png');     // Tonneau intact
+assetsManager.load('crate2', 'assets/decorations/crate2.png');    // Tonneau cassé
+assetsManager.load('crate3', 'assets/decorations/crate3.png');    // Caisse intacte
+assetsManager.load('crate4', 'assets/decorations/crate4.png');    // Caisse cassée
+
+assetsManager.load('chest1', 'assets/decorations/chest1.png');    // Coffre fermé
+assetsManager.load('chest2', 'assets/decorations/chest2.png');    // Coffre ouvert
