@@ -25,10 +25,7 @@ assetsManager.load('card_knight', 'assets/card/Knight.png');
 assetsManager.load('card_elf', 'assets/card/Elf.png');
 assetsManager.load('card_burned', 'assets/card/Burned.png');
 
-assetsManager.load('left_door', 'assets/decors/left_door.png');
-assetsManager.load('right_door', 'assets/decors/right_door.png');
-assetsManager.load('back_door', 'assets/decors/back_door.png');   
-assetsManager.load('front_door', 'assets/decors/front_door.png'); 
+
 assetsManager.load('left_door_close', 'assets/decors/left_door_close.png');
 assetsManager.load('left_door_open', 'assets/decors/left_door_open.png');
 assetsManager.load('left_door_key', 'assets/decors/left_door_key.png'); 
