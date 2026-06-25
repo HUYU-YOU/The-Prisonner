@@ -64,7 +64,7 @@ assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
 assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
 
 // --- DÉCORS ET CAISSES ---
-assetsManager.load('crate1', 'assets/decorations/crate.png');     
+assetsManager.load('crate1', 'assets/decorations/crate1.png');     
 assetsManager.load('crate2', 'assets/decorations/crate2.png');    
 assetsManager.load('crate3', 'assets/decorations/crate3.png');    
 assetsManager.load('crate4', 'assets/decorations/crate4.png');    
