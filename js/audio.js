@@ -1,5 +1,5 @@
 // ============================================================================
-// GESTION AUDIO (js/audio.js)
+// js/audio.js - GESTION DE LA MUSIQUE ET DU SON
 // ============================================================================
 
 const playlist = [
@@ -38,26 +38,8 @@ window.changeVolume = function(val) {
     if (s2) s2.value = val;
 };
 
-window.addEventListener('DOMContentLoaded', () => {
-    const audioUi = document.getElementById('audio-ui');
-    const volSlider = document.getElementById('volume-slider');
-    if (audioUi && volSlider) {
-        audioUi.addEventListener('mouseenter', () => volSlider.style.display = 'block');
-        audioUi.addEventListener('mouseleave', () => volSlider.style.display = 'none');
-    }
-
-    // Connecte automatiquement TOUT bouton contenant le mot "MAP" ou "PAUSE"
-    document.querySelectorAll('button').forEach(btn => {
-        if (btn.innerText.toUpperCase().includes('MAP') || btn.innerText.toUpperCase().includes('PAUSE')) {
-            btn.addEventListener('click', () => {
-                if(typeof togglePause === 'function') togglePause();
-            });
-        }
-    });
-});
-
 document.body.addEventListener('click', () => {
     if (bgMusic.paused && !isMuted && bgMusic.src) {
-        bgMusic.play().catch(e => console.log("Attente action joueur pour l'audio"));
+        bgMusic.play().catch(e => console.log("Attente action joueur pour audio"));
     }
 }, { once: true });
