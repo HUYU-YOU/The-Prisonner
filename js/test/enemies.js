@@ -47,6 +47,79 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
             attackAnimTimer: 0, blockAnimTimer: 0, ultiAnimTimer: 0, dashTimer: 180, isDashing: 0
         });
     }
+    window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
+    for (let i = 0; i < count; i++) {
+        let ex = baseX, ey = baseY;
+        if (ex === null || ey === null) {
+            let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
+            let bLeft = isVertCorridor ? 350 : wallMargin;
+            let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
+            let minSpawnX = bLeft + arenaShrink, maxSpawnX = bRight - arenaShrink - 40;
+            let minSpawnY = wallMargin + arenaShrink, maxSpawnY = canvas.height - wallMargin - arenaShrink - 40;
+            ex = minSpawnX + Math.random() * (maxSpawnX - minSpawnX);
+            ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY);
+        }
+        
+        let size = 40, hp = 90, spd = 3.5, col = '#27ae60';
+        if (type === 'skeleton') { hp = 50; spd = 2; col = '#bdc3c7'; }
+        else if (type === 'spider') { size = 30; hp = 1; spd = 7; col = '#8e44ad'; }
+        else if (type === 'troll') { size = 80; hp = 900; spd = 2.5; col = '#117a65'; }
+        else if (type === 'mage') { size = 60; hp = 900; spd = 2; col = '#9b59b6'; }
+        else if (type === 'dragon') { size = 150; hp = 3000; spd = 1.0; col = '#8b0000'; }
+
+        if (isArenaMode && arenaWave >= 25 && type !== 'spider' && type !== 'dragon') hp += (arenaWave - 24) * 30;
+
+        currentEnemies.push({ 
+            x: ex, y: ey, size: size, health: hp, maxHealth: hp, speed: spd, color: col, type: type, 
+            shootCooldown: 0, summonTimer: 300, wobble: Math.random() * Math.PI * 2,
+            phase: 1, invulnerable: false, isBurning: false, burnTicks: 0, burnTimer: 0,
+            attackAnimTimer: 0, blockAnimTimer: 0, ultiAnimTimer: 0, dashTimer: 180, isDashing: 0
+        });
+    }
+};
+
+window.updateEnemies = function() {
+    currentEnemies.forEach((enemy) => {
+        // --- LOGIQUE BOSS TROLL ---
+        if (enemy.type === 'troll') {
+            if (enemy.health < enemy.maxHealth / 2) {
+                enemy.speed = 5.5; // Accélère en phase 2
+                if (Math.random() < 0.01) { /* Dash Troll */ enemy.isDashing = 30; enemy.dashVx = (player.x - enemy.x) * 0.1; enemy.dashVy = (player.y - enemy.y) * 0.1; }
+            }
+        }
+        // --- LOGIQUE BOSS MAGE ---
+        if (enemy.type === 'mage') {
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) { spawnEnemy('skeleton', 2, enemy.x, enemy.y); enemy.summonTimer = 400; }
+            if (enemy.health < enemy.maxHealth / 2) enemy.shootCooldown -= 1; // Attaque 2x plus vite
+            if (enemy.shootCooldown <= 0) {
+                let ang = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+                enemyProjectiles.push({ type: 'fire', x: enemy.x, y: enemy.y, vx: Math.cos(ang)*8, vy: Math.sin(ang)*8, size: 12, damage: 25, color: '#e74c3c' });
+                enemy.shootCooldown = 60;
+            }
+        }
+        // --- LOGIQUE BOSS DRAGON ---
+        if (enemy.type === 'dragon') {
+            if (enemy.health < enemy.maxHealth / 2 && enemy.phase === 1) {
+                enemy.phase = 2; enemy.invulnerable = true;
+                setTimeout(() => { enemy.invulnerable = false; }, 30000);
+            }
+            if (enemy.invulnerable) {
+                if (Math.random() < 0.05) hazards.push({ x: player.x, y: player.y, radius: 50, timer: 60, maxTimer: 60, damage: 30 });
+            } else {
+                if (Math.random() < 0.02) { // 5 boules de feu
+                    for(let i=-2; i<=2; i++) {
+                        let ang = Math.atan2(player.y - enemy.y, player.x - enemy.x) + (i * 0.2);
+                        enemyProjectiles.push({ type: 'fire', x: enemy.x, y: enemy.y, vx: Math.cos(ang)*7, vy: Math.sin(ang)*7, size: 15, damage: 20, color: '#e74c3c' });
+                    }
+                }
+            }
+        }
+        // Déplacement générique
+        let dx = player.x - enemy.x, dy = player.y - enemy.y, dist = Math.hypot(dx, dy);
+        if (dist > 0 && enemy.isDashing <= 0) { enemy.x += (dx/dist) * enemy.speed; enemy.y += (dy/dist) * enemy.speed; }
+        else if (enemy.isDashing > 0) { enemy.x += enemy.dashVx; enemy.y += enemy.dashVy; enemy.isDashing--; }
+    });
 };
 
 window.updateEnemies = function() {
