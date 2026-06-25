@@ -88,7 +88,7 @@ function renderGameView() {
         ctx.strokeRect(x, y, w, h);
     }
 
-    // --- L'ESCALIER CENTRAL (PILIER GEANT) ---
+    // --- L'ESCALIER CENTRAL (OPTION B ULTRA-VISIBLE) ---
     if (currentRoomId === 8) {
         let sImg = assetsManager.images['stairs_down'];
         let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
@@ -97,26 +97,24 @@ function renderGameView() {
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
             ctx.drawImage(sImg, sx, sy, sw, sh);
             if (!worldState.bossDefeated) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // Grisé pendant le combat
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; 
                 ctx.fillRect(sx, sy, sw, sh);
             }
         } else {
-            // OPTION B: Un bel escalier géométrique (pyramide de carrés)
+            // NOUVELLE OPTION B : Un gros bloc de pierre noire avec du texte
             ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh);
-            ctx.fillStyle = '#2c3e50';
-            for(let i=0; i<6; i++) {
-                let stepOff = i * 12;
-                ctx.fillRect(sx + stepOff, sy + stepOff, sw - stepOff*2, sh - stepOff*2);
-                ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-                ctx.strokeRect(sx + stepOff, sy + stepOff, sw - stepOff*2, sh - stepOff*2);
-            }
-            // Si la porte est fermée, on met un effet rouge menaçant
+            ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.strokeRect(sx, sy, sw, sh);
+            
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
             if (!worldState.bossDefeated) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.fillRect(sx, sy, sw, sh);
-                ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)'; ctx.lineWidth = 4;
-                ctx.strokeRect(sx+4, sy+4, sw-8, sh-8);
+                ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10);
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20);
+            } else {
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5);
             }
+            ctx.textAlign = 'left';
         }
         
         if (worldState.bossDefeated) {
@@ -146,7 +144,6 @@ function renderGameView() {
         let stateStr = '_close'; 
         if (isOpen) { stateStr = '_open'; } else if (door.requiresKey && door.locked) { stateStr = '_key'; }
         
-        // Ferme visuellement la porte Sud en salle 8 si le boss vit !
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
 
         if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr];
@@ -222,9 +219,9 @@ function renderGameView() {
         let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2);
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         
-        // 🛠️ ROTATION MAGIQUE INVERSÉE À 180 DEGRÉS !
-        // (Si tes personnages continuaient à te tourner le dos, cela les remettra de face)
-        let angleToPlayer = Math.atan2(dy, dx) + (Math.PI / 2); 
+        // 🛠️ ROTATION MAGIQUE INVERSÉE (- Math.PI / 2) ! 
+        // Vos images regardent vers le sud, ça les mettra face à vous !
+        let angleToPlayer = Math.atan2(dy, dx) - (Math.PI / 2); 
 
         let rot = angleToPlayer + Math.sin(enemy.wobble) * 0.15; 
         let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
@@ -314,7 +311,6 @@ function renderGameView() {
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4);
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4);
         } else if (currentRoomId !== 8) {
-            // Dans l'arène, les boss ont une petite barre
             let bossName = enemy.type === 'troll' ? "Troll Corrompu" : (enemy.type === 'mage' ? "Mage Exilé" : "Dragon Maudit");
             ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; 
             ctx.fillText(bossName, enemy.x + enemy.size/2, enemy.y - 25); 
@@ -325,7 +321,7 @@ function renderGameView() {
         }
     });
 
-    // --- 7. BARRE DE VIE GLOBALE DU BOSS (EN HAUT DE L'ÉCRAN) ---
+    // --- 7. BARRE DE VIE GLOBALE DU BOSS EN SALLE 8 (EN HAUT DE L'ÉCRAN) ---
     let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon'].includes(e.type));
     if (boss && currentRoomId === 8 && !worldState.bossDefeated) {
         let bossName = boss.type === 'troll' ? "TROLL CORROMPU" : (boss.type === 'mage' ? "MAGE EXILÉ" : "DRAGON MAUDIT");
@@ -334,16 +330,15 @@ function renderGameView() {
         let barWidth = 600;
         let barHeight = 24;
         let bx = canvas.width/2 - barWidth/2;
-        let by = 30; // Positionnée majestueusement en haut !
+        let by = 30; // En haut !
 
         ctx.fillStyle = '#111';
         ctx.fillRect(bx, by, barWidth, barHeight);
         
-        ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; // Violet si enragé !
+        ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; 
         let hpPercent = Math.max(0, boss.health) / boss.maxHealth;
         ctx.fillRect(bx + 2, by + 2, (barWidth - 4) * hpPercent, barHeight - 4);
         
-        // Nom du Boss
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; 
         ctx.font = 'bold 22px Arial'; 
         ctx.textAlign = 'center'; 
@@ -374,7 +369,7 @@ function renderGameView() {
         ctx.restore();
     });
     
-    // --- 9. PROJECTILES ENNEMIS (OS ALLONGÉS & TOILES) ---
+    // --- 9. PROJECTILES ENNEMIS (OS ALLONGÉS) ---
     enemyProjectiles.forEach(p => { 
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -385,15 +380,11 @@ function renderGameView() {
         if (p.type === 'bone') {
             ctx.rotate(pAngle); // L'os pointe droit devant comme une flèche
             ctx.fillStyle = '#ecf0f1';
-            let l = p.size * 2.5; // Bien allongé !
-            let w = p.size * 0.4; 
-            
+            let l = p.size * 2.5; let w = p.size * 0.4; 
             ctx.fillRect(-l, -w, l * 2, w * 2); 
             ctx.beginPath(); ctx.arc(-l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(-l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill(); 
             ctx.beginPath(); ctx.arc(l, -w*1.5, w*1.5, 0, Math.PI*2); ctx.arc(l, w*1.5, w*1.5, 0, Math.PI*2); ctx.fill();   
-            
-            ctx.fillStyle = '#bdc3c7';
-            ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-l + 2, -w/2, l*2 - 4, w);
         } 
         else if (p.type === 'bat_web') {
             ctx.rotate(pAngle); 
