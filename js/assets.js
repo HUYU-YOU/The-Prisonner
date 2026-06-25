@@ -155,3 +155,6 @@ assetsManager.load('crate4', 'assets/decorations/crate4.png');    // Caisse cass
 
 assetsManager.load('chest1', 'assets/decorations/chest1.png');    // Coffre fermé
 assetsManager.load('chest2', 'assets/decorations/chest2.png');    // Coffre ouvert
+
+assetsManager.load('bibliotheque', 'assets/decorations/bibliotheque.png');
+assetsManager.load('bench', 'assets/decorations/bench.png');
