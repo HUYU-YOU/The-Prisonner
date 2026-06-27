@@ -67,12 +67,20 @@ window.renderGameView = function() {
     let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
-    // --- SANG OPAQUE ET SOMBRE SUR LE SOL ---
+  // --- SANG OPAQUE ET CONTRASTÉ SUR LE SOL ---
     bloodStains.forEach(blood => { 
-        ctx.fillStyle = 'rgba(138, 3, 3, 1.0)'; 
+        // Rouge foncé très net (base)
+        ctx.fillStyle = '#8a0303'; 
         ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.fill(); 
-        ctx.fillStyle = 'rgba(80, 0, 0, 1.0)';  
+        
+        // Coeur de la flaque (plus sombre pour le volume)
+        ctx.fillStyle = '#500000';  
         ctx.beginPath(); ctx.arc(blood.x, blood.y, (blood.r || 15) * 0.6, 0, Math.PI * 2); ctx.fill(); 
+        
+        // Un très léger liseré noir autour pour "détacher" la flaque du sol
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.stroke();
     });
 
     if (currentRoomId === 999) { 
