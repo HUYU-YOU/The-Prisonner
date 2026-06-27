@@ -834,7 +834,7 @@ function update() {
     });
 
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
-        if (currentEnemies[i].health <= 0) {
+       if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
             if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) {
@@ -844,7 +844,7 @@ function update() {
             }
 
             // --- DROP DE PIÈCE D'OR PAR LES ENNEMIS (30% de chance) ---
-            if (Math.random() < 0.3 && !['troll', 'mage', 'dragon'].includes(e.type)) {
+            if (Math.random() < 0.1 && !['troll', 'mage', 'dragon'].includes(e.type)) {
                 currentItems.push({ 
                     id: 'coin_en_' + Date.now() + i, 
                     type: 'coin', 
@@ -857,6 +857,13 @@ function update() {
 
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
             spawnParticles(e.x + e.size/2, e.y + e.size/2, '#c0392b', 30);
+            
+            // --- AJOUT DES FLAQUES DE SANG AU SOL ---
+            bloodStains.push({ 
+                x: e.x + e.size/2, 
+                y: e.y + e.size/2, 
+                r: Math.random() * 15 + 10 // Taille de la flaque aléatoire
+            });
             
             currentEnemies.splice(i, 1);
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
