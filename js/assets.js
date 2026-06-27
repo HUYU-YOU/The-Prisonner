@@ -77,3 +77,5 @@ assetsManager.load('chest2', 'assets/decorations/chest2.png');
 
 assetsManager.load('bibliotheque', 'assets/decorations/bibliotheque.png');
 assetsManager.load('bench', 'assets/decorations/bench.png');
+
+assetsManager.load('gold_coin', 'assets/decors/gold_coin.png');
