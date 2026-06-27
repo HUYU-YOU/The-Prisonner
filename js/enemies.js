@@ -117,10 +117,37 @@ window.updateEnemies = function() {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-            // LA COLLECTE D'ÂMES !
+   // LA COLLECTE D'ÂMES !
             if (player.heroClass === 'Necromancer') {
                 necroKills.push(e.type); 
             }
+
+            if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) { 
+                worldState.bossDefeated = true; 
+                currentItems.push({ id: 'boss_key', type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 + 80, size: 20, collected: false }); 
+                if (typeof window.triggerShake === 'function') window.triggerShake(20, 30); 
+            }
+            
+            if (Math.random() < 0.3 && !['troll', 'mage', 'dragon'].includes(e.type)) { 
+                currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
+            }
+            
+            // --- TON SYSTÈME DE SANG PARFAIT ---
+            for(let b = 0; b < 5; b++) {
+                bloodStains.push({ 
+                    x: e.x + e.size/2 + Math.random() * 30 - 15, 
+                    y: e.y + e.size/2 + Math.random() * 30 - 15,
+                    r: Math.random() * 12 + 4
+                });
+            }
+            
+            playerStats.mana = Math.min(100, playerStats.mana + 5); 
+            
+            currentEnemies.splice(i, 1);
+            if (currentEnemies.length === 0 && currentRoomId !== 999) {
+                worldState.clearedRooms[currentRoomId] = true;
+            }
+            if (typeof window.updateHUD === 'function') window.updateHUD();
 
             if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
