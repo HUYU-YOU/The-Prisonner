@@ -37,7 +37,6 @@ window.handlePlayerAttack = function() {
                 if (!enemy.invulnerable) {
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         enemy.blockAnimTimer = 45; 
-                        if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15); 
                     } else { 
                         enemy.health -= 50; 
                         // --- SANG AU LIEU DES PARTICULES ---
