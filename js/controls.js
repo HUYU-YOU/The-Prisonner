@@ -8,11 +8,6 @@ window.addEventListener('keydown', (e) => {
     let k = e.key.toLowerCase(); if(k === ' ') k = 'space'; keys[k] = true; 
     
     if (k === 'shift') { if (typeof window.triggerDash === 'function') window.triggerDash(); }
-
-window.addEventListener('keydown', (e) => { 
-    let k = e.key.toLowerCase(); if(k === ' ') k = 'space'; keys[k] = true; 
-    
-    if (k === 'shift') { if (typeof window.triggerDash === 'function') window.triggerDash(); }
     if (k === 'escape' || k === 'p' || k === 'm') { if (typeof window.togglePause === 'function') window.togglePause(); }
     
     if (k === '1' || k === '&') { if (typeof window.usePotion === 'function') window.usePotion('green'); } 
@@ -56,7 +51,6 @@ if (canvas) {
         }
         lastClickTime = now;
 
-        // L'action d'attaque sera gérée dans combat.js
         if (typeof window.handlePlayerAttack === 'function') window.handlePlayerAttack();
     });
 }
