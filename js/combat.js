@@ -93,6 +93,13 @@ window.updateProjectiles = function() {
                     }
                 }
                 if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, enemy.color, 10);
+                }
+                // --- SANG AU LIEU DES PARTICULES POUR PROJECTILES ---
+                bloodStains.push({
+                    x: enemy.x + enemy.size/2 + Math.random() * 10 - 5,
+                    y: enemy.y + enemy.size/2 + Math.random() * 10 - 5,
+                    r: Math.random() * 8 + 3
+                });
                 
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 if (isPiercingElf || player.heroClass === 'Mage') { 
