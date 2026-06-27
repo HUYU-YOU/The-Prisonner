@@ -7,7 +7,22 @@ function triggerShake(intensity, duration) {
     shakeTimer = duration; 
 }
 
-
+function spawnParticles(x, y, color, count, isGlow = false) {
+    for (let i = 0; i < count; i++) {
+        let angle = Math.random() * Math.PI * 2; 
+        let speed = Math.random() * 5 + 2;
+        particles.push({ 
+            x: x, 
+            y: y, 
+            vx: Math.cos(angle) * speed, 
+            vy: Math.sin(angle) * speed, 
+            life: 1.0, 
+            color: color, 
+            size: Math.random() * 5 + 3, 
+            glow: isGlow 
+        });
+    }
+}
 
 function updateHUD() {
     let healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
