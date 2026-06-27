@@ -35,12 +35,17 @@ window.handlePlayerAttack = function() {
         currentEnemies.forEach(enemy => { 
             if (window.checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
-                    if (enemy.type === 'goblin' && Math.random() < 0.15) { 
+       if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         enemy.blockAnimTimer = 45; 
                         if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15); 
                     } else { 
                         enemy.health -= 50; 
-                        if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, enemy.color, 15); 
+                        // --- SANG AU LIEU DES PARTICULES ---
+                        bloodStains.push({
+                            x: enemy.x + enemy.size/2 + Math.random() * 10 - 5,
+                            y: enemy.y + enemy.size/2 + Math.random() * 10 - 5,
+                            r: Math.random() * 8 + 3
+                        });
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
                 }
