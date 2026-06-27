@@ -5,64 +5,10 @@
 // Désactive le menu Clic Droit normal du navigateur pour utiliser le Dash !
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-// ============================================================================
-// --- GESTION DE LA MUSIQUE (PLAYLIST) ---
-// ============================================================================
- const playlist = [
-    'assets/audio/track1.mp3', 
-    'assets/audio/track2.mp3', 
-    'assets/audio/track3.mp3'  
-];
-
-let currentTrackIndex = 0;
-let bgMusic = new Audio(playlist[currentTrackIndex]);
-bgMusic.volume = 0.1; // Volume bas par défaut
-let isMuted = false;
-
-// Passer à la musique suivante quand la piste se termine
-bgMusic.addEventListener('ended', () => {
-    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-    bgMusic.src = playlist[currentTrackIndex];
-    bgMusic.play().catch(e => console.log(e));
-});
-
-window.toggleMute = function() {
-    isMuted = !isMuted;
-    bgMusic.muted = isMuted;
-    let btn = document.getElementById('mute-btn');
-    if (btn) btn.innerText = isMuted ? '🔇' : '🔊';
-};
-
-window.changeVolume = function(val) {
-    bgMusic.volume = parseFloat(val);
-    let slider1 = document.getElementById('volume-slider');
-    let slider2 = document.getElementById('pause-volume');
-    if (slider1) slider1.value = val;
-    if (slider2) slider2.value = val;
-};
-
-// Afficher le slider au survol du bouton
-window.addEventListener('DOMContentLoaded', () => {
-    const audioUi = document.getElementById('audio-ui');
-    const volSlider = document.getElementById('volume-slider');
-    if (audioUi && volSlider) {
-        audioUi.addEventListener('mouseenter', () => volSlider.style.display = 'block');
-        audioUi.addEventListener('mouseleave', () => volSlider.style.display = 'none');
-    }
-});
-
-// Le navigateur exige un clic avant d'autoriser l'audio
-document.body.addEventListener('click', () => {
-    if (bgMusic.paused && !isMuted) {
-        bgMusic.play().catch(e => console.log("Attente d'interaction audio"));
-    }
-}, { once: true });
-
 
 // ============================================================================
 // --- SYSTÈME DE PAUSE ET CARTE (MINIMAP) ---
 // ============================================================================
-let isPaused = false;
 
 window.togglePause = function() {
     if (gameState !== "PLAYING" && gameState !== "PAUSED") return;
