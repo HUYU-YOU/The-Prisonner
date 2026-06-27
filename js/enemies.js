@@ -93,11 +93,20 @@ window.updateEnemies = function() {
         if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY; 
         if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
 
-        // Dégâts au Joueur
+       // Dégâts au Joueur
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
-            if (typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#e74c3c', 25);
+            
+            // --- SANG AU SOL AU LIEU DE LA PARTICULE ---
+            for(let b = 0; b < 3; b++) {
+                bloodStains.push({
+                    x: player.x + player.size/2 + Math.random() * 20 - 10,
+                    y: player.y + player.size/2 + Math.random() * 20 - 10,
+                    r: Math.random() * 8 + 4
+                });
+            }
+            
             playerInvulnerableTimer = 60; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
