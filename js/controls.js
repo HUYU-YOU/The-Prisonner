@@ -4,12 +4,10 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-import { keys } from './globals.js';
-
-export function initControls() {
-    window.addEventListener('keydown', (e) => { keys[e.key] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
-}
+window.addEventListener('keydown', (e) => { 
+    let k = e.key.toLowerCase(); if(k === ' ') k = 'space'; keys[k] = true; 
+    
+    if (k === 'shift') { if (typeof window.triggerDash === 'function') window.triggerDash(); }
 
 window.addEventListener('keydown', (e) => { 
     let k = e.key.toLowerCase(); if(k === ' ') k = 'space'; keys[k] = true; 
