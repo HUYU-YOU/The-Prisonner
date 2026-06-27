@@ -35,7 +35,7 @@ window.handlePlayerAttack = function() {
         currentEnemies.forEach(enemy => { 
             if (window.checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
-       if (enemy.type === 'goblin' && Math.random() < 0.15) { 
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         enemy.blockAnimTimer = 45; 
                         if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15); 
                     } else { 
@@ -92,8 +92,7 @@ window.updateProjectiles = function() {
                         let dmg = 30; if (player.heroClass === 'Elf') dmg = 60; enemy.health -= dmg; 
                     }
                 }
-                if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, enemy.color, 10);
-                }
+                
                 // --- SANG AU LIEU DES PARTICULES POUR PROJECTILES ---
                 bloodStains.push({
                     x: enemy.x + enemy.size/2 + Math.random() * 10 - 5,
@@ -104,7 +103,9 @@ window.updateProjectiles = function() {
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 if (isPiercingElf || player.heroClass === 'Mage') { 
                     if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
-                } else { projectileHit = true; break; } 
+                } else { 
+                    projectileHit = true; break; 
+                } 
             }
         }
         if (projectileHit) projectiles.splice(i, 1); 
@@ -146,4 +147,3 @@ window.updateItemsAndCrates = function() {
         }
     }
 };
-
