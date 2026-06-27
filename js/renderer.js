@@ -18,28 +18,13 @@ window.spawnParticles = function(x, y, color, count, isGlow = false) {
     }
 };
 
-window.updateHUD = function() {
-    let healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
-    let hBar = document.getElementById('health-bar'); if(hBar) hBar.style.width = healthPercent + "%";
-    let mBar = document.getElementById('mana-bar'); if(mBar) mBar.style.width = playerStats.mana + "%";
-    
-    let kg = document.getElementById('key-gold'); if(kg) kg.innerText = playerStats.inventory.keys.gold;
-    let ks = document.getElementById('key-skull'); if(ks) ks.innerText = playerStats.inventory.keys.skull;
-    let ko = document.getElementById('key-orb'); if(ko) ko.innerText = playerStats.inventory.keys.orb;
-    
-    let pg = document.getElementById('p-green'); if(pg) pg.innerText = playerStats.inventory.potions.green;
-    let py = document.getElementById('p-yellow'); if(py) py.innerText = playerStats.inventory.potions.yellow;
-    let pb = document.getElementById('p-blue'); if(pb) pb.innerText = playerStats.inventory.potions.blue;
-    let pr = document.getElementById('p-red'); if(pr) pr.innerText = playerStats.inventory.potions.red;
-    let pc = document.getElementById('inv-coins'); if(pc) pc.innerText = playerStats.inventory.coins;
-};
-
 window.renderGameView = function() {
     if (!ctx) return;
     
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
+    // --- GESTION DU SHAKE (TREMBLEMENT DE CAMÉRA) ---
     if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
@@ -48,6 +33,7 @@ window.renderGameView = function() {
         shakeIntensity *= 0.9; 
     }
     
+    // --- RENDU DU SOL ---
     let imageSol = assetsManager.images['sol_base'];
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -63,6 +49,7 @@ window.renderGameView = function() {
         } 
     }
 
+    // --- COULOIRS ET MURS ---
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
@@ -80,11 +67,11 @@ window.renderGameView = function() {
     let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
-    // --- SANG OPAQUE ET SOMBRE SUR LE SOL (Derrière le personnage et les ennemis) ---
+    // --- SANG OPAQUE ET SOMBRE SUR LE SOL ---
     bloodStains.forEach(blood => { 
-        ctx.fillStyle = 'rgba(138, 3, 3, 1.0)'; // Flaque totalement opaque (Alpha 1.0)
+        ctx.fillStyle = 'rgba(138, 3, 3, 1.0)'; 
         ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.fill(); 
-        ctx.fillStyle = 'rgba(80, 0, 0, 1.0)';  // Centre plus sombre
+        ctx.fillStyle = 'rgba(80, 0, 0, 1.0)';  
         ctx.beginPath(); ctx.arc(blood.x, blood.y, (blood.r || 15) * 0.6, 0, Math.PI * 2); ctx.fill(); 
     });
 
@@ -153,7 +140,20 @@ window.renderGameView = function() {
             if (item.type === 'key') { ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(item.x, item.y + floatY, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x + 6, item.y - 3 + floatY, 18, 6); ctx.fillRect(item.x + 18, item.y + 3 + floatY, 3, 6); } 
             else if (item.type === 'potion_green') { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); ctx.fillStyle = '#e67e22'; ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); } 
             else if (item.type === 'key_skull') { ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(item.x, item.y + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#bdc3c7'; ctx.fillRect(item.x - 3, item.y + 10 + floatY, 6, 15); ctx.fillStyle = '#2c3e50'; ctx.fillRect(item.x - 2, item.y + 2 + floatY, 4, 4); } 
-            else if (item.type === 'coin') { ctx.translate(item.x, item.y + floatY); let scaleX = Math.abs(Math.cos(Date.now() / 200)); ctx.scale(scaleX, 1); ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, item.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(0, 0, item.size*0.6, 0, Math.PI*2); ctx.fill(); }
+            else if (item.type === 'coin') { 
+                // --- VRAIE IMAGE DE PIÈCE AU SOL ICI ---
+                ctx.translate(item.x, item.y + floatY); 
+                let scaleX = Math.abs(Math.cos(Date.now() / 200)); 
+                ctx.scale(scaleX, 1); 
+                let coinImg = assetsManager.images['gold_coin'];
+                if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+                    let displaySize = item.size * 2.5; 
+                    ctx.drawImage(coinImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
+                } else {
+                    ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, item.size, 0, Math.PI*2); ctx.fill(); 
+                    ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(0, 0, item.size*0.6, 0, Math.PI*2); ctx.fill(); 
+                }
+            }
             ctx.restore();
         }
     });
@@ -243,12 +243,10 @@ window.renderGameView = function() {
         ctx.save(); 
         ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
         ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-        
-        // SUPPRIMÉ: l'arc gris transparent du joueur pendant le dash (`rgba(236, 240, 241, 0.4)`) 
 
         if (player.heroClass === 'Elf') {
             ctx.rotate(tilt); let angle = player.faceAngle; let skin = 'Elf_front'; 
-            if (angle > -Math.PI/4 && angle <= Math.PI/4) skin = 'Elf_est'; else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) skin = 'Elf_front'; else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) skin = 'Elf_back'; else skin = 'Elf_west';                                                     
+            if (angle > -Math.PI/4 && angle <= Math.PI/4) skin = 'Elf_est'; else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) skin = 'Elf_front'; else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) skin = 'Elf_back'; else skin = 'Elf_west';                                                      
             let img = assetsManager.images[skin]; let displaySize = player.size * 6.0; 
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); } 
             else { ctx.rotate(player.faceAngle); ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); }
@@ -269,7 +267,7 @@ window.renderGameView = function() {
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
     
-    // Rendu des vraies particules restantes (magie, etc) par dessus le reste
+    // --- LES EFFETS MAGIQUES (NE PAS SUPPRIMER !) ---
     particles.forEach(p => { 
         ctx.globalAlpha = p.life; 
         if (p.glow) { ctx.save(); ctx.shadowColor = p.color; ctx.shadowBlur = 10; } 
@@ -278,23 +276,31 @@ window.renderGameView = function() {
     });
     ctx.globalAlpha = 1.0; 
     
+    // --- L'ICÔNE DE PIÈCE DANS L'HUD EN HAUT À GAUCHE ---
     if (playerStats.inventory.coins !== undefined) {
-        ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 10, 0, Math.PI*2); ctx.fill();
+        let coinImg = assetsManager.images['gold_coin'];
+        if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+            ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
+        } else {
+            ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 10, 0, Math.PI*2); ctx.fill();
+        }
         ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left';
-        ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 60, 43);
+        ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
+    
     ctx.save();
     let gradient = ctx.createRadialGradient(
         player.x + player.size/2, player.y + player.size/2, 100, 
         player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
     );
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');       
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');        
     gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
     gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height); 
     ctx.restore();
+    
     if (currentRoomId === 999) {
         ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
         let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
@@ -303,4 +309,4 @@ window.renderGameView = function() {
         ctx.textAlign = 'left';
     }
     ctx.restore(); 
-}
+};
