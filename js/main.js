@@ -14,24 +14,72 @@ window.update = function() {
         requestAnimationFrame(window.update); return;
     }
     
-    if (gameState === "PAUSED") { requestAnimationFrame(window.update); return; }
-    if (gameState !== "PLAYING" && gameState !== "GAMEOVER") { requestAnimationFrame(window.update); return; }
-    if (gameState === "GAMEOVER") { if(typeof window.renderGameView==='function') window.renderGameView(); requestAnimationFrame(window.update); return; }
+    if (gameState === "PAUSED" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
+        requestAnimationFrame(window.update); return; 
+    }
+    if (gameState === "GAMEOVER") { 
+        if(typeof window.renderGameView==='function') window.renderGameView(); 
+        requestAnimationFrame(window.update); return; 
+    }
     
-    if (currentRoomId === 999 && waveStartDelay > 0) waveStartDelay--;
-    if (currentRoomId === 999 && arenaWave >= 10 && arenaShrink < 150) { arenaShrink += 0.1; }
+    // --- GESTION DU MODE ARÈNE (VAGUES) ---
+    if (currentRoomId === 999) {
+        if (waveStartDelay > 0) waveStartDelay--;
+        if (arenaWave >= 10 && arenaShrink < 150) { arenaShrink += 0.1; }
+
+        if (arenaState === "WAITING") {
+            if (typeof arenaTimer === 'undefined') arenaTimer = 0;
+            arenaTimer--; // LE COMPTEUR TOURNE ENFIN !
+            
+            if (arenaTimer <= 0) {
+                arenaState = "PLAYING";
+                
+                // --- APPARITION DES POTIONS TOUTES LES 5 VAGUES ---
+                if (arenaWave > 1 && (arenaWave - 1) % 5 === 0) {
+                    currentItems.push({ id: 'pot_r_'+arenaWave, type: 'potion_red', x: canvas.width/2 - 30, y: canvas.height/2, size: 15, collected: false });
+                    currentItems.push({ id: 'pot_b_'+arenaWave, type: 'potion_blue', x: canvas.width/2 + 30, y: canvas.height/2, size: 15, collected: false });
+                }
+
+                // --- LOGIQUE DES BOSS ---
+                if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
+                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
+                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
+                else if (arenaWave === 35) { 
+                    window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); 
+                }
+                else if (arenaWave === 45) { 
+                    window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); 
+                }
+                else {
+                    // --- VAGUES NORMALES ---
+                    let countGoblin = 3 + Math.floor(arenaWave * 1.2);
+                    window.spawnEnemy('goblin', countGoblin);
+                    if (arenaWave >= 3) window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
+                    if (arenaWave >= 15) window.spawnEnemy('spider', 2);
+                }
+                arenaWave++;
+            }
+        } else if (arenaState === "PLAYING") {
+            // Fin de la vague
+            if (currentEnemies.length === 0) {
+                arenaState = "WAITING";
+                arenaTimer = 300; // 300 frames = 5 secondes
+                playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + 15);
+                if(typeof window.updateHUD==='function') window.updateHUD();
+            }
+        }
+    }
 
     if (!worldState.openedDoors) worldState.openedDoors = {};
     let roomChanged = false;
     currentDoors.forEach(door => {
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (checkCollision(player, door)) { player.y = door.y - player.size - 5; } return;
+            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } return;
         }
-        if (!roomChanged && checkCollision(player, door)) { 
+        if (!roomChanged && window.checkCollision(player, door)) { 
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
                     playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; if(typeof window.updateHUD==='function') window.updateHUD();
-                    if(typeof window.spawnParticles==='function') window.spawnParticles(door.x + door.width/2, door.y + door.height/2, '#f1c40f', 30);
                     if (door.dest !== null) { 
                         worldState.openedDoors[door.id] = true; if(typeof window.saveRoomState==='function') window.saveRoomState(); if(typeof window.loadRoom==='function') window.loadRoom(door.dest, door.face); player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
                     }
@@ -50,14 +98,14 @@ window.update = function() {
     if (roomChanged) { requestAnimationFrame(window.update); return; }
     
     if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
-        if (typeof activateUltimate === 'function') activateUltimate(); 
+        if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
         keys['space'] = false; keys['0'] = false; keys['control'] = false; 
     }
     
     if (leftClickHeld) {
         leftClickHoldTime++;
         if (leftClickHoldTime >= 180 && playerStats.mana >= 100) { 
-            if (typeof activateUltimate === 'function') activateUltimate(); 
+            if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
             leftClickHeld = false; 
         }
     }
@@ -73,7 +121,6 @@ window.update = function() {
         if (player.heroClass === 'Knight' && ultimateTimer % 60 === 0) {
             playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.1));
             if(typeof window.updateHUD==='function') window.updateHUD(); 
-            if(typeof window.spawnParticles==='function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 10);
         }
     }
     
@@ -82,7 +129,6 @@ window.update = function() {
         if (playerPoisonTimer % 60 === 0 && playerStats.health > 1) {
             playerStats.health -= 5; if (playerStats.health < 1) playerStats.health = 1;
             if(typeof window.updateHUD==='function') window.updateHUD(); 
-            if(typeof window.spawnParticles==='function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#8e44ad', 5);
         }
     }
     
@@ -91,10 +137,10 @@ window.update = function() {
     let manaBar = document.getElementById('mana-bar');
     if (playerStats.mana >= 100) { if(manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if(manaBar) manaBar.style.opacity = "1"; }
     
-    // --- GESTION DU DÉPLACEMENT ---
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let dx_mov = 0; let dy_mov = 0;
+    
     if (player.dashTimer > 0) {
         player.dashTimer--; dx_mov = player.dashVx; dy_mov = player.dashVy;
     } else {
@@ -103,21 +149,19 @@ window.update = function() {
         if (keys['z'] || keys['w'] || keys['arrowup'])    dy_mov -= currentSpeedPlayer;
         if (keys['s'] || keys['arrowdown'])               dy_mov += currentSpeedPlayer;
     }
+    
     let oldPx = player.x; player.x += dx_mov;
-    
-    if (currentRoomId === 8 && checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
+    if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
-        // CORRECTION : Les coffres cassés ne bloquent plus !
-        if (!obj.isBroken && checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
+        if (!obj.isBroken && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
     }
-    let oldPy = player.y; player.y += dy_mov;
     
-    if (currentRoomId === 8 && checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
+    let oldPy = player.y; player.y += dy_mov;
+    if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
-        // CORRECTION : Les coffres cassés ne bloquent plus !
-        if (!obj.isBroken && checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
+        if (!obj.isBroken && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
     }
     
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
@@ -140,23 +184,23 @@ window.update = function() {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
     
-    // --- GESTION DES PARTICULES (LE MOTEUR ÉTAIT MANQUANT !) ---
+    // --- GESTION DE LA MAGIE ---
     for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 0.03; // Les particules disparaissent progressivement
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
         if (p.life <= 0) particles.splice(i, 1);
     }
     
-    // --- APPEL AUX AUTRES FICHIERS ---
+    // --- L'ÉBOUEUR (ANTI-LAG ABSOLU) ---
+    // Empêche le jeu de ramer en limitant la mémoire à 150 flaques de sang au sol !
+    if (bloodStains.length > 150) bloodStains.splice(0, bloodStains.length - 150);
+
     if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 45, y: canvas.height/2 - 45, width: 90, height: 90 };
-        if (checkCollision(player, triggerStairs)) {
+        if (window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
                 setTimeout(() => { alert("FÉLICITATIONS !\n\nLa suite de l'aventure arrive très bientôt..."); window.location.reload(); }, 100); 
