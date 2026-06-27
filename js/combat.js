@@ -109,7 +109,6 @@ window.updateProjectiles = function() {
         if (projectileHit) projectiles.splice(i, 1); 
     }
 };
-
 window.updateItemsAndCrates = function() {
     for (let i = currentItems.length - 1; i >= 0; i--) {
         let item = currentItems[i];
@@ -122,6 +121,7 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'coin') { playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); }
             
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
+            // On ne fait PLUS d'explosion jaune moche quand on ramasse l'or
             currentItems.splice(i, 1); 
         }
     }
@@ -132,15 +132,19 @@ window.updateItemsAndCrates = function() {
             crate.isBroken = true; 
             if (crate.type === 'chest') {
                 if (!worldState.openedChests) worldState.openedChests = {}; worldState.openedChests[crate.id] = true;
-                currentItems.push({ id: 'potion_chest_' + Date.now(), type: 'potion_green', x: crate.x + 10, y: crate.y + crate.size + 20, size: 15, collected: false });
-                currentItems.push({ id: 'coin_chest1_' + Date.now(), type: 'coin', x: crate.x + 40, y: crate.y + crate.size + 15, size: 8, collected: false });
-                currentItems.push({ id: 'coin_chest2_' + Date.now(), type: 'coin', x: crate.x - 10, y: crate.y + crate.size + 15, size: 8, collected: false });
+                // LES ITEMS APPARAISSENT DIRECTEMENT AU CENTRE DU COFFRE
+                currentItems.push({ id: 'potion_chest_' + Date.now(), type: 'potion_green', x: crate.x + 25, y: crate.y + 25, size: 15, collected: false });
+                currentItems.push({ id: 'coin_chest1_' + Date.now(), type: 'coin', x: crate.x + 10, y: crate.y + 40, size: 8, collected: false });
+                currentItems.push({ id: 'coin_chest2_' + Date.now(), type: 'coin', x: crate.x + 40, y: crate.y + 40, size: 8, collected: false });
+                
+                // Magnifique explosion de magie dorée !
                 if (typeof window.spawnParticles === 'function') window.spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#f1c40f', 30);
             } else {
                 if (!worldState.brokenCrates) worldState.brokenCrates = {}; worldState.brokenCrates[crate.id] = true;
-                currentItems.push({ id: 'coin_' + Date.now() + i, type: 'coin', x: crate.x + 10, y: crate.y + crate.size + 10, size: 8, collected: false });
+                currentItems.push({ id: 'coin_' + Date.now() + i, type: 'coin', x: crate.x + 15, y: crate.y + 15, size: 8, collected: false });
                 if (typeof window.spawnParticles === 'function') window.spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#8B4513', 20);
             }
         }
     }
 };
+
