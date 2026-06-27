@@ -3,7 +3,18 @@
 // ============================================================================
 
 document.addEventListener('contextmenu', event => event.preventDefault());
+import { player } from './globals.js';
+import { initControls } from './controls.js';
+import { renderGameView } from './renderer.js';
 
+initControls();
+
+function update() {
+    // Logique de mouvement centralisée
+    renderGameView();
+    requestAnimationFrame(update);
+}
+update();
 window.update = function() {
     if (gameState === "MENU") {
         if (keys['space']) {
