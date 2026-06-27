@@ -500,7 +500,40 @@ function update() {
     }
 
     if (currentRoomId === 999 && waveStartDelay > 0) waveStartDelay--;
+// --- GESTION DU MODE ARÈNE (VAGUES) ---
+    if (isArenaMode && currentRoomId === 999) {
+        // Rétrécissement de l'arène à partir de la vague 10
+        if (arenaWave >= 10 && arenaShrink < 150) {
+            arenaShrink += 0.1; 
+        }
 
+        if (arenaState === "WAITING") {
+            arenaTimer--;
+            if (arenaTimer <= 0) {
+                arenaState = "PLAYING";
+                
+                // Génération des ennemis selon le numéro de la vague
+                let countGoblin = 3 + Math.floor(arenaWave * 1.2);
+                if (typeof spawnEnemy === 'function') {
+                    spawnEnemy('goblin', countGoblin);
+                    if (arenaWave >= 3) spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
+                    if (arenaWave % 5 === 0) spawnEnemy('troll', 1 + Math.floor(arenaWave / 20));
+                    if (arenaWave >= 8 && arenaWave % 3 === 0) spawnEnemy('mage', 1);
+                    if (arenaWave % 10 === 0) spawnEnemy('dragon', 1);
+                }
+                arenaWave++;
+            }
+        } else if (arenaState === "PLAYING") {
+            if (currentEnemies.length === 0) {
+                arenaState = "WAITING";
+                arenaTimer = 180; // 3 secondes d'attente avant la prochaine vague
+                
+                // Petit soin à la fin de chaque vague
+                playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + 15);
+                if (typeof updateHUD === 'function') updateHUD();
+            }
+        }
+    }
     if (!worldState.openedDoors) worldState.openedDoors = {};
 
     let roomChanged = false;
