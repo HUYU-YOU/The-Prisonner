@@ -18,9 +18,18 @@ window.updateHUD = function() {
     let pr = document.getElementById('p-red'); if(pr) pr.innerText = playerStats.inventory.potions.red;
     
     let pcoins = document.getElementById('inv-coins'); 
-    if(pcoins && playerStats.inventory.coins !== undefined) pcoins.innerText = playerStats.inventory.coins;
 };
-
+if (playerStats.inventory.coins !== undefined) {
+        let coinImg = assetsManager.images['gold_coin'];
+        if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+            ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
+        } else {
+            ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 10, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left';
+        ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
+    }
 window.updatePortrait = function(heroClass) {
     const portrait = document.getElementById('portrait');
     const imgMap = { 
