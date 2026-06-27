@@ -93,12 +93,12 @@ window.updateEnemies = function() {
         if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY; 
         if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
 
-       // Dégâts au Joueur
+        // Dégâts au Joueur
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
             
-            // --- SANG AU SOL AU LIEU DE LA PARTICULE ---
+            // --- SANG AU SOL (À LA PLACE DES PARTICULES ROUGES) ---
             for(let b = 0; b < 3; b++) {
                 bloodStains.push({
                     x: player.x + player.size/2 + Math.random() * 20 - 10,
@@ -117,7 +117,7 @@ window.updateEnemies = function() {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-   // LA COLLECTE D'ÂMES !
+            // LA COLLECTE D'ÂMES !
             if (player.heroClass === 'Necromancer') {
                 necroKills.push(e.type); 
             }
@@ -132,7 +132,7 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
-            // --- TON SYSTÈME DE SANG PARFAIT ---
+            // --- SYSTÈME DE SANG PARFAIT À LA MORT DE L'ENNEMI ---
             for(let b = 0; b < 5; b++) {
                 bloodStains.push({ 
                     x: e.x + e.size/2 + Math.random() * 30 - 15, 
@@ -142,25 +142,6 @@ window.updateEnemies = function() {
             }
             
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
-            
-            currentEnemies.splice(i, 1);
-            if (currentEnemies.length === 0 && currentRoomId !== 999) {
-                worldState.clearedRooms[currentRoomId] = true;
-            }
-            if (typeof window.updateHUD === 'function') window.updateHUD();
-
-            if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) { 
-                worldState.bossDefeated = true; 
-                currentItems.push({ id: 'boss_key', type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 + 80, size: 20, collected: false }); 
-                if (typeof window.triggerShake === 'function') window.triggerShake(20, 30); 
-            }
-            
-            if (Math.random() < 0.3 && !['troll', 'mage', 'dragon'].includes(e.type)) { 
-                currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
-            }
-            
-            playerStats.mana = Math.min(100, playerStats.mana + 5); 
-            if (typeof window.spawnParticles === 'function') window.spawnParticles(e.x + e.size/2, e.y + e.size/2, '#c0392b', 30); 
             
             currentEnemies.splice(i, 1);
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
