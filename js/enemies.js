@@ -57,7 +57,6 @@ window.updateEnemies = function() {
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
 
-    // On ajoute un index (idx) pour différencier les ennemis entre eux
     currentEnemies.forEach((enemy, idx) => {
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0; 
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0; 
@@ -68,6 +67,30 @@ window.updateEnemies = function() {
         if (enemy.blockAnimTimer > 0) enemy.blockAnimTimer--; 
         if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; 
         enemy.wobble += 0.1; 
+        
+        // --- LA BRÛLURE ORANGE DU MAGE S'ARRÊTE ENFIN ---
+        if (enemy.burnTimer > 0) {
+            enemy.burnTimer--;
+            if (enemy.burnTimer <= 0) enemy.isBurning = false;
+        }
+
+        // --- INVOCATIONS DES BOSS ---
+        if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
+        if (enemy.type === 'troll') {
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) {
+                window.spawnEnemy('goblin', 2, enemy.x + 20, enemy.y + 20);
+                enemy.summonTimer = 300; // Invoque toutes les 5s
+            }
+        }
+        if (enemy.type === 'mage') {
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) {
+                window.spawnEnemy('skeleton', 1, enemy.x + 20, enemy.y + 20);
+                window.spawnEnemy('spider', 1, enemy.x - 20, enemy.y - 20);
+                enemy.summonTimer = 400; // Invoque toutes les ~6.5s
+            }
+        }
 
         let minDistToTarget = 9999;
         if (!isElfInvuln) minDistToTarget = Math.hypot(player.x - enemy.x, player.y - enemy.y); 
@@ -81,30 +104,32 @@ window.updateEnemies = function() {
         let dx_mov = 0, dy_mov = 0; 
         if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
 
-        // --- ANTICOLLISION ENTRE ENNEMIS (Pour éviter qu'ils se superposent) ---
+        // --- ANTI-STACKING (Évite que les ennemis se fondent les uns dans les autres) ---
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
             if (idx !== otherIdx) {
-                let diffX = enemy.x - otherEnemy.x;
-                let diffY = enemy.y - otherEnemy.y;
-                let distEnemies = Math.hypot(diffX, diffY);
-                let minDistEnemies = (enemy.size + otherEnemy.size) * 0.5; 
-                if (distEnemies < minDistEnemies && distEnemies > 0) {
-                    repulseX += (diffX / distEnemies) * 1.5;
-                    repulseY += (diffY / distEnemies) * 1.5;
+                let diffX = enemy.x - otherEnemy.x; let diffY = enemy.y - otherEnemy.y;
+                if (Math.abs(diffX) < 60 && Math.abs(diffY) < 60) {
+                    let distSq = diffX*diffX + diffY*diffY;
+                    let minDistSq = ((enemy.size + otherEnemy.size) * 0.4) ** 2;
+                    if (distSq < minDistSq && distSq > 0) {
+                        let repDist = Math.sqrt(distSq);
+                        repulseX += (diffX / repDist) * 1.5; repulseY += (diffY / repDist) * 1.5;
+                    }
                 }
             }
         });
-        dx_mov += repulseX;
-        dy_mov += repulseY;
-        // -----------------------------------------------------------------------
+        dx_mov += repulseX; dy_mov += repulseY;
+
+        let isBoss = ['troll', 'mage', 'dragon'].includes(enemy.type);
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        // CORRECTION: Les Boss ne bloquent plus dans l'escalier !
+        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } }
 
         let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size; 
@@ -112,17 +137,12 @@ window.updateEnemies = function() {
         if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY; 
         if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
 
-        // Dégâts au Joueur
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
             
             for(let b = 0; b < 3; b++) {
-                bloodStains.push({
-                    x: player.x + player.size/2 + Math.random() * 20 - 10,
-                    y: player.y + player.size/2 + Math.random() * 20 - 10,
-                    r: Math.random() * 8 + 4
-                });
+                bloodStains.push({ x: player.x + player.size/2 + Math.random() * 20 - 10, y: player.y + player.size/2 + Math.random() * 20 - 10, r: Math.random() * 8 + 4 });
             }
             
             playerInvulnerableTimer = 60; 
@@ -135,9 +155,7 @@ window.updateEnemies = function() {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-            if (player.heroClass === 'Necromancer') {
-                necroKills.push(e.type); 
-            }
+            if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
 
             if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
@@ -150,11 +168,7 @@ window.updateEnemies = function() {
             }
             
             for(let b = 0; b < 5; b++) {
-                bloodStains.push({ 
-                    x: e.x + e.size/2 + Math.random() * 30 - 15, 
-                    y: e.y + e.size/2 + Math.random() * 30 - 15,
-                    r: Math.random() * 12 + 4
-                });
+                bloodStains.push({ x: e.x + e.size/2 + Math.random() * 30 - 15, y: e.y + e.size/2 + Math.random() * 30 - 15, r: Math.random() * 12 + 4 });
             }
             
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
