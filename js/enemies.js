@@ -57,7 +57,8 @@ window.updateEnemies = function() {
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
 
-    currentEnemies.forEach((enemy) => {
+    // On ajoute un index (idx) pour différencier les ennemis entre eux
+    currentEnemies.forEach((enemy, idx) => {
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0; 
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0; 
         if (enemy.ultiAnimTimer === undefined) enemy.ultiAnimTimer = 0; 
@@ -80,6 +81,24 @@ window.updateEnemies = function() {
         let dx_mov = 0, dy_mov = 0; 
         if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
 
+        // --- ANTICOLLISION ENTRE ENNEMIS (Pour éviter qu'ils se superposent) ---
+        let repulseX = 0, repulseY = 0;
+        currentEnemies.forEach((otherEnemy, otherIdx) => {
+            if (idx !== otherIdx) {
+                let diffX = enemy.x - otherEnemy.x;
+                let diffY = enemy.y - otherEnemy.y;
+                let distEnemies = Math.hypot(diffX, diffY);
+                let minDistEnemies = (enemy.size + otherEnemy.size) * 0.5; 
+                if (distEnemies < minDistEnemies && distEnemies > 0) {
+                    repulseX += (diffX / distEnemies) * 1.5;
+                    repulseY += (diffY / distEnemies) * 1.5;
+                }
+            }
+        });
+        dx_mov += repulseX;
+        dy_mov += repulseY;
+        // -----------------------------------------------------------------------
+
         let oldEx = enemy.x; enemy.x += dx_mov; 
         if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
@@ -98,7 +117,6 @@ window.updateEnemies = function() {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
             
-            // --- SANG AU SOL (À LA PLACE DES PARTICULES ROUGES) ---
             for(let b = 0; b < 3; b++) {
                 bloodStains.push({
                     x: player.x + player.size/2 + Math.random() * 20 - 10,
@@ -117,7 +135,6 @@ window.updateEnemies = function() {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-            // LA COLLECTE D'ÂMES !
             if (player.heroClass === 'Necromancer') {
                 necroKills.push(e.type); 
             }
@@ -132,7 +149,6 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
-            // --- SYSTÈME DE SANG PARFAIT À LA MORT DE L'ENNEMI ---
             for(let b = 0; b < 5; b++) {
                 bloodStains.push({ 
                     x: e.x + e.size/2 + Math.random() * 30 - 15, 
