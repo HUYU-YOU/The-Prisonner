@@ -96,6 +96,3 @@ window.saveRoomState = function() {
     if (!worldState.enemyStates) worldState.enemyStates = {};
     worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
 };
-
-export const player = { x: 150, y: 150, size: 40, speed: 5, health: 100 };
-export const keys = {};
