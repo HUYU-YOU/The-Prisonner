@@ -86,7 +86,6 @@ window.updateProjectiles = function() {
                     let isBlocked = false;
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         isBlocked = true; enemy.blockAnimTimer = 45; 
-                        if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#bdc3c7', 15); 
                     }
                     if (!isBlocked) { 
                         let dmg = 30; if (player.heroClass === 'Elf') dmg = 60; enemy.health -= dmg; 
@@ -124,7 +123,6 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'coin') { playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); }
             
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
-            if (typeof window.spawnParticles === 'function') window.spawnParticles(item.x, item.y, '#f1c40f', 15);
             currentItems.splice(i, 1); 
         }
     }
