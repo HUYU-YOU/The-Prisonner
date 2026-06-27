@@ -310,8 +310,6 @@ canvas.addEventListener('mousemove', (e) => {
     mouse.y = (e.clientY - rect.top) * scaleY;
 });
 
-// Variable globale pour stocker les caisses dans la salle
-let currentCrates = []; 
 
 canvas.addEventListener('mousedown', (e) => {
     if (gameState !== "PLAYING") return;
