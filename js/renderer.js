@@ -18,7 +18,7 @@ window.spawnParticles = function(x, y, color, count, isGlow = false) {
     }
 };
 
-// --- NOUVEAU : CONVERTISSEUR D'ANGLE EN 8 DIRECTIONS ---
+// --- CONVERTISSEUR D'ANGLE EN 8 DIRECTIONS ---
 window.getDirectionName = function(angle) {
     let deg = angle * (180 / Math.PI);
     if (deg < 0) deg += 360;
@@ -37,12 +37,13 @@ window.getDirectionName = function(angle) {
 window.renderGameView = function() {
     if (!ctx) return;
     
-    // Désactive le lissage pour que le pixel art et les sprites restent ultra nets
+    // Désactive le lissage pour que le pixel art reste ultra net
     ctx.imageSmoothingEnabled = false;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
+    // --- GESTION DU SHAKE ---
     if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
@@ -51,6 +52,7 @@ window.renderGameView = function() {
         shakeIntensity *= 0.9; 
     }
     
+    // --- RENDU DU SOL ---
     let imageSol = assetsManager.images['sol_base'];
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -66,6 +68,7 @@ window.renderGameView = function() {
         } 
     }
 
+    // --- COULOIRS ET MURS ---
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
@@ -87,12 +90,9 @@ window.renderGameView = function() {
     bloodStains.forEach(blood => { 
         ctx.fillStyle = '#8a0303'; 
         ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.fill(); 
-        
         ctx.fillStyle = '#500000'; 
         ctx.beginPath(); ctx.arc(blood.x, blood.y, (blood.r || 15) * 0.6, 0, Math.PI * 2); ctx.fill(); 
-        
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.stroke();
     });
 
@@ -198,7 +198,7 @@ window.renderGameView = function() {
     }
 
     // ========================================================================
-    // --- RENDU DES ENNEMIS (MOTEUR 8 DIRECTIONS ISOMÉTRIQUE) ---
+    // --- RENDU DES ENNEMIS (MOTEUR 8 DIRECTIONS & MULTI-FRAMES) ---
     // ========================================================================
     currentEnemies.forEach(enemy => {
         ctx.save(); 
@@ -208,22 +208,37 @@ window.renderGameView = function() {
         let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
         let angleToPlayer = Math.atan2(dy, dx); 
         
-        // 1. Détection de la direction en 8 axes
         let dir = window.getDirectionName(angleToPlayer);
-
-        // 2. Détermination de l'action ('view', 'attack', 'block')
+        let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
         let action = 'view';
-        if (enemy.blockAnimTimer > 0) action = 'block'; 
-        else if (enemy.attackAnimTimer > 0) action = 'attack';
+        let skinName = '';
 
-        // 3. Récupération du sprite (Exemple exact : goblin_northeast_attack)
-        let prefix = enemy.type.toLowerCase();
-        let skinName = `${prefix}_${dir}_${action}`;
+        if (enemy.blockAnimTimer > 0) {
+            action = 'block';
+            skinName = `${prefix}_${dir}_${action}`;
+        } 
+        else if (enemy.attackAnimTimer > 0) {
+            action = 'attack';
+            
+            // --- GESTION DES ANIMATIONS D'ATTAQUE MULTI-FRAMES ---
+            let t = enemy.attackAnimTimer;
+            if (prefix === 'Skeleton' || prefix === 'Mage') {
+                if (t > 15) skinName = `${prefix}_${dir}_attack1`;
+                else skinName = `${prefix}_${dir}_attack2`;
+            } else if (prefix === 'Dragon') {
+                if (t > 20) skinName = `${prefix}_${dir}_attack1`;
+                else if (t > 10) skinName = `${prefix}_${dir}_attack2`;
+                else skinName = `${prefix}_${dir}_attack3`;
+            } else {
+                skinName = `${prefix}_${dir}_${action}`;
+            }
+        } else {
+            skinName = `${prefix}_${dir}_${action}`;
+        }
+
         let img = assetsManager.images[skinName];
-
         let is8Dir = true;
 
-        // 4. Sécurités (Fallbacks) si l'image précise manque
         if (!img || !img.complete || img.naturalWidth === 0) { 
             skinName = `${prefix}_${dir}_view`;
             img = assetsManager.images[skinName]; 
@@ -231,23 +246,23 @@ window.renderGameView = function() {
         if (!img || !img.complete || img.naturalWidth === 0) { 
             is8Dir = false; 
             let fallbackName = ''; 
-            if (prefix === 'goblin') { if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; else fallbackName = 'goblin_top_view'; } 
-            else if (prefix === 'skeleton') { if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; else fallbackName = 'Skeleton_top_view'; } 
-            else if (prefix === 'spider') fallbackName = 'spider_top_view'; 
-            else if (prefix === 'troll') fallbackName = 'troll_top_view'; 
-            else if (prefix === 'mage') fallbackName = 'Burned_top_view'; 
-            else if (prefix === 'dragon') fallbackName = 'drake_top_view';
+            let lowPrefix = prefix.toLowerCase();
+            if (lowPrefix === 'goblin') { if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; else fallbackName = 'goblin_top_view'; } 
+            else if (lowPrefix === 'skeleton') { if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; else fallbackName = 'Skeleton_top_view'; } 
+            else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; 
+            else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; 
+            else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; 
+            else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
             img = assetsManager.images[fallbackName]; 
         }
 
         let wobble = Math.sin(enemy.wobble) * 0.15; 
         let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
         
-        // --- LA MAGIE DES 8 DIRECTIONS : On ne tourne PLUS l'image ! ---
         if (is8Dir) {
-            ctx.rotate(wobble); // Juste le balancement de la marche
+            ctx.rotate(wobble); 
         } else {
-            ctx.rotate(angleToPlayer - (Math.PI / 2) + wobble); // Ancienne rotation
+            ctx.rotate(angleToPlayer - (Math.PI / 2) + wobble); 
         }
         
         ctx.scale(scalePulse, scalePulse); 
@@ -259,7 +274,7 @@ window.renderGameView = function() {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 2.5; 
-            if (enemy.type === 'mage' || enemy.type === 'spider') { 
+            if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
                 ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
             } else { 
@@ -270,7 +285,7 @@ window.renderGameView = function() {
         }
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
         
-        // ULTIME DU MAGE CORRIGÉ (L'EXPLOSION SANS BOULE ORANGE)
+        // --- CORRECTION ULTIME MAGE SANS BOULE ORANGE ---
         if (enemy.ultiAnimTimer > 0) { 
             ctx.save(); 
             ctx.globalCompositeOperation = 'screen'; 
@@ -280,7 +295,16 @@ window.renderGameView = function() {
                 let expSize = enemy.size * 3.5; 
                 ctx.globalAlpha = enemy.ultiAnimTimer / 30; 
                 ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize); 
-            } 
+            } else {
+                // Effet d'explosion vectoriel net (plus de boule orange floue)
+                let progress = 1 - (enemy.ultiAnimTimer / 30); 
+                let radius = progress * enemy.size * 2.5;
+                ctx.globalAlpha = 1 - progress;
+                ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2);
+                ctx.fillStyle = '#e74c3c'; ctx.fill();
+                ctx.beginPath(); ctx.arc(0, 0, radius * 0.7, 0, Math.PI*2);
+                ctx.fillStyle = '#f1c40f'; ctx.fill();
+            }
             ctx.restore(); 
         }
         if (enemy.isBurning) { ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); }
@@ -316,7 +340,7 @@ window.renderGameView = function() {
     });
 
     // ========================================================================
-    // --- RENDU DU JOUEUR (MOTEUR 8 DIRECTIONS ISOMÉTRIQUE) ---
+    // --- RENDU DU JOUEUR (MOTEUR 8 DIRECTIONS + ANIMATIONS) ---
     // ========================================================================
     let drawPlayer = true;
     if (playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
@@ -336,43 +360,51 @@ window.renderGameView = function() {
         ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
         ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
 
-        // 1. Calcul direction Joueur (basé sur la souris)
         let dirP = window.getDirectionName(player.faceAngle);
+        let prefixP = player.heroClass ? player.heroClass.charAt(0).toUpperCase() + player.heroClass.slice(1).toLowerCase() : 'Knight';
+        if (prefixP === 'Mage') prefixP = 'Burned'; 
         
-        // 2. Détermination de la classe et de l'action
-        let prefixP = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
-        // On conserve ta nomenclature pour le Mage
-        if (prefixP === 'mage') prefixP = 'burned';
+        // --- ANIMATIONS MULTIPLES POUR LE JOUEUR ---
+        let actionP = 'view';
+        if ((typeof isAttacking !== 'undefined' && isAttacking) || attackCooldown > 0) {
+            actionP = 'attack';
+            
+            // Calcul automatique des frames selon la vitesse du Héros
+            let midTime = 15;
+            if (prefixP === 'Knight') midTime = 20;
+            else if (prefixP === 'Burned') midTime = 17;
+            else if (prefixP === 'Necromancer') midTime = 7;
+            
+            if (attackCooldown > midTime) actionP = 'attack1';
+            else actionP = 'attack2';
+        }
         
-        let actionP = (typeof isAttacking !== 'undefined' && isAttacking) ? 'attack' : 'view';
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
-        
         let pImg = assetsManager.images[skinNameP];
         let is8DirP = true;
 
-        // Fallbacks
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-            pSkinName = `${prefixP}_${dirP}_view`;
+            let pSkinName = `${prefixP}_${dirP}_view`;
             pImg = assetsManager.images[pSkinName];
         }
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
             is8DirP = false;
             if (player.heroClass === 'Elf') {
-                let angle = player.faceAngle; pSkinName = 'Elf_front'; 
-                if (angle > -Math.PI/4 && angle <= Math.PI/4) pSkinName = 'Elf_est'; 
-                else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) pSkinName = 'Elf_front'; 
-                else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) pSkinName = 'Elf_back'; 
-                else pSkinName = 'Elf_west';                                                      
-                pImg = assetsManager.images[pSkinName]; 
-                is8DirP = true; // L'elfe utilisait déjà 4 directions fixes
+                let angle = player.faceAngle; let pSkinNameFallback = 'Elf_front'; 
+                if (angle > -Math.PI/4 && angle <= Math.PI/4) pSkinNameFallback = 'Elf_est'; 
+                else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) pSkinNameFallback = 'Elf_front'; 
+                else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) pSkinNameFallback = 'Elf_back'; 
+                else pSkinNameFallback = 'Elf_west';                                                      
+                pImg = assetsManager.images[pSkinNameFallback]; 
+                is8DirP = true; 
             } else if (player.heroClass === 'Mage') {
                 pImg = assetsManager.images['Burned_top_view'];
             }
         }
 
         if (is8DirP) {
-            ctx.rotate(tilt); // Oscillation de marche uniquement
+            ctx.rotate(tilt); 
         } else {
             if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
             else ctx.rotate(player.faceAngle + tilt); 
@@ -380,8 +412,8 @@ window.renderGameView = function() {
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             let displaySize = player.size * 2.5; 
-            if (player.heroClass === 'Elf') displaySize = player.size * 6.0;
-            if (player.heroClass === 'Mage') displaySize = player.size * 3.5;
+            if (player.heroClass === 'Elf' && !is8DirP) displaySize = player.size * 6.0;
+            if (player.heroClass === 'Mage' && !is8DirP) displaySize = player.size * 3.5;
             
             if (player.heroClass === 'Mage' && !is8DirP) { 
                 ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
@@ -390,8 +422,7 @@ window.renderGameView = function() {
                 ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize); 
             }
         } else {
-            // Dessin vectoriel de secours
-            if (is8DirP) ctx.rotate(player.faceAngle); // Si pas d'image, le dessin code DOIT pivoter
+            if (is8DirP) ctx.rotate(player.faceAngle);
             ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6'); 
             ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
             if (player.heroClass === 'Necromancer') { ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill(); ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); ctx.stroke(); } 
@@ -405,9 +436,9 @@ window.renderGameView = function() {
         ctx.restore(); ctx.globalAlpha = 1.0; 
     }
     
-    // --- LES EFFETS MAGIQUES (À CONSERVER ABSOLUMENT) ---
+    // --- LES EFFETS MAGIQUES DE PARTICULES ---
     particles.forEach(p => { 
-        ctx.globalAlpha = Math.max(0, p.life); // Sécurité anti-crash d'opacité
+        ctx.globalAlpha = Math.max(0, p.life); 
         if (p.glow) { ctx.save(); ctx.shadowColor = p.color; ctx.shadowBlur = 10; } 
         ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); 
         if (p.glow) ctx.restore(); 
