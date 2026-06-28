@@ -39,7 +39,6 @@ window.handlePlayerAttack = function() {
                         enemy.blockAnimTimer = 45; 
                     } else { 
                         enemy.health -= 50; 
-                        // --- SANG AU LIEU DES PARTICULES ---
                         bloodStains.push({
                             x: enemy.x + enemy.size/2 + Math.random() * 10 - 5,
                             y: enemy.y + enemy.size/2 + Math.random() * 10 - 5,
@@ -59,15 +58,21 @@ window.handlePlayerAttack = function() {
 };
 
 window.updateProjectiles = function() {
-    let bTop = (currentRoomId === 2 || currentRoomId === 3) ? 250 : wallMargin; 
-    let bBot = (currentRoomId === 2 || currentRoomId === 3) ? 550 : canvas.height - wallMargin;
+    // CORRECTION : Les salles 2 et 3 ne sont plus limitées comme des couloirs !
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
+    let bLeft = isVertCorridor ? 350 : wallMargin;
+    let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
+    let bTop = wallMargin; 
+    let bBot = canvas.height - wallMargin;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i]; p.x += p.vx; p.y += p.vy;
         
         if (currentRoomId === 8 && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { projectiles.splice(i, 1); continue; }
-        if (p.x < wallMargin || p.y < bTop || p.x > canvas.width - wallMargin || p.y > bBot) { projectiles.splice(i, 1); continue; }
+        
+        // Les flèches disparaissent si elles touchent les vrais murs
+        if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { projectiles.splice(i, 1); continue; }
         
         let projectileHit = false; let arrowHitbox = { x: p.x - p.size, y: p.y - p.size, size: p.size * 2 };
 
@@ -91,7 +96,6 @@ window.updateProjectiles = function() {
                     }
                 }
                 
-                // --- SANG AU LIEU DES PARTICULES POUR PROJECTILES ---
                 bloodStains.push({
                     x: enemy.x + enemy.size/2 + Math.random() * 10 - 5,
                     y: enemy.y + enemy.size/2 + Math.random() * 10 - 5,
@@ -109,6 +113,7 @@ window.updateProjectiles = function() {
         if (projectileHit) projectiles.splice(i, 1); 
     }
 };
+
 window.updateItemsAndCrates = function() {
     for (let i = currentItems.length - 1; i >= 0; i--) {
         let item = currentItems[i];
@@ -121,7 +126,6 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'coin') { playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); }
             
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
-            // On ne fait PLUS d'explosion jaune moche quand on ramasse l'or
             currentItems.splice(i, 1); 
         }
     }
@@ -132,12 +136,10 @@ window.updateItemsAndCrates = function() {
             crate.isBroken = true; 
             if (crate.type === 'chest') {
                 if (!worldState.openedChests) worldState.openedChests = {}; worldState.openedChests[crate.id] = true;
-                // LES ITEMS APPARAISSENT DIRECTEMENT AU CENTRE DU COFFRE
                 currentItems.push({ id: 'potion_chest_' + Date.now(), type: 'potion_green', x: crate.x + 25, y: crate.y + 25, size: 15, collected: false });
                 currentItems.push({ id: 'coin_chest1_' + Date.now(), type: 'coin', x: crate.x + 10, y: crate.y + 40, size: 8, collected: false });
                 currentItems.push({ id: 'coin_chest2_' + Date.now(), type: 'coin', x: crate.x + 40, y: crate.y + 40, size: 8, collected: false });
                 
-                // Magnifique explosion de magie dorée !
                 if (typeof window.spawnParticles === 'function') window.spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#f1c40f', 30);
             } else {
                 if (!worldState.brokenCrates) worldState.brokenCrates = {}; worldState.brokenCrates[crate.id] = true;
@@ -147,4 +149,3 @@ window.updateItemsAndCrates = function() {
         }
     }
 };
-
