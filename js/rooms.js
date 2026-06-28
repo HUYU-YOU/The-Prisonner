@@ -12,17 +12,19 @@ window.saveRoomState = function() {
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
-  
+    
+    // --- PROTECTION AU SPAWN : 1.5 SECONDES D'INVINCIBILITÉ ---
+    playerInvulnerableTimer = 90; 
+    
     if (!worldState.bloodStains) worldState.bloodStains = {}; 
     if (!worldState.visitedRooms) worldState.visitedRooms = {};
     if (!worldState.brokenCrates) worldState.brokenCrates = {}; 
     if (!worldState.openedChests) worldState.openedChests = {};
     if (!worldState.bloodStains[roomId]) worldState.bloodStains[roomId] = []; 
-  
+    
     bloodStains = worldState.bloodStains[roomId];
     worldState.visitedRooms[roomId] = true; 
-  
-    // FIX : On remet les murs normaux pour les grandes salles. Seuls 5 et 6 sont des couloirs étroits verticaux !
+    
     let isVertCorridor = (roomId === 5 || roomId === 6);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
@@ -68,12 +70,15 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     if (roomId !== 999) {
         if (worldState.enemyStates && worldState.enemyStates[roomId]) { currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId])); } 
         else if (!worldState.clearedRooms[roomId]) {
-            let spawnX = canvas.width / 2; let spawnY = canvas.height / 2;
-            if (roomId === 2 || roomId === 3) { if (entryFace === 'west') spawnX = canvas.width - wallMargin - 100; else if (entryFace === 'east') spawnX = wallMargin + 100; }
             
-            // FIX : Rétablissement de ton nombre exact d'ennemis !
-            if (roomId === 2) window.spawnEnemy('goblin', 2, spawnX, spawnY);
-            else if (roomId === 3) window.spawnEnemy('goblin', 2, spawnX, spawnY);
+            // CORRECTION DES APPARITIONS (On les éloigne des portes pour éviter le spawn kill)
+            if (roomId === 2) {
+                window.spawnEnemy('goblin', 1, canvas.width/2 - 150, canvas.height/2 - 150);
+                window.spawnEnemy('goblin', 1, canvas.width/2 + 150, canvas.height/2 + 150);
+            }
+            else if (roomId === 3) {
+                window.spawnEnemy('goblin', 2, canvas.width/2, canvas.height/2);
+            }
             else if (roomId === 4) window.spawnEnemy('goblin', 2, 800, 400);
             else if (roomId === 5) window.spawnEnemy('goblin', 2, canvas.width/2, 300);
             else if (roomId === 6) window.spawnEnemy('goblin', 2, canvas.width/2, 300);
