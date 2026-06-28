@@ -49,9 +49,9 @@ assetsManager.load('Elf_front', 'assets/skins/Elf_front.png');
 assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); 
 
 // --- SKINS BURNED ---
-assetsManager.load('Burned_top_view', 'assets/skins/Burned_top_view.jpeg');
-assetsManager.load('Attack_fire_mage', 'assets/skins/Attack_fire_mage.jpeg');
-assetsManager.load('Ulti_fire_mage', 'assets/skins/Ulti_fire_mage.jpeg');
+assetsManager.load('Burned_top_view', 'assets/skins/Attack/Burned_top_view.jpeg');
+assetsManager.load('Attack_fire_mage', 'assets/skins/Attack/Attack_fire_mage.jpeg');
+assetsManager.load('Ulti_fire_mage', 'assets/skins/Attack/Ulti_fire_mage.jpeg');
 
 // --- SKINS ENNEMIS ET ANIMATIONS ---
 assetsManager.load('goblin_top_view', 'assets/skins/goblin_top_view.png');
