@@ -25,19 +25,25 @@ window.update = function() {
     // --- GESTION DU MODE ARÈNE (VAGUES) ---
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
-        if (arenaWave >= 10 && arenaShrink < 150) { arenaShrink += 0.1; }
+        
+        // CORRECTION : Rétrécit UNIQUEMENT à la vague 10, revient à la normale à la vague 11
+        if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
+            arenaShrink += 0.3; 
+        } else if (arenaWave !== 10) {
+            arenaShrink = 0; 
+        }
 
         if (arenaState === "WAITING") {
             if (typeof arenaTimer === 'undefined') arenaTimer = 0;
-            arenaTimer--; // LE COMPTEUR TOURNE ENFIN !
+            arenaTimer--;
             
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
                 
-                // --- APPARITION DES POTIONS TOUTES LES 5 VAGUES ---
+                // --- APPARITION D'UNE POTION VERTE TOUTES LES 5 VAGUES ---
                 if (arenaWave > 1 && (arenaWave - 1) % 5 === 0) {
-                    currentItems.push({ id: 'pot_r_'+arenaWave, type: 'potion_red', x: canvas.width/2 - 30, y: canvas.height/2, size: 15, collected: false });
-                    currentItems.push({ id: 'pot_b_'+arenaWave, type: 'potion_blue', x: canvas.width/2 + 30, y: canvas.height/2, size: 15, collected: false });
+                    currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
+                    if(typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
                 // --- LOGIQUE DES BOSS ---
@@ -51,7 +57,6 @@ window.update = function() {
                     window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); 
                 }
                 else {
-                    // --- VAGUES NORMALES ---
                     let countGoblin = 3 + Math.floor(arenaWave * 1.2);
                     window.spawnEnemy('goblin', countGoblin);
                     if (arenaWave >= 3) window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
@@ -60,10 +65,9 @@ window.update = function() {
                 arenaWave++;
             }
         } else if (arenaState === "PLAYING") {
-            // Fin de la vague
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
-                arenaTimer = 300; // 300 frames = 5 secondes
+                arenaTimer = 300; 
                 playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + 15);
                 if(typeof window.updateHUD==='function') window.updateHUD();
             }
@@ -184,14 +188,11 @@ window.update = function() {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
     
-    // --- GESTION DE LA MAGIE ---
     for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
         if (p.life <= 0) particles.splice(i, 1);
     }
     
-    // --- L'ÉBOUEUR (ANTI-LAG ABSOLU) ---
-    // Empêche le jeu de ramer en limitant la mémoire à 150 flaques de sang au sol !
     if (bloodStains.length > 150) bloodStains.splice(0, bloodStains.length - 150);
 
     if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
