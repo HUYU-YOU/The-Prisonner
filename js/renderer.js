@@ -12,8 +12,14 @@ window.spawnParticles = function(x, y, color, count, isGlow = false) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
         particles.push({ 
-            x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
-            life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
+            x: x, 
+            y: y, 
+            vx: Math.cos(angle) * speed, 
+            vy: Math.sin(angle) * speed, 
+            life: 1.0, 
+            color: color, 
+            size: Math.random() * 5 + 3, 
+            glow: isGlow 
         });
     }
 };
@@ -40,6 +46,7 @@ window.renderGameView = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
+    // --- GESTION DU SHAKE ---
     if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
@@ -48,6 +55,7 @@ window.renderGameView = function() {
         shakeIntensity *= 0.9; 
     }
     
+    // --- RENDU DU SOL ---
     let imageSol = assetsManager.images['sol_base'];
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -59,10 +67,13 @@ window.renderGameView = function() {
         ctx.strokeStyle = '#3d342c'; 
         ctx.lineWidth = 1; 
         for(let i = 0; i < canvas.width; i += 60) { 
-            for(let j = 0; j < canvas.height; j += 60) { ctx.strokeRect(i, j, 60, 60); }
+            for(let j = 0; j < canvas.height; j += 60) { 
+                ctx.strokeRect(i, j, 60, 60); 
+            }
         } 
     }
 
+    // --- COULOIRS ET MURS ---
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
@@ -71,103 +82,297 @@ window.renderGameView = function() {
         
         ctx.strokeStyle = '#3d342c'; 
         ctx.lineWidth = 6;
-        ctx.beginPath(); ctx.moveTo(350 - wallMargin, 0); ctx.lineTo(350 - wallMargin, canvas.height); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(canvas.width - 350 + wallMargin, 0); ctx.lineTo(canvas.width - 350 + wallMargin, canvas.height); ctx.stroke();
+        
+        ctx.beginPath(); 
+        ctx.moveTo(350 - wallMargin, 0); 
+        ctx.lineTo(350 - wallMargin, canvas.height); 
+        ctx.stroke();
+        
+        ctx.beginPath(); 
+        ctx.moveTo(canvas.width - 350 + wallMargin, 0); 
+        ctx.lineTo(canvas.width - 350 + wallMargin, canvas.height); 
+        ctx.stroke();
     }
     
-    let wallL = assetsManager.images['left_wall']; if (wallL && wallL.complete) ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
-    let wallR = assetsManager.images['right_wall']; if (wallR && wallR.complete) ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
-    let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
-    let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
+    let wallL = assetsManager.images['left_wall']; 
+    if (wallL && wallL.complete) {
+        ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
+    }
     
+    let wallR = assetsManager.images['right_wall']; 
+    if (wallR && wallR.complete) {
+        ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
+    }
+    
+    let wallT = assetsManager.images['back_wall']; 
+    if (wallT && wallT.complete) {
+        ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
+    }
+    
+    let wallB = assetsManager.images['front_wall']; 
+    if (wallB && wallB.complete) {
+        ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
+    }
+    
+    // ========================================================================
+    // --- RENDU DU SANG EN IMAGES (AVEC FONDU) ---
+    // ========================================================================
     bloodStains.forEach(blood => { 
-        ctx.fillStyle = '#8a0303'; 
-        ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.fill(); 
+        ctx.save();
         
-        ctx.fillStyle = '#500000'; 
-        ctx.beginPath(); ctx.arc(blood.x, blood.y, (blood.r || 15) * 0.6, 0, Math.PI * 2); ctx.fill(); 
+        // Applique l'opacité doucement
+        let alpha = 1.0;
+        if (blood.life !== undefined && blood.life < 300) {
+            alpha = Math.max(0, blood.life / 300);
+        }
+        ctx.globalAlpha = alpha;
         
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.translate(blood.x, blood.y);
+        if (blood.rotation) ctx.rotate(blood.rotation);
+        
+        let bImg = assetsManager.images[blood.imgId];
+        
+        if (bImg && bImg.complete && bImg.naturalWidth > 0) {
+            let s = blood.size || 40;
+            ctx.drawImage(bImg, -s/2, -s/2, s, s);
+        } else {
+            // Fallback très propre si l'image manque
+            ctx.fillStyle = blood.type === 'kill' ? '#500000' : '#8a0303'; 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, (blood.size || 30) / 2, 0, Math.PI * 2); 
+            ctx.fill(); 
+        }
+        ctx.restore();
     });
+    // Reset opacité
+    ctx.globalAlpha = 1.0;
 
     if (currentRoomId === 999) { 
-        ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
+        ctx.strokeStyle = '#c0392b'; 
+        ctx.lineWidth = 6; 
         ctx.strokeRect(wallMargin + arenaShrink, wallMargin + arenaShrink, canvas.width - (wallMargin + arenaShrink) * 2, canvas.height - (wallMargin + arenaShrink) * 2);
     }
 
     if (currentRoomId === 8) {
-        let sImg = assetsManager.images['stairs_down']; let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
+        let sImg = assetsManager.images['stairs_down']; 
+        let sx = canvas.width/2 - 75;
+        let sy = canvas.height/2 - 75;
+        let sw = 150;
+        let sh = 150; 
+        
         ctx.save();
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
             ctx.drawImage(sImg, sx, sy, sw, sh); 
-            if (!worldState.bossDefeated) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
+            if (!worldState.bossDefeated) { 
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; 
+                ctx.fillRect(sx, sy, sw, sh); 
+            }
         } else {
-            ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.strokeRect(sx, sy, sw, sh);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            if (!worldState.bossDefeated) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
-            else { ctx.fillStyle = '#f1c40f'; ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5); }
+            ctx.fillStyle = '#111'; 
+            ctx.fillRect(sx, sy, sw, sh); 
+            ctx.strokeStyle = '#555'; 
+            ctx.lineWidth = 6; 
+            ctx.strokeRect(sx, sy, sw, sh);
+            
+            ctx.fillStyle = '#fff'; 
+            ctx.font = 'bold 20px Arial'; 
+            ctx.textAlign = 'center';
+            if (!worldState.bossDefeated) { 
+                ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); 
+                ctx.fillStyle = '#e74c3c'; 
+                ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); 
+            } else { 
+                ctx.fillStyle = '#f1c40f'; 
+                ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5); 
+            }
             ctx.textAlign = 'left';
         }
-        if (worldState.bossDefeated) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
+        if (worldState.bossDefeated) { 
+            ctx.shadowColor = '#f1c40f'; 
+            ctx.shadowBlur = 30; 
+            ctx.strokeStyle = '#f1c40f'; 
+            ctx.lineWidth = 4; 
+            ctx.strokeRect(sx, sy, sw, sh); 
+        }
         ctx.restore();
     }
 
     if (currentRoomId === 1) {
-        let benchX = 400; let benchY = canvas.height - wallMargin - 60; let imgBench = assetsManager.images['bench'];
-        if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) { ctx.drawImage(imgBench, benchX, benchY, 200, 80); } 
+        let benchX = 400; 
+        let benchY = canvas.height - wallMargin - 60; 
+        let imgBench = assetsManager.images['bench'];
+        
+        if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) { 
+            ctx.drawImage(imgBench, benchX, benchY, 200, 80); 
+        } 
+        
         if (typeof bookshelf !== 'undefined') {
             let imgBiblio = assetsManager.images['bibliotheque'];
-            if (imgBiblio && imgBiblio.complete && imgBiblio.naturalWidth > 0) { ctx.drawImage(imgBiblio, bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height); } 
+            if (imgBiblio && imgBiblio.complete && imgBiblio.naturalWidth > 0) { 
+                ctx.drawImage(imgBiblio, bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height); 
+            } 
             
             let distToBiblio = Math.hypot((player.x + player.size/2) - (bookshelf.x + bookshelf.width/2), (player.y + player.size/2) - (bookshelf.y + bookshelf.height/2));
             if (distToBiblio < 120) {
-                ctx.save(); ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2; 
-                let popW = 320; let popH = 40; let popX = bookshelf.x + bookshelf.width/2 - popW/2; let popY = bookshelf.y - popH - 15; popY += Math.sin(Date.now() / 200) * 3; 
-                ctx.fillRect(popX, popY, popW, popH); ctx.strokeRect(popX, popY, popW, popH); 
-                ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.fillText("Appuyez sur 'E' pour lire un vieux grimoire...", popX + popW/2, popY + 25); ctx.textAlign = 'left'; ctx.restore();
+                ctx.save(); 
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; 
+                ctx.strokeStyle = '#f1c40f'; 
+                ctx.lineWidth = 2; 
+                let popW = 320; 
+                let popH = 40; 
+                let popX = bookshelf.x + bookshelf.width/2 - popW/2; 
+                let popY = bookshelf.y - popH - 15; 
+                popY += Math.sin(Date.now() / 200) * 3; 
+                
+                ctx.fillRect(popX, popY, popW, popH); 
+                ctx.strokeRect(popX, popY, popW, popH); 
+                
+                ctx.fillStyle = '#ecf0f1'; 
+                ctx.font = 'bold 14px Arial'; 
+                ctx.textAlign = 'center'; 
+                ctx.fillText("Appuyez sur 'E' pour lire un vieux grimoire...", popX + popW/2, popY + 25); 
+                ctx.textAlign = 'left'; 
+                ctx.restore();
             }
         }
     }
 
     if (typeof currentCrates !== 'undefined') {
         currentCrates.forEach(crate => {
-            let imgName = ''; if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
-            let img = assetsManager.images[imgName]; ctx.save(); ctx.translate(crate.x + crate.size/2, crate.y + crate.size/2);
-            if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') { ctx.rotate(Math.sin(Date.now() / 20) * 0.1); }
-            if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); } 
-            else { ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); if (!crate.isBroken) { ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(-crate.size/2, -crate.size/2, crate.size, crate.size); } }
+            let imgName = ''; 
+            if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; 
+            else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; 
+            else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
+            
+            let img = assetsManager.images[imgName]; 
+            ctx.save(); 
+            ctx.translate(crate.x + crate.size/2, crate.y + crate.size/2);
+            
+            if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') { 
+                ctx.rotate(Math.sin(Date.now() / 20) * 0.1); 
+            }
+            if (img && img.complete && img.naturalWidth > 0) { 
+                ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); 
+            } else { 
+                ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; 
+                if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; 
+                ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); 
+                if (!crate.isBroken) { 
+                    ctx.strokeStyle = '#000'; 
+                    ctx.lineWidth = 2; 
+                    ctx.strokeRect(-crate.size/2, -crate.size/2, crate.size, crate.size); 
+                } 
+            }
             ctx.restore();
         });
     }
 
     currentDoors.forEach(door => {
-        let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
-        if (isOpen) { stateStr = '_open'; } else if (door.requiresKey && door.locked) { stateStr = '_key'; }
+        let doorImg = null; 
+        let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; 
+        let stateStr = '_close'; 
+        
+        if (isOpen) { stateStr = '_open'; } 
+        else if (door.requiresKey && door.locked) { stateStr = '_key'; }
+        
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
-        if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
-        if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { ctx.fillStyle = 'rgba(192, 57, 43, 0.4)'; ctx.fillRect(door.x, door.y, door.width, door.height); } } 
-        else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); ctx.strokeStyle = '#111'; ctx.lineWidth = 2; if(door.face === 'north' || door.face === 'south') { ctx.strokeRect(door.x + 10, door.y, door.width - 20, door.height); } else { ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); } }
+        
+        if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
+        else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
+        else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; 
+        else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
+        
+        if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { 
+            ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); 
+            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { 
+                ctx.fillStyle = 'rgba(192, 57, 43, 0.4)'; 
+                ctx.fillRect(door.x, door.y, door.width, door.height); 
+            } 
+        } else { 
+            ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; 
+            ctx.fillRect(door.x, door.y, door.width, door.height); 
+            ctx.strokeStyle = '#111'; 
+            ctx.lineWidth = 2; 
+            
+            if (door.face === 'north' || door.face === 'south') { 
+                ctx.strokeRect(door.x + 10, door.y, door.width - 20, door.height); 
+            } else { 
+                ctx.strokeRect(door.x, door.y + 10, door.width, door.height - 20); 
+            } 
+        }
     });
 
     currentItems.forEach(item => {
         if (!item.collected) {
-            let floatY = Math.sin(Date.now() / 200) * 3; ctx.save(); ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
-            if (item.type === 'key') { ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(item.x, item.y + floatY, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x + 6, item.y - 3 + floatY, 18, 6); ctx.fillRect(item.x + 18, item.y + 3 + floatY, 3, 6); } 
-            else if (item.type === 'potion_green') { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); ctx.fillStyle = '#e67e22'; ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); } 
-            else if (item.type === 'potion_red') { ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); ctx.fillStyle = '#c0392b'; ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); } 
-            else if (item.type === 'potion_blue') { ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); ctx.fillStyle = '#2980b9'; ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); } 
-            else if (item.type === 'key_skull') { ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(item.x, item.y + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#bdc3c7'; ctx.fillRect(item.x - 3, item.y + 10 + floatY, 6, 15); ctx.fillStyle = '#2c3e50'; ctx.fillRect(item.x - 2, item.y + 2 + floatY, 4, 4); } 
+            let floatY = Math.sin(Date.now() / 200) * 3; 
+            ctx.save(); 
+            ctx.shadowBlur = 10; 
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
+            
+            if (item.type === 'key') { 
+                ctx.fillStyle = '#f1c40f'; 
+                ctx.beginPath(); 
+                ctx.arc(item.x, item.y + floatY, 8, 0, Math.PI * 2); 
+                ctx.fill(); 
+                ctx.fillRect(item.x + 6, item.y - 3 + floatY, 18, 6); 
+                ctx.fillRect(item.x + 18, item.y + 3 + floatY, 3, 6); 
+            } 
+            else if (item.type === 'potion_green') { 
+                ctx.fillStyle = '#2ecc71'; 
+                ctx.beginPath(); 
+                ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); 
+                ctx.fill(); 
+                ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); 
+                ctx.fillStyle = '#e67e22'; 
+                ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); 
+            } 
+            else if (item.type === 'potion_red') { 
+                ctx.fillStyle = '#e74c3c'; 
+                ctx.beginPath(); 
+                ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); 
+                ctx.fill(); 
+                ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); 
+                ctx.fillStyle = '#c0392b'; 
+                ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); 
+            } 
+            else if (item.type === 'potion_blue') { 
+                ctx.fillStyle = '#3498db'; 
+                ctx.beginPath(); 
+                ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); 
+                ctx.fill(); 
+                ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); 
+                ctx.fillStyle = '#2980b9'; 
+                ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); 
+            } 
+            else if (item.type === 'key_skull') { 
+                ctx.fillStyle = '#ecf0f1'; 
+                ctx.beginPath(); 
+                ctx.arc(item.x, item.y + floatY, 10, 0, Math.PI * 2); 
+                ctx.fill(); 
+                ctx.fillStyle = '#bdc3c7'; 
+                ctx.fillRect(item.x - 3, item.y + 10 + floatY, 6, 15); 
+                ctx.fillStyle = '#2c3e50'; 
+                ctx.fillRect(item.x - 2, item.y + 2 + floatY, 4, 4); 
+            } 
             else if (item.type === 'coin') { 
-                ctx.translate(item.x, item.y + floatY); let scaleX = Math.abs(Math.cos(Date.now() / 200)); ctx.scale(scaleX, 1); 
-                let coinImg = assetsManager.images['gold_coin'];
+                ctx.translate(item.x, item.y + floatY); 
+                let scaleX = Math.abs(Math.cos(Date.now() / 200)); 
+                ctx.scale(scaleX, 1); 
+                
+                let coinImg = assetsManager.images['gold_coins'];
                 if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
                     let displaySize = item.size * 2.5; 
                     ctx.drawImage(coinImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
                 } else {
-                    ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, item.size, 0, Math.PI*2); ctx.fill(); 
-                    ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(0, 0, item.size*0.6, 0, Math.PI*2); ctx.fill(); 
+                    ctx.fillStyle = '#f1c40f'; 
+                    ctx.beginPath(); 
+                    ctx.arc(0, 0, item.size, 0, Math.PI*2); 
+                    ctx.fill(); 
+                    
+                    ctx.fillStyle = '#f39c12'; 
+                    ctx.beginPath(); 
+                    ctx.arc(0, 0, item.size*0.6, 0, Math.PI*2); 
+                    ctx.fill(); 
                 }
             }
             ctx.restore();
@@ -176,18 +381,69 @@ window.renderGameView = function() {
 
     if (typeof hazards !== 'undefined') {
         hazards.forEach(h => { 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill(); 
-            let fallH = (h.timer / h.maxTimer) * 150; ctx.fillStyle = 'rgba(192, 57, 43, 0.9)'; ctx.beginPath(); ctx.arc(h.x, h.y - fallH, h.radius * (1 - (h.timer/h.maxTimer)*0.5), 0, Math.PI*2); ctx.fill(); 
-            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.stroke(); 
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; 
+            ctx.beginPath(); 
+            ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); 
+            ctx.fill(); 
+            
+            let fallH = (h.timer / h.maxTimer) * 150; 
+            ctx.fillStyle = 'rgba(192, 57, 43, 0.9)'; 
+            ctx.beginPath(); 
+            ctx.arc(h.x, h.y - fallH, h.radius * (1 - (h.timer/h.maxTimer)*0.5), 0, Math.PI*2); 
+            ctx.fill(); 
+            
+            ctx.strokeStyle = '#e74c3c'; 
+            ctx.lineWidth = 2; 
+            ctx.beginPath(); 
+            ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); 
+            ctx.stroke(); 
         });
     }
 
     if (typeof necroSummons !== 'undefined') {
         necroSummons.forEach(s => {
-            ctx.save(); ctx.translate(s.x + s.size/2, s.y + s.size/2);
-            if (s.type === 'fusion') { if (s.invulnerableTimer && s.invulnerableTimer > 0) { ctx.shadowBlur = 20; ctx.shadowColor = '#f1c40f'; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, s.size/2 + 8, 0, Math.PI*2); ctx.stroke(); } ctx.fillStyle = '#8e44ad'; ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size); ctx.fillStyle = '#1abc9c'; ctx.beginPath(); ctx.arc(0, 0, s.size/4, 0, Math.PI*2); ctx.fill(); } 
-            else { ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'; ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(-s.size/4, -s.size/4, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(s.size/4, -s.size/4, 4, 0, Math.PI*2); ctx.fill(); }
-            ctx.shadowBlur = 0; ctx.restore(); ctx.fillStyle = '#111'; ctx.fillRect(s.x, s.y - 10, s.size, 4); ctx.fillStyle = '#8e44ad'; ctx.fillRect(s.x, s.y - 10, s.size * (s.health / s.maxHealth), 4);
+            ctx.save(); 
+            ctx.translate(s.x + s.size/2, s.y + s.size/2);
+            if (s.type === 'fusion') { 
+                if (s.invulnerableTimer && s.invulnerableTimer > 0) { 
+                    ctx.shadowBlur = 20; 
+                    ctx.shadowColor = '#f1c40f'; 
+                    ctx.strokeStyle = '#f1c40f'; 
+                    ctx.lineWidth = 4; 
+                    ctx.beginPath(); 
+                    ctx.arc(0, 0, s.size/2 + 8, 0, Math.PI*2); 
+                    ctx.stroke(); 
+                } 
+                ctx.fillStyle = '#8e44ad'; 
+                ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size); 
+                
+                ctx.fillStyle = '#1abc9c'; 
+                ctx.beginPath(); 
+                ctx.arc(0, 0, s.size/4, 0, Math.PI*2); 
+                ctx.fill(); 
+            } else { 
+                ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'; 
+                ctx.beginPath(); 
+                ctx.arc(0, 0, s.size/2, 0, Math.PI*2); 
+                ctx.fill(); 
+                
+                ctx.fillStyle = '#8e44ad'; 
+                ctx.beginPath(); 
+                ctx.arc(-s.size/4, -s.size/4, 4, 0, Math.PI*2); 
+                ctx.fill(); 
+                
+                ctx.beginPath(); 
+                ctx.arc(s.size/4, -s.size/4, 4, 0, Math.PI*2); 
+                ctx.fill(); 
+            }
+            ctx.shadowBlur = 0; 
+            ctx.restore(); 
+            
+            ctx.fillStyle = '#111'; 
+            ctx.fillRect(s.x, s.y - 10, s.size, 4); 
+            
+            ctx.fillStyle = '#8e44ad'; 
+            ctx.fillRect(s.x, s.y - 10, s.size * (s.health / s.maxHealth), 4);
         });
     }
 
@@ -235,16 +491,26 @@ window.renderGameView = function() {
             skinName = `${prefix}_${dir}_view`;
             img = assetsManager.images[skinName]; 
         }
+        
         if (!img || !img.complete || img.naturalWidth === 0) { 
             is8Dir = false; 
             let fallbackName = ''; 
             let lowPrefix = prefix.toLowerCase();
-            if (lowPrefix === 'goblin') { if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; else fallbackName = 'goblin_top_view'; } 
-            else if (lowPrefix === 'skeleton') { if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; else fallbackName = 'Skeleton_top_view'; } 
+            
+            if (lowPrefix === 'goblin') { 
+                if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; 
+                else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; 
+                else fallbackName = 'goblin_top_view'; 
+            } 
+            else if (lowPrefix === 'skeleton') { 
+                if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; 
+                else fallbackName = 'Skeleton_top_view'; 
+            } 
             else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; 
             else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; 
             else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; 
             else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
+            
             img = assetsManager.images[fallbackName]; 
         }
 
@@ -259,29 +525,46 @@ window.renderGameView = function() {
         
         ctx.scale(scalePulse, scalePulse); 
         
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
-        if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } 
-        else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; } 
-        else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; 
+        ctx.shadowBlur = 10; 
+        ctx.shadowOffsetX = 4; 
+        ctx.shadowOffsetY = 4;
+        
+        if (enemy.type === 'troll') { 
+            ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; 
+        } else if (enemy.type === 'mage') { 
+            ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; 
+        } else if (enemy.type === 'dragon') { 
+            ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; 
+        }
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 2.5; 
             if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
-                ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
-                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
+                ctx.save(); 
+                ctx.beginPath(); 
+                ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); 
+                ctx.clip(); 
+                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
+                ctx.restore(); 
             } else { 
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
             }
         } else { 
-            ctx.shadowColor = 'transparent'; ctx.fillStyle = '#e74c3c'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size); 
+            ctx.shadowColor = 'transparent'; 
+            ctx.fillStyle = '#e74c3c'; 
+            ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size); 
         }
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+        
+        ctx.shadowColor = 'transparent'; 
+        ctx.shadowBlur = 0;
         
         if (enemy.ultiAnimTimer > 0) { 
             ctx.save(); 
             ctx.globalCompositeOperation = 'screen'; 
             let imgUlt = assetsManager.images['Ulti_fire_mage']; 
             if (imgUlt && imgUlt.complete && imgUlt.naturalWidth > 0) { 
+                let progress = 1 - (enemy.ultiAnimTimer / 30); 
                 let expSize = enemy.size * 3.5; 
                 ctx.globalAlpha = enemy.ultiAnimTimer / 30; 
                 ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize); 
@@ -289,43 +572,183 @@ window.renderGameView = function() {
                 let progress = 1 - (enemy.ultiAnimTimer / 30); 
                 let radius = progress * enemy.size * 2.5;
                 ctx.globalAlpha = 1 - progress;
-                ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2);
-                ctx.fillStyle = '#e74c3c'; ctx.fill();
-                ctx.beginPath(); ctx.arc(0, 0, radius * 0.7, 0, Math.PI*2);
-                ctx.fillStyle = '#f1c40f'; ctx.fill();
+                ctx.beginPath(); 
+                ctx.arc(0, 0, radius, 0, Math.PI*2);
+                ctx.fillStyle = '#e74c3c'; 
+                ctx.fill();
+                
+                ctx.beginPath(); 
+                ctx.arc(0, 0, radius * 0.7, 0, Math.PI*2);
+                ctx.fillStyle = '#f1c40f'; 
+                ctx.fill();
             }
             ctx.restore(); 
         }
-        if (enemy.isBurning) { ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); }
-        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); ctx.stroke(); }
+        
+        if (enemy.isBurning) { 
+            ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); 
+            ctx.fill(); 
+        }
+        
+        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { 
+            ctx.strokeStyle = '#8e44ad'; 
+            ctx.lineWidth = 3; 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); 
+            ctx.stroke(); 
+        }
         ctx.restore(); 
         
-        if (!['troll', 'mage', 'dragon'].includes(enemy.type)) { ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); } 
-        else if (currentRoomId !== 8) { let bossName = enemy.type === 'troll' ? "Troll Corrompu" : (enemy.type === 'mage' ? "Mage Exilé" : "Dragon Maudit"); ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName, enemy.x + enemy.size/2, enemy.y - 25); let barWidth = 100; ctx.fillStyle = '#111'; ctx.fillRect(enemy.x + enemy.size/2 - barWidth/2, enemy.y - 15, barWidth, 8); ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x + enemy.size/2 - barWidth/2 + 1, enemy.y - 14, (barWidth-2) * (Math.max(0, enemy.health) / enemy.maxHealth), 6); ctx.textAlign = 'left'; }
+        // Barres de vie au-dessus des têtes (Uniquement pour les ennemis normaux)
+        if (!['troll', 'mage', 'dragon'].includes(enemy.type)) { 
+            ctx.fillStyle = '#111'; 
+            ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
+            
+            ctx.fillStyle = '#e74c3c'; 
+            ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
+        } 
     });
 
+    // --- CORRECTION : BARRE DE BOSS TOUJOURS AFFICHEE SI UN BOSS EXISTE ---
     let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon'].includes(e.type));
-    if (boss && currentRoomId === 8 && !worldState.bossDefeated) {
+    if (boss) {
         let bossName = boss.type === 'troll' ? "TROLL CORROMPU" : (boss.type === 'mage' ? "MAGE EXILÉ" : "DRAGON MAUDIT"); 
-        let isPhase2 = boss.health <= boss.maxHealth / 2; let barWidth = 600; let barHeight = 24; let bx = canvas.width/2 - barWidth/2; let by = 30; 
-        ctx.fillStyle = '#111'; ctx.fillRect(bx, by, barWidth, barHeight); ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; let hpPercent = Math.max(0, boss.health) / boss.maxHealth; ctx.fillRect(bx + 2, by + 2, (barWidth - 4) * hpPercent, barHeight - 4); ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, by - 8); ctx.textAlign = 'left';
+        let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
+        let barWidth = 600; 
+        let bx = canvas.width/2 - barWidth/2;
+        
+        ctx.fillStyle = '#111'; 
+        ctx.fillRect(bx, 30, barWidth, 24); 
+        
+        ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; 
+        ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
+        
+        ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; 
+        ctx.font = 'bold 22px Arial'; 
+        ctx.textAlign = 'center'; 
+        ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); 
+        ctx.textAlign = 'left';
     }
 
-    // --- RENDU DES PROJECTILES ---
     projectiles.forEach(p => { 
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle); ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); ctx.shadowBlur = 10;
-        if (p.isNecro) { ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill(); } 
-        else if (p.isFire) { let imgFire = assetsManager.images['Attack_fire_mage']; if (imgFire && imgFire.complete && imgFire.naturalWidth > 0) { ctx.globalCompositeOperation = 'screen'; ctx.rotate(Math.PI / 2); let pSize = p.size * 5; ctx.drawImage(imgFire, -pSize/2, -pSize/2, pSize, pSize); } else { ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill(); } } 
-        else { ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-8, -1, 16, 2); ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(14, 0); ctx.lineTo(8, 3); ctx.fill(); ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.moveTo(-8, -3); ctx.lineTo(-12, -3); ctx.lineTo(-8, 0); ctx.lineTo(-12, 3); ctx.lineTo(-8, 3); ctx.fill(); }
+        ctx.save(); 
+        ctx.translate(p.x, p.y); 
+        ctx.rotate(p.angle); 
+        ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); 
+        ctx.shadowBlur = 10;
+        
+        if (p.isNecro) { 
+            ctx.fillStyle = '#8e44ad'; 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, p.size, 0, Math.PI*2); 
+            ctx.fill(); 
+            
+            ctx.fillStyle = '#2c3e50'; 
+            ctx.beginPath(); 
+            ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); 
+            ctx.fill(); 
+        } 
+        else if (p.isFire) { 
+            let imgFire = assetsManager.images['Attack_fire_mage']; 
+            if (imgFire && imgFire.complete && imgFire.naturalWidth > 0) { 
+                ctx.globalCompositeOperation = 'screen'; 
+                ctx.rotate(Math.PI / 2); 
+                let pSize = p.size * 5; 
+                ctx.drawImage(imgFire, -pSize/2, -pSize/2, pSize, pSize); 
+            } else { 
+                ctx.fillStyle = '#e67e22'; 
+                ctx.beginPath(); 
+                ctx.arc(0, 0, p.size, 0, Math.PI*2); 
+                ctx.fill(); 
+                
+                ctx.fillStyle = '#f1c40f'; 
+                ctx.beginPath(); 
+                ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); 
+                ctx.fill(); 
+            } 
+        } 
+        else { 
+            ctx.fillStyle = '#bdc3c7'; 
+            ctx.fillRect(-8, -1, 16, 2); 
+            
+            ctx.fillStyle = '#ecf0f1'; 
+            ctx.beginPath(); 
+            ctx.moveTo(8, -3); ctx.lineTo(14, 0); ctx.lineTo(8, 3); 
+            ctx.fill(); 
+            
+            ctx.fillStyle = '#34495e'; 
+            ctx.beginPath(); 
+            ctx.moveTo(-8, -3); ctx.lineTo(-12, -3); ctx.lineTo(-8, 0); ctx.lineTo(-12, 3); ctx.lineTo(-8, 3); 
+            ctx.fill(); 
+        }
         ctx.restore();
     });
     
     enemyProjectiles.forEach(p => { 
-        ctx.save(); ctx.translate(p.x, p.y); let pAngle = Math.atan2(p.vy, p.vx); 
-        if (p.type === 'bone') { ctx.rotate(pAngle); ctx.shadowBlur = 0; ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-l + 2, -w/4, l*2 - 4, w/2); } 
-        else if (p.type === 'bat_web') { ctx.shadowColor = p.color; ctx.shadowBlur = 10; ctx.rotate(pAngle); ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, -8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, 8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 8); ctx.stroke(); } 
-        else if (p.type === 'fire') { ctx.shadowColor = p.color; ctx.shadowBlur = 10; let fireImg = assetsManager.images['Attack_fire_mage']; if (fireImg && fireImg.complete && fireImg.naturalWidth > 0) { ctx.rotate(pAngle + Math.PI / 2); ctx.globalCompositeOperation = 'screen'; let dSize = p.size * 5.0; ctx.drawImage(fireImg, -dSize/2, -dSize/2, dSize, dSize); } else { ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); } } 
-        else { ctx.shadowColor = p.color; ctx.shadowBlur = 10; ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); }
+        ctx.save(); 
+        ctx.translate(p.x, p.y); 
+        let pAngle = Math.atan2(p.vy, p.vx); 
+        
+        if (p.type === 'bone') { 
+            ctx.rotate(pAngle); 
+            ctx.shadowBlur = 0; 
+            ctx.fillStyle = '#ecf0f1'; 
+            let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; 
+            
+            ctx.fillRect(-l, -w, l * 2, w * 2); 
+            ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            
+            ctx.fillStyle = '#bdc3c7'; 
+            ctx.fillRect(-l + 2, -w/4, l*2 - 4, w/2); 
+        } 
+        else if (p.type === 'bat_web') { 
+            ctx.shadowColor = p.color; 
+            ctx.shadowBlur = 10; 
+            ctx.rotate(pAngle); 
+            
+            ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; 
+            ctx.beginPath(); 
+            ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); 
+            ctx.closePath(); 
+            ctx.fill(); 
+            
+            ctx.strokeStyle = '#ecf0f1'; 
+            ctx.lineWidth = 1; 
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -8); ctx.stroke(); 
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, -8); ctx.stroke(); 
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, 8); ctx.stroke(); 
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 8); ctx.stroke(); 
+        } 
+        else if (p.type === 'fire') { 
+            ctx.shadowColor = p.color; 
+            ctx.shadowBlur = 10; 
+            let fireImg = assetsManager.images['Attack_fire_mage']; 
+            if (fireImg && fireImg.complete && fireImg.naturalWidth > 0) { 
+                ctx.rotate(pAngle + Math.PI / 2); 
+                ctx.globalCompositeOperation = 'screen'; 
+                let dSize = p.size * 5.0; 
+                ctx.drawImage(fireImg, -dSize/2, -dSize/2, dSize, dSize); 
+            } else { 
+                ctx.rotate(pAngle); 
+                ctx.fillStyle = p.color; 
+                ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
+            } 
+        } 
+        else { 
+            ctx.shadowColor = p.color; 
+            ctx.shadowBlur = 10; 
+            ctx.rotate(pAngle); 
+            
+            ctx.fillStyle = p.color; 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, p.size, 0, Math.PI * 2); 
+            ctx.fill(); 
+        }
         ctx.restore();
     });
 
@@ -341,14 +764,18 @@ window.renderGameView = function() {
         else if (isElfInvuln) ctx.globalAlpha = 0.4; 
         else ctx.globalAlpha = 1.0;
         
-        let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright'] || player.dashTimer > 0);
+        let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
         let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
         let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
+        
         if (player.dashTimer > 0) tilt = Math.PI / 8; 
         
         ctx.save(); 
         ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
-        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
+        ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
+        ctx.shadowBlur = 10; 
+        ctx.shadowOffsetX = 5; 
+        ctx.shadowOffsetY = 5;
 
         let dirP = window.getDirectionName(player.faceAngle);
         let prefixP = player.heroClass ? player.heroClass.charAt(0).toUpperCase() + player.heroClass.slice(1).toLowerCase() : 'Knight';
@@ -358,6 +785,7 @@ window.renderGameView = function() {
         if ((typeof isAttacking !== 'undefined' && isAttacking) || attackCooldown > 0) {
             actionP = 'attack';
             let midTime = 15;
+            
             if (prefixP === 'Knight') midTime = 20;
             else if (prefixP === 'Burned') midTime = 17;
             else if (prefixP === 'Necromancer') midTime = 7;
@@ -378,11 +806,14 @@ window.renderGameView = function() {
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
             is8DirP = false;
             if (player.heroClass === 'Elf') {
-                let angle = player.faceAngle; let pSkinNameFallback = 'Elf_front'; 
+                let angle = player.faceAngle; 
+                let pSkinNameFallback = 'Elf_front'; 
+                
                 if (angle > -Math.PI/4 && angle <= Math.PI/4) pSkinNameFallback = 'Elf_est'; 
                 else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) pSkinNameFallback = 'Elf_front'; 
                 else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) pSkinNameFallback = 'Elf_back'; 
                 else pSkinNameFallback = 'Elf_west';                                                      
+                
                 pImg = assetsManager.images[pSkinNameFallback]; 
                 is8DirP = true; 
             } else if (player.heroClass === 'Mage') {
@@ -403,24 +834,50 @@ window.renderGameView = function() {
             if (player.heroClass === 'Mage' && !is8DirP) displaySize = player.size * 3.5;
             
             if (player.heroClass === 'Mage' && !is8DirP) { 
-                ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
-                ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
+                ctx.save(); 
+                ctx.beginPath(); 
+                ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); 
+                ctx.clip(); 
+                ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize); 
+                ctx.restore(); 
             } else { 
                 ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize); 
             }
         } else {
             if (is8DirP) ctx.rotate(player.faceAngle);
             ctx.fillStyle = playerPoisonTimer > 0 ? '#27ae60' : (player.heroClass === 'Necromancer' ? '#34495e' : '#95a5a6'); 
-            ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
-            if (player.heroClass === 'Necromancer') { ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill(); ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); ctx.stroke(); } 
+            ctx.beginPath(); 
+            ctx.arc(0, 0, player.size/2, 0, Math.PI*2); 
+            ctx.fill();
+            
+            if (player.heroClass === 'Necromancer') { 
+                ctx.fillStyle = '#2c3e50'; 
+                ctx.beginPath(); 
+                ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); 
+                ctx.fill(); 
+                
+                ctx.strokeStyle = '#8e44ad'; 
+                ctx.lineWidth = 3; 
+                ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); 
+                ctx.stroke(); 
+            } 
             else if (player.heroClass === 'Knight') { 
-                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-15, -15, 30, 30); ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -10, 5, 20); ctx.save(); 
+                ctx.fillStyle = '#bdc3c7'; 
+                ctx.fillRect(-15, -15, 30, 30); 
+                ctx.fillStyle = '#2c3e50'; 
+                ctx.fillRect(0, -10, 5, 20); 
+                
+                ctx.save(); 
                 if (attackCooldown > 0) {
                     let progress = (40 - attackCooldown) / 40;
                     let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3);
                     ctx.rotate(swipeAngle);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
-                    ctx.beginPath(); ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); ctx.stroke();
+                    
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; 
+                    ctx.lineWidth = 4;
+                    ctx.beginPath(); 
+                    ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); 
+                    ctx.stroke();
                 } else {
                     ctx.translate(5, 12); 
                 }
@@ -429,31 +886,42 @@ window.renderGameView = function() {
                 ctx.restore();
             }
         }
-        ctx.restore(); ctx.globalAlpha = 1.0; 
+        ctx.restore(); 
+        ctx.globalAlpha = 1.0; 
     }
     
-    // --- LES EFFETS MAGIQUES DE PARTICULES ---
-    particles.forEach(p => { 
-        ctx.globalAlpha = Math.max(0, p.life); 
-        if (p.glow) { ctx.save(); ctx.shadowColor = p.color; ctx.shadowBlur = 10; } 
-        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); 
-        if (p.glow) ctx.restore(); 
-    });
-    ctx.globalAlpha = 1.0; 
-    
-    // --- L'ICÔNE DE PIÈCE DANS L'HUD EN HAUT À GAUCHE ---
+    // --- L'ICÔNE DE PIÈCE DANS L'HUD ---
     if (playerStats.inventory.coins !== undefined) {
-        let coinImg = assetsManager.images['gold_coin'];
+        let coinImg = assetsManager.images['gold_coins'];
         if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
             ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
         } else {
             ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 10, 0, Math.PI*2); ctx.fill();
         }
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left';
+        ctx.fillStyle = '#fff'; 
+        ctx.font = 'bold 24px Arial'; 
+        ctx.textAlign = 'left';
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
+    // Effets magiques qui subliment le jeu (portes déverrouillées, esquives...)
+    particles.forEach(p => { 
+        ctx.globalAlpha = Math.max(0, p.life); 
+        if (p.glow) { 
+            ctx.save(); 
+            ctx.shadowColor = p.color; 
+            ctx.shadowBlur = 10; 
+        } 
+        ctx.fillStyle = p.color; 
+        ctx.beginPath(); 
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); 
+        ctx.fill(); 
+        if (p.glow) ctx.restore(); 
+    });
+    ctx.globalAlpha = 1.0; 
+    
+    // Assombrissement des coins
     ctx.save();
     let gradient = ctx.createRadialGradient(
         player.x + player.size/2, player.y + player.size/2, 100, 
@@ -467,10 +935,15 @@ window.renderGameView = function() {
     ctx.restore();
     
     if (currentRoomId === 999) {
-        ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#ecf0f1'; 
+        ctx.font = 'bold 28px Arial'; 
+        ctx.textAlign = 'center';
         let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
-        if (arenaState === "WAITING" && arenaTimer > 0) ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
-        else if (displayWave > 0) ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
+        if (arenaState === "WAITING" && arenaTimer > 0) {
+            ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
+        } else if (displayWave > 0) {
+            ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
+        }
         ctx.textAlign = 'left';
     }
     ctx.restore(); 
