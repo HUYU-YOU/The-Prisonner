@@ -13,7 +13,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
     
-    // --- PROTECTION AU SPAWN : 1.5 SECONDES D'INVINCIBILITÉ ---
     playerInvulnerableTimer = 90; 
     
     if (!worldState.bloodStains) worldState.bloodStains = {}; 
@@ -71,7 +70,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         if (worldState.enemyStates && worldState.enemyStates[roomId]) { currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId])); } 
         else if (!worldState.clearedRooms[roomId]) {
             
-            // CORRECTION DES APPARITIONS (On les éloigne des portes pour éviter le spawn kill)
             if (roomId === 2) {
                 window.spawnEnemy('goblin', 1, canvas.width/2 - 150, canvas.height/2 - 150);
                 window.spawnEnemy('goblin', 1, canvas.width/2 + 150, canvas.height/2 + 150);
@@ -83,7 +81,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 5) window.spawnEnemy('goblin', 2, canvas.width/2, 300);
             else if (roomId === 6) window.spawnEnemy('goblin', 2, canvas.width/2, 300);
             else if (roomId === 7) { window.spawnEnemy('goblin', 4, 450, 200); window.spawnEnemy('skeleton', 1, 600, 300); }
-            else if (roomId === 8) window.spawnEnemy('troll', 1, 600, 300); 
+            
+            // --- CORRECTION : Le Boss apparaît en haut, loin de l'escalier ---
+            else if (roomId === 8) window.spawnEnemy('troll', 1, canvas.width/2 - 40, 150); 
         }
     } else { currentDoors = []; currentItems = []; arenaShrink = 0; player.x = canvas.width / 2 - player.size / 2; player.y = canvas.height / 2 - player.size / 2; }
 };
