@@ -79,3 +79,103 @@ assetsManager.load('bibliotheque', 'assets/decorations/bibliotheque.png');
 assetsManager.load('bench', 'assets/decorations/bench.png');
 
 assetsManager.load('gold_coin', 'assets/decors/gold_coin.png');
+
+// --- SQUELETTES 8 DIRECTIONS ---
+assetsManager.load('Skeleton_south_view', 'assets/skins/Skeleton/skeleton_south_view.png');
+assetsManager.load('Skeleton_north_view', 'assets/skins/Skeleton/skeleton_north_view.png');
+assetsManager.load('Skeleton_east_view', 'assets/skins/Skeleton/skeleton_east_view.png');
+assetsManager.load('Skeleton_west_view', 'assets/skins/Skeleton/skeleton_west_view.png');
+assetsManager.load('Skeleton_northeast_view', 'assets/skins/Skeleton/skeleton_northeast_view.png');
+assetsManager.load('Skeleton_northwest_view', 'assets/skins/Skeleton/skeleton_northwest_view.png');
+assetsManager.load('Skeleton_southeast_view', 'assets/skins/Skeleton/skeleton_southeast_view.png');
+assetsManager.load('Skeleton_southwest_view', 'assets/skins/Skeleton/skeleton_southwest_view.png');
+
+// --- GOBELINS 8 DIRECTIONS ---
+assetsManager.load('Goblin_south_view', 'assets/skins/Goblin/goblin_south_view.png');
+assetsManager.load('Goblin_north_view', 'assets/skins/Goblin/goblin_north_view.png');
+assetsManager.load('Goblin_east_view', 'assets/skins/Goblin/goblin_east_view.png');
+assetsManager.load('Goblin_west_view', 'assets/skins/Goblin/goblin_west_view.png');
+assetsManager.load('Goblin_southwest_view', 'assets/skins/Goblin/goblin_southwest_view.png');
+assetsManager.load('Goblin_northwest_view', 'assets/skins/Goblin/goblin_northwest_view.png');
+assetsManager.load('Goblin_southeast_view', 'assets/skins/Goblin/goblin_southeast_view.png');
+assetsManager.load('Goblin_northeast_view', 'assets/skins/Goblin/goblin_northeast_view.png');
+
+// --- SPIDER 8 DIRECTIONS ---
+assetsManager.load('Spider_south_view', 'assets/skins/Spider/spider_south_view.png');
+assetsManager.load('Spider_north_view', 'assets/skins/Spider/spider_north_view.png');
+assetsManager.load('Spider_east_view', 'assets/skins/Spider/spider_east_view.png');
+assetsManager.load('Spider_west_view', 'assets/skins/Spider/spider_west_view.png');
+assetsManager.load('Spider_southwest_view', 'assets/skins/Spider/spider_southwest_view.png');
+assetsManager.load('Spider_northwest_view', 'assets/skins/Spider/spider_northwest_view.png');
+assetsManager.load('Spider_southeast_view', 'assets/skins/Spider/spider_southeast_view.png');
+assetsManager.load('Spider_northeast_view', 'assets/skins/Spider/spider_northeast_view.png');
+
+// --- KNIGHT 8 DIRECTIONS ---
+assetsManager.load('Knight_south_view', 'assets/skins/Knight/Knight_south_view.png');
+assetsManager.load('Knight_north_view', 'assets/skins/Knight/Knight_north_view.png');
+assetsManager.load('Knight_east_view', 'assets/skins/Knight/Knight_east_view.png');
+assetsManager.load('Knight_west_view', 'assets/skins/Knight/Knight_west_view.png');
+assetsManager.load('Knight_northeast_view', 'assets/skins/Knight/Knight_northeast_view.png');
+assetsManager.load('Knight_northwest_view', 'assets/skins/Knight/Knight_northwest_view.png');
+assetsManager.load('Knight_southeast_view', 'assets/skins/Knight/Knight_southeast_view.png');
+assetsManager.load('Knight_southwest_view', 'assets/skins/Knight/Knight_southwest_view.png');
+
+// --- ELF 8 DIRECTIONS ---
+assetsManager.load('Elf_south_view', 'assets/skins/Elf/Elf_south_view.png');
+assetsManager.load('Elf_north_view', 'assets/skins/Elf/Elf_north_view.png');
+assetsManager.load('Elf_east_view', 'assets/skins/Elf/Elf_east_view.png');
+assetsManager.load('Elf_west_view', 'assets/skins/Elf/Elf_west_view.png');
+assetsManager.load('Elf_northeast_view', 'assets/skins/Elf/Elf_northeast_view.png');
+assetsManager.load('Elf_northwest_view', 'assets/skins/Elf/Elf_northwest_view.png');
+assetsManager.load('Elf_southeast_view', 'assets/skins/Elf/Elf_southeast_view.png');
+assetsManager.load('Elf_southwest_view', 'assets/skins/Elf/Elf_southwest_view.png');
+
+// --- BURNED (Mage Joueur) 8 DIRECTIONS ---
+assetsManager.load('Burned_south_view', 'assets/skins/Burned/Burned_south_view.png');
+assetsManager.load('Burned_north_view', 'assets/skins/Burned/Burned_north_view.png');
+assetsManager.load('Burned_east_view', 'assets/skins/Burned/Burned_east_view.png');
+assetsManager.load('Burned_west_view', 'assets/skins/Burned/Burned_west_view.png');
+assetsManager.load('Burned_northeast_view', 'assets/skins/Burned/Burned_northeast_view.png');
+assetsManager.load('Burned_northwest_view', 'assets/skins/Burned/Burned_northwest_view.png');
+assetsManager.load('Burned_southeast_view', 'assets/skins/Burned/Burned_southeast_view.png');
+assetsManager.load('Burned_southwest_view', 'assets/skins/Burned/Burned_southwest_view.png');
+
+// --- NECROMANCER 8 DIRECTIONS ---
+assetsManager.load('Necromancer_south_view', 'assets/skins/Necromancien/Necromancien_south_view.png');
+assetsManager.load('Necromancer_north_view', 'assets/skins/Necromancien/Necromancien_north_view.png');
+assetsManager.load('Necromancer_east_view', 'assets/skins/Necromancien/Necromancien_east_view.png');
+assetsManager.load('Necromancer_west_view', 'assets/skins/Necromancien/Necromancien_west_view.png');
+assetsManager.load('Necromancer_northeast_view', 'assets/skins/Necromancien/Necromancien_northeast_view.png');
+assetsManager.load('Necromancer_northwest_view', 'assets/skins/Necromancien/Necromancien_northwest_view.png');
+assetsManager.load('Necromancer_southeast_view', 'assets/skins/Necromancien/Necromancien_southeast_view.png');
+assetsManager.load('Necromancer_southwest_view', 'assets/skins/Necromancien/Necromancien_southwest_view.png');
+
+// --- DRAGON (Ennemi) 8 DIRECTIONS ---
+assetsManager.load('Dragon_south_view', 'assets/skins/Drake/Drake_south_view.png');
+assetsManager.load('Dragon_north_view', 'assets/skins/Drake/Drake_north_view.png');
+assetsManager.load('Dragon_east_view', 'assets/skins/Drake/Drake_east_view.png');
+assetsManager.load('Dragon_west_view', 'assets/skins/Drake/Drake_west_view.png');
+assetsManager.load('Dragon_northeast_view', 'assets/skins/Drake/Drake_northeast_view.png');
+assetsManager.load('Dragon_northwest_view', 'assets/skins/Drake/Drake_northwest_view.png');
+assetsManager.load('Dragon_southeast_view', 'assets/skins/Drake/Drake_southeast_view.png');
+assetsManager.load('Dragon_southwest_view', 'assets/skins/Drake/Drake_southwest_view.png');
+
+// --- TROLL 8 DIRECTIONS ---
+assetsManager.load('Troll_south_view', 'assets/skins/Troll/troll_south_view.png');
+assetsManager.load('Troll_north_view', 'assets/skins/Troll/troll_north_view.png');
+assetsManager.load('Troll_east_view', 'assets/skins/Troll/troll_east_view.png');
+assetsManager.load('Troll_west_view', 'assets/skins/Troll/troll_west_view.png');
+assetsManager.load('Troll_northeast_view', 'assets/skins/Troll/troll_northeast_view.png');
+assetsManager.load('Troll_northwest_view', 'assets/skins/Troll/troll_northwest_view.png');
+assetsManager.load('Troll_southeast_view', 'assets/skins/Troll/troll_southeast_view.png');
+assetsManager.load('Troll_southwest_view', 'assets/skins/Troll/troll_southwest_view.png');
+
+// --- MAGE (Ennemi) 8 DIRECTIONS ---
+assetsManager.load('Mage_south_view', 'assets/skins/Mage/mage_south_view.png');
+assetsManager.load('Mage_north_view', 'assets/skins/Mage/mage_north_view.png');
+assetsManager.load('Mage_east_view', 'assets/skins/Mage/mage_east_view.png');
+assetsManager.load('Mage_west_view', 'assets/skins/Mage/mage_west_view.png');
+assetsManager.load('Mage_northeast_view', 'assets/skins/Mage/mage_northeast_view.png');
+assetsManager.load('Mage_northwest_view', 'assets/skins/Mage/mage_northwest_view.png');
+assetsManager.load('Mage_southeast_view', 'assets/skins/Mage/mage_southeast_view.png');
+assetsManager.load('Mage_southwest_view', 'assets/skins/Mage/mage_southwest_view.png');
