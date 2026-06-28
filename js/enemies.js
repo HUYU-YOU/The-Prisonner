@@ -50,7 +50,6 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 };
 
 window.updateEnemies = function() {
-    // CORRECTION DES LIMITES POUR LES ENNEMIS (Plus de couloir invisible en salle 2 et 3)
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
@@ -73,8 +72,14 @@ window.updateEnemies = function() {
         if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; 
         enemy.wobble += 0.1; 
         
-        if (enemy.burnTimer > 0) {
+        // --- CORRECTION : APPLICATION DES DÉGÂTS DU DO T DE BRÛLURE MAGE ---
+        if (enemy.isBurning) {
+            if (enemy.burnTimer === undefined) enemy.burnTimer = 0;
             enemy.burnTimer--;
+            if (enemy.burnTimer % 20 === 0) { // S'applique 3 fois par seconde
+                enemy.health -= 12; // Les PV baissent !
+                if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#e67e22', 4);
+            }
             if (enemy.burnTimer <= 0) enemy.isBurning = false;
         }
 
@@ -146,7 +151,6 @@ window.updateEnemies = function() {
                 bloodStains.push({ x: player.x + player.size/2 + Math.random() * 20 - 10, y: player.y + player.size/2 + Math.random() * 20 - 10, r: Math.random() * 8 + 4 });
             }
             
-            // Protection après dégâts
             playerInvulnerableTimer = 60; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
