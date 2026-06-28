@@ -38,7 +38,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 
         currentEnemies.push({ 
             x: ex, y: ey, size: size, health: hp, maxHealth: hp, 
-            speed: spd, color: col, type: type, shootCooldown: 0, summonTimer: 180,
+            speed: spd, color: col, type: type, shootCooldown: Math.random() * 60 + 60, summonTimer: 180,
             wobble: Math.random() * Math.PI * 2,
             timeAlive: 0, phase: 1, invulnerable: false,
             isBurning: false, burnTicks: 0, burnTimer: 0,
@@ -66,19 +66,19 @@ window.updateEnemies = function() {
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0; 
         if (enemy.ultiAnimTimer === undefined) enemy.ultiAnimTimer = 0; 
         if (enemy.dashTimer === undefined) { enemy.dashTimer = 180; enemy.isDashing = 0; }
+        if (enemy.shootCooldown === undefined) enemy.shootCooldown = 60;
         
         if (enemy.attackAnimTimer > 0) enemy.attackAnimTimer--; 
         if (enemy.blockAnimTimer > 0) enemy.blockAnimTimer--; 
         if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; 
+        if (enemy.shootCooldown > 0) enemy.shootCooldown--;
         enemy.wobble += 0.1; 
         
-        // --- CORRECTION : APPLICATION DES DÉGÂTS DU DO T DE BRÛLURE MAGE ---
         if (enemy.isBurning) {
             if (enemy.burnTimer === undefined) enemy.burnTimer = 0;
             enemy.burnTimer--;
-            if (enemy.burnTimer % 20 === 0) { // S'applique 3 fois par seconde
-                enemy.health -= 12; // Les PV baissent !
-                if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#e67e22', 4);
+            if (enemy.burnTimer % 20 === 0) { 
+                enemy.health -= 12; 
             }
             if (enemy.burnTimer <= 0) enemy.isBurning = false;
         }
@@ -105,6 +105,30 @@ window.updateEnemies = function() {
         
         let dx = 0, dy = 0, dist = minDistToTarget; 
         if (dist !== 9999 && dist > 0) { dx = player.x - enemy.x; dy = player.y - enemy.y; }
+
+        // --- I.A DE TIR À DISTANCE DES ENNEMIS ---
+        let isRanged = ['skeleton', 'mage', 'dragon', 'spider'].includes(enemy.type);
+        if (isRanged && dist < 500 && enemy.shootCooldown <= 0 && !isElfInvuln) {
+            let pSpeed = 6, pType = 'bone', pColor = '#ecf0f1', pSize = 5, pDmg = 10;
+            
+            if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4; pSize = 6; pDmg = 5; }
+            else if (enemy.type === 'mage') { pType = 'fire'; pColor = '#e67e22'; pSpeed = 7; pSize = 8; pDmg = 15; }
+            else if (enemy.type === 'dragon') { pType = 'fire'; pColor = '#e74c3c'; pSpeed = 8; pSize = 12; pDmg = 25; }
+
+            let angle = Math.atan2(dy, dx);
+            
+            if (enemy.type === 'dragon') {
+                // Triple tir du dragon
+                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle - 0.2) * pSpeed, vy: Math.sin(angle - 0.2) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
+                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle) * pSpeed, vy: Math.sin(angle) * pSpeed, size: pSize * 1.2, type: pType, color: pColor, damage: pDmg + 10 });
+                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle + 0.2) * pSpeed, vy: Math.sin(angle + 0.2) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
+            } else {
+                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle) * pSpeed, vy: Math.sin(angle) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
+            }
+            
+            enemy.shootCooldown = enemy.type === 'dragon' ? 90 : (enemy.type === 'mage' ? 120 : 150);
+            enemy.attackAnimTimer = 30; // DÉCLENCHE L'ANIMATION attack1/attack2
+        }
 
         let currentEnemySpeed = enemy.speed; 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
@@ -146,6 +170,7 @@ window.updateEnemies = function() {
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
+            enemy.attackAnimTimer = 30; // DÉCLENCHE L'ANIMATION D'ATTAQUE AU CAC
             
             for(let b = 0; b < 3; b++) {
                 bloodStains.push({ x: player.x + player.size/2 + Math.random() * 20 - 10, y: player.y + player.size/2 + Math.random() * 20 - 10, r: Math.random() * 8 + 4 });
