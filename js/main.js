@@ -5,9 +5,12 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
+    // --- GESTION DU MENU ---
     if (gameState === "MENU") {
         if (keys['space']) {
-            if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
+            if (typeof spaceHoldTimer === 'undefined') {
+                spaceHoldTimer = 0;
+            }
             spaceHoldTimer++;
             if (spaceHoldTimer >= 300) { 
                 spaceHoldTimer = 0; 
@@ -23,6 +26,7 @@ window.update = function() {
         return;
     }
     
+    // --- ÉTATS DE JEU ---
     if (gameState === "PAUSED" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
         requestAnimationFrame(window.update); 
         return; 
@@ -35,13 +39,13 @@ window.update = function() {
         return; 
     }
     
-    // --- GESTION DU MODE ARÈNE (VAGUES) ---
+    // --- GESTION DE L'ARÈNE ---
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) {
             waveStartDelay--;
         }
         
-        // La map se rétrécit UNIQUEMENT à la vague 9
+        // Rétrécissement
         if (arenaWave === 9 && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
         } else if (arenaWave !== 9) {
@@ -55,7 +59,7 @@ window.update = function() {
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
                 
-                // Popo verte toutes les 5 vagues
+                // Potions
                 if (arenaWave > 1 && (arenaWave - 1) % 5 === 0) {
                     currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
                     if (typeof window.spawnParticles === 'function') {
@@ -94,12 +98,12 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                // FINI LE SOIN AUTOMATIQUE : La survie dépend des potions !
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
     }
 
+    // --- PORTES ---
     if (!worldState.openedDoors) worldState.openedDoors = {};
     let roomChanged = false;
     
@@ -150,6 +154,7 @@ window.update = function() {
         return; 
     }
     
+    // --- ULTIME ---
     if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
         if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
         keys['space'] = false; 
@@ -165,6 +170,7 @@ window.update = function() {
         }
     }
     
+    // --- COOLDOWNS ---
     if (player.dashCooldown === undefined) player.dashCooldown = 0;
     if (player.dashCooldown > 0) player.dashCooldown--;
     
@@ -199,6 +205,7 @@ window.update = function() {
         if (manaBar) manaBar.style.opacity = "1"; 
     }
     
+    // --- DÉPLACEMENTS ---
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
@@ -272,7 +279,7 @@ window.update = function() {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
     
-    // Disparition progressive des particules magiques
+    // --- NETTOYAGE ---
     for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i]; 
         p.x += p.vx; 
@@ -283,7 +290,6 @@ window.update = function() {
         }
     }
     
-    // --- GESTION DU FONDU DU SANG (1 minute = 3600 frames) ---
     for (let i = bloodStains.length - 1; i >= 0; i--) {
         let b = bloodStains[i];
         if (b.life === undefined) b.life = 3600; 
@@ -300,6 +306,7 @@ window.update = function() {
         }
     }
 
+    // --- APPELS SECONDAIRES ---
     if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
