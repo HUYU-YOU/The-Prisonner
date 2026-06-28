@@ -4,7 +4,8 @@
 
 window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
     for (let i = 0; i < count; i++) {
-        let ex = baseX; let ey = baseY;
+        let ex = baseX; 
+        let ey = baseY;
         
         if (ex === null || ey === null) {
             let minSpawnX = wallMargin + arenaShrink;
@@ -37,14 +38,32 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         }
 
         currentEnemies.push({ 
-            x: ex, y: ey, size: size, health: hp, maxHealth: hp, 
-            speed: spd, color: col, type: type, shootCooldown: Math.random() * 60 + 60, summonTimer: 180,
+            x: ex, 
+            y: ey, 
+            size: size, 
+            health: hp, 
+            maxHealth: hp, 
+            speed: spd, 
+            color: col, 
+            type: type, 
+            shootCooldown: Math.random() * 60 + 60, 
+            summonTimer: 180,
             wobble: Math.random() * Math.PI * 2,
-            timeAlive: 0, phase: 1, invulnerable: false,
-            isBurning: false, burnTicks: 0, burnTimer: 0,
-            slowTimer: 0, isPermanentlySlowed: false, 
-            killedBySummon: false, killedByNecro: false,
-            attackAnimTimer: 0, blockAnimTimer: 0, ultiAnimTimer: 0, dashTimer: 180, isDashing: 0
+            timeAlive: 0, 
+            phase: 1, 
+            invulnerable: false,
+            isBurning: false, 
+            burnTicks: 0, 
+            burnTimer: 0,
+            slowTimer: 0, 
+            isPermanentlySlowed: false, 
+            killedBySummon: false, 
+            killedByNecro: false,
+            attackAnimTimer: 0, 
+            blockAnimTimer: 0, 
+            ultiAnimTimer: 0, 
+            dashTimer: 180, 
+            isDashing: 0
         });
     }
 };
@@ -83,13 +102,11 @@ window.updateEnemies = function() {
             if (enemy.burnTimer <= 0) enemy.isBurning = false;
         }
         
-        // --- PHASE 2 DU MAGE EXILÉ ---
+        // --- PHASE 2 DU MAGE EXILÉ (+300 HP) ---
         if (enemy.type === 'mage' && enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
             enemy.phase = 2;
             enemy.maxHealth += 300;
             enemy.health += 300;
-            if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#9b59b6', 50, true);
-            if (typeof window.triggerShake === 'function') window.triggerShake(10, 20);
         }
 
         if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
@@ -105,16 +122,23 @@ window.updateEnemies = function() {
             if (enemy.summonTimer <= 0) {
                 window.spawnEnemy('skeleton', 1, enemy.x + 20, enemy.y + 20);
                 window.spawnEnemy('spider', 1, enemy.x - 20, enemy.y - 20);
-                enemy.summonTimer = enemy.phase === 2 ? 250 : 400; // Invoque plus vite en Phase 2 !
+                enemy.summonTimer = enemy.phase === 2 ? 250 : 400; 
             }
         }
 
         let minDistToTarget = 9999;
         if (!isElfInvuln) minDistToTarget = Math.hypot(player.x - enemy.x, player.y - enemy.y); 
         
-        let dx = 0, dy = 0, dist = minDistToTarget; 
-        if (dist !== 9999 && dist > 0) { dx = player.x - enemy.x; dy = player.y - enemy.y; }
+        let dx = 0; 
+        let dy = 0; 
+        let dist = minDistToTarget; 
+        
+        if (dist !== 9999 && dist > 0) { 
+            dx = player.x - enemy.x; 
+            dy = player.y - enemy.y; 
+        }
 
+        // --- I.A DE TIR À DISTANCE (TIRS ENNEMIS) ---
         let isRanged = ['skeleton', 'mage', 'dragon', 'spider'].includes(enemy.type);
         if (isRanged && dist < 500 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6, pType = 'bone', pColor = '#ecf0f1', pSize = 5, pDmg = 10;
@@ -133,7 +157,6 @@ window.updateEnemies = function() {
                 enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle) * pSpeed, vy: Math.sin(angle) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
             }
             
-            // Le Mage tire DEUX FOIS PLUS VITE en Phase 2 !
             let mageCD = enemy.phase === 2 ? 60 : 120;
             enemy.shootCooldown = enemy.type === 'dragon' ? 90 : (enemy.type === 'mage' ? mageCD : 150);
             enemy.attackAnimTimer = 30; 
@@ -143,47 +166,81 @@ window.updateEnemies = function() {
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
         
         let dx_mov = 0, dy_mov = 0; 
-        if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+        if (dist > 0 && dist < 9999) { 
+            dx_mov = (dx / dist) * currentEnemySpeed; 
+            dy_mov = (dy / dist) * currentEnemySpeed; 
+        }
 
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
             if (idx !== otherIdx) {
-                let diffX = enemy.x - otherEnemy.x; let diffY = enemy.y - otherEnemy.y;
+                let diffX = enemy.x - otherEnemy.x; 
+                let diffY = enemy.y - otherEnemy.y;
                 if (Math.abs(diffX) < 60 && Math.abs(diffY) < 60) {
                     let distSq = diffX*diffX + diffY*diffY;
                     let minDistSq = ((enemy.size + otherEnemy.size) * 0.4) ** 2;
                     if (distSq < minDistSq && distSq > 0) {
                         let repDist = Math.sqrt(distSq);
-                        repulseX += (diffX / repDist) * 1.5; repulseY += (diffY / repDist) * 1.5;
+                        repulseX += (diffX / repDist) * 1.5; 
+                        repulseY += (diffY / repDist) * 1.5;
                     }
                 }
             }
         });
-        dx_mov += repulseX; dy_mov += repulseY;
+        dx_mov += repulseX; 
+        dy_mov += repulseY;
 
-        let oldEx = enemy.x; enemy.x += dx_mov; 
-        // CORRECTION : Les boss bloquent de nouveau sur l'escalier !
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
+        let isBoss = ['troll', 'mage', 'dragon'].includes(enemy.type);
+
+        let oldEx = enemy.x; 
+        enemy.x += dx_mov; 
         
-        let oldEy = enemy.y; enemy.y += dy_mov; 
-        // CORRECTION : Les boss bloquent de nouveau sur l'escalier !
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } }
+        // CORRECTION : Les Boss ne traversent plus l'escalier
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) {
+            enemy.x = oldEx;
+        }
+        
+        for (let c = 0; c < currentCrates.length; c++) { 
+            let obj = currentCrates[c]; 
+            if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } 
+        }
+        
+        let oldEy = enemy.y; 
+        enemy.y += dy_mov; 
+        
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) {
+            enemy.y = oldEy;
+        }
+        
+        for (let c = 0; c < currentCrates.length; c++) { 
+            let obj = currentCrates[c]; 
+            if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } 
+        }
 
         let eMaxX = bRight - arenaShrink - enemy.size; 
         let eMaxY = bBot - arenaShrink - enemy.size;
-        if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY; 
-        if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
+        
+        if (enemy.x < minLimitX) enemy.x = minLimitX; 
+        if (enemy.y < minLimitY) enemy.y = minLimitY; 
+        if (enemy.x > eMaxX) enemy.x = eMaxX; 
+        if (enemy.y > eMaxY) enemy.y = eMaxY;
 
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
             enemy.attackAnimTimer = 30;
             
-            for(let b = 0; b < 3; b++) {
-                bloodStains.push({ x: player.x + player.size/2 + Math.random() * 20 - 10, y: player.y + player.size/2 + Math.random() * 20 - 10, r: Math.random() * 8 + 4 });
-            }
+            // SANG DU JOUEUR TOUCHÉ (HIT)
+            let randHit = Math.floor(Math.random() * 3) + 1;
+            bloodStains.push({
+                type: 'hit',
+                imgId: 'bloods_hit_view' + randHit,
+                x: player.x + player.size/2,
+                y: player.y + player.size/2,
+                size: player.size * 1.5,
+                rotation: Math.random() * Math.PI * 2,
+                life: 3600
+            });
             
             playerInvulnerableTimer = 60; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
@@ -195,7 +252,9 @@ window.updateEnemies = function() {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-            if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
+            if (player.heroClass === 'Necromancer') { 
+                necroKills.push(e.type); 
+            }
 
             if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
@@ -207,9 +266,17 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
-            for(let b = 0; b < 5; b++) {
-                bloodStains.push({ x: e.x + e.size/2 + Math.random() * 30 - 15, y: e.y + e.size/2 + Math.random() * 30 - 15, r: Math.random() * 12 + 4 });
-            }
+            // SANG À LA MORT DE L'ENNEMI (KILL)
+            let killNum = Math.floor(Math.random() * 3) + 1;
+            bloodStains.push({
+                type: 'kill',
+                imgId: 'bloods_kill_view' + killNum,
+                x: e.x + e.size/2,
+                y: e.y + e.size/2,
+                size: e.size * 2.0,
+                rotation: Math.random() * Math.PI * 2,
+                life: 3600
+            });
             
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
             
