@@ -26,10 +26,10 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        // CORRECTION : Rétrécit UNIQUEMENT à la vague 10, revient à la normale à la vague 11
-        if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
+        // CORRECTION : Rétrécit UNIQUEMENT à la vague 9 !
+        if (arenaWave === 9 && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
-        } else if (arenaWave !== 10) {
+        } else if (arenaWave !== 9) {
             arenaShrink = 0; 
         }
 
@@ -40,13 +40,11 @@ window.update = function() {
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
                 
-                // --- APPARITION D'UNE POTION VERTE TOUTES LES 5 VAGUES ---
                 if (arenaWave > 1 && (arenaWave - 1) % 5 === 0) {
                     currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
                     if(typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
-                // --- LOGIQUE DES BOSS ---
                 if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
                 else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
                 else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
