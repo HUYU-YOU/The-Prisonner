@@ -41,12 +41,8 @@ assetsManager.load('front_door_key', 'assets/decors/front_door_key.png');
 assetsManager.load('back_door_close', 'assets/decors/back_door_close.png');
 assetsManager.load('back_door_open', 'assets/decors/back_door_open.png');
 assetsManager.load('back_door_key', 'assets/decors/back_door_key.png'); 
-
-assetsManager.load('Elf_west', 'assets/skins/Elf_west.png');
-assetsManager.load('Elf_est', 'assets/skins/Elf_est.png');
-assetsManager.load('Elf_back', 'assets/skins/Elf_back.png');
-assetsManager.load('Elf_front', 'assets/skins/Elf_front.png');
 assetsManager.load('stairs_down', 'assets/decors/stairs_down.png'); 
+
 
 // --- SKINS BURNED ---
 assetsManager.load('Burned_top_view', 'assets/skins/Attack/Burned_top_view.jpeg');
@@ -77,8 +73,9 @@ assetsManager.load('chest2', 'assets/decorations/chest2.png');
 
 assetsManager.load('bibliotheque', 'assets/decorations/bibliotheque.png');
 assetsManager.load('bench', 'assets/decorations/bench.png');
-
+// --- LOGISTIQUE ET RAMASSABLES ---
 assetsManager.load('gold_coin', 'assets/decors/gold_coin.png');
+assetsManager.load('gold_key', 'assets/decors/gold_key.png');
 
 // --- SQUELETTES 8 DIRECTIONS ---
 assetsManager.load('Skeleton_south_view', 'assets/skins/Skeleton/skeleton_south_view.png');
