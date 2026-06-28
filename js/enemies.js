@@ -50,9 +50,14 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 };
 
 window.updateEnemies = function() {
-    let bTop = (currentRoomId === 2 || currentRoomId === 3) ? 250 : wallMargin; 
-    let bBot = (currentRoomId === 2 || currentRoomId === 3) ? 550 : canvas.height - wallMargin;
-    let minLimitX = wallMargin + arenaShrink; 
+    // CORRECTION DES LIMITES POUR LES ENNEMIS (Plus de couloir invisible en salle 2 et 3)
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
+    let bLeft = isVertCorridor ? 350 : wallMargin;
+    let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
+    let bTop = wallMargin; 
+    let bBot = canvas.height - wallMargin;
+    
+    let minLimitX = bLeft + arenaShrink; 
     let minLimitY = bTop + arenaShrink;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
@@ -68,19 +73,17 @@ window.updateEnemies = function() {
         if (enemy.ultiAnimTimer > 0) enemy.ultiAnimTimer--; 
         enemy.wobble += 0.1; 
         
-        // --- LA BRÛLURE ORANGE DU MAGE S'ARRÊTE ENFIN ---
         if (enemy.burnTimer > 0) {
             enemy.burnTimer--;
             if (enemy.burnTimer <= 0) enemy.isBurning = false;
         }
 
-        // --- INVOCATIONS DES BOSS ---
         if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
         if (enemy.type === 'troll') {
             enemy.summonTimer--;
             if (enemy.summonTimer <= 0) {
                 window.spawnEnemy('goblin', 2, enemy.x + 20, enemy.y + 20);
-                enemy.summonTimer = 300; // Invoque toutes les 5s
+                enemy.summonTimer = 300; 
             }
         }
         if (enemy.type === 'mage') {
@@ -88,7 +91,7 @@ window.updateEnemies = function() {
             if (enemy.summonTimer <= 0) {
                 window.spawnEnemy('skeleton', 1, enemy.x + 20, enemy.y + 20);
                 window.spawnEnemy('spider', 1, enemy.x - 20, enemy.y - 20);
-                enemy.summonTimer = 400; // Invoque toutes les ~6.5s
+                enemy.summonTimer = 400; 
             }
         }
 
@@ -104,7 +107,6 @@ window.updateEnemies = function() {
         let dx_mov = 0, dy_mov = 0; 
         if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
 
-        // --- ANTI-STACKING (Évite que les ennemis se fondent les uns dans les autres) ---
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
             if (idx !== otherIdx) {
@@ -124,7 +126,6 @@ window.updateEnemies = function() {
         let isBoss = ['troll', 'mage', 'dragon'].includes(enemy.type);
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
-        // CORRECTION: Les Boss ne bloquent plus dans l'escalier !
         if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
         
@@ -132,7 +133,7 @@ window.updateEnemies = function() {
         if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } }
 
-        let eMaxX = canvas.width - wallMargin - arenaShrink - enemy.size; 
+        let eMaxX = bRight - arenaShrink - enemy.size; 
         let eMaxY = bBot - arenaShrink - enemy.size;
         if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY; 
         if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
@@ -145,6 +146,7 @@ window.updateEnemies = function() {
                 bloodStains.push({ x: player.x + player.size/2 + Math.random() * 20 - 10, y: player.y + player.size/2 + Math.random() * 20 - 10, r: Math.random() * 8 + 4 });
             }
             
+            // Protection après dégâts
             playerInvulnerableTimer = 60; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
