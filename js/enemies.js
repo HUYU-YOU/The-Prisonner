@@ -82,6 +82,15 @@ window.updateEnemies = function() {
             }
             if (enemy.burnTimer <= 0) enemy.isBurning = false;
         }
+        
+        // --- PHASE 2 DU MAGE EXILÉ ---
+        if (enemy.type === 'mage' && enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
+            enemy.phase = 2;
+            enemy.maxHealth += 300;
+            enemy.health += 300;
+            if (typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#9b59b6', 50, true);
+            if (typeof window.triggerShake === 'function') window.triggerShake(10, 20);
+        }
 
         if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
         if (enemy.type === 'troll') {
@@ -96,7 +105,7 @@ window.updateEnemies = function() {
             if (enemy.summonTimer <= 0) {
                 window.spawnEnemy('skeleton', 1, enemy.x + 20, enemy.y + 20);
                 window.spawnEnemy('spider', 1, enemy.x - 20, enemy.y - 20);
-                enemy.summonTimer = 400; 
+                enemy.summonTimer = enemy.phase === 2 ? 250 : 400; // Invoque plus vite en Phase 2 !
             }
         }
 
@@ -106,7 +115,6 @@ window.updateEnemies = function() {
         let dx = 0, dy = 0, dist = minDistToTarget; 
         if (dist !== 9999 && dist > 0) { dx = player.x - enemy.x; dy = player.y - enemy.y; }
 
-        // --- I.A DE TIR À DISTANCE DES ENNEMIS ---
         let isRanged = ['skeleton', 'mage', 'dragon', 'spider'].includes(enemy.type);
         if (isRanged && dist < 500 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6, pType = 'bone', pColor = '#ecf0f1', pSize = 5, pDmg = 10;
@@ -118,7 +126,6 @@ window.updateEnemies = function() {
             let angle = Math.atan2(dy, dx);
             
             if (enemy.type === 'dragon') {
-                // Triple tir du dragon
                 enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle - 0.2) * pSpeed, vy: Math.sin(angle - 0.2) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
                 enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle) * pSpeed, vy: Math.sin(angle) * pSpeed, size: pSize * 1.2, type: pType, color: pColor, damage: pDmg + 10 });
                 enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle + 0.2) * pSpeed, vy: Math.sin(angle + 0.2) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
@@ -126,8 +133,10 @@ window.updateEnemies = function() {
                 enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle) * pSpeed, vy: Math.sin(angle) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
             }
             
-            enemy.shootCooldown = enemy.type === 'dragon' ? 90 : (enemy.type === 'mage' ? 120 : 150);
-            enemy.attackAnimTimer = 30; // DÉCLENCHE L'ANIMATION attack1/attack2
+            // Le Mage tire DEUX FOIS PLUS VITE en Phase 2 !
+            let mageCD = enemy.phase === 2 ? 60 : 120;
+            enemy.shootCooldown = enemy.type === 'dragon' ? 90 : (enemy.type === 'mage' ? mageCD : 150);
+            enemy.attackAnimTimer = 30; 
         }
 
         let currentEnemySpeed = enemy.speed; 
@@ -152,14 +161,14 @@ window.updateEnemies = function() {
         });
         dx_mov += repulseX; dy_mov += repulseY;
 
-        let isBoss = ['troll', 'mage', 'dragon'].includes(enemy.type);
-
         let oldEx = enemy.x; enemy.x += dx_mov; 
-        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        // CORRECTION : Les boss bloquent de nouveau sur l'escalier !
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
-        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        // CORRECTION : Les boss bloquent de nouveau sur l'escalier !
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
         for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } }
 
         let eMaxX = bRight - arenaShrink - enemy.size; 
@@ -170,7 +179,7 @@ window.updateEnemies = function() {
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
-            enemy.attackAnimTimer = 30; // DÉCLENCHE L'ANIMATION D'ATTAQUE AU CAC
+            enemy.attackAnimTimer = 30;
             
             for(let b = 0; b < 3; b++) {
                 bloodStains.push({ x: player.x + player.size/2 + Math.random() * 20 - 10, y: player.y + player.size/2 + Math.random() * 20 - 10, r: Math.random() * 8 + 4 });
