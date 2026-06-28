@@ -18,7 +18,6 @@ window.spawnParticles = function(x, y, color, count, isGlow = false) {
     }
 };
 
-// --- CONVERTISSEUR D'ANGLE EN 8 DIRECTIONS ---
 window.getDirectionName = function(angle) {
     let deg = angle * (180 / Math.PI);
     if (deg < 0) deg += 360;
@@ -37,13 +36,10 @@ window.getDirectionName = function(angle) {
 window.renderGameView = function() {
     if (!ctx) return;
     
-    // Désactive le lissage pour que le pixel art reste ultra net
     ctx.imageSmoothingEnabled = false;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
-    // --- GESTION DU SHAKE ---
     if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
@@ -52,7 +48,6 @@ window.renderGameView = function() {
         shakeIntensity *= 0.9; 
     }
     
-    // --- RENDU DU SOL ---
     let imageSol = assetsManager.images['sol_base'];
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -68,7 +63,6 @@ window.renderGameView = function() {
         } 
     }
 
-    // --- COULOIRS ET MURS ---
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
@@ -86,13 +80,15 @@ window.renderGameView = function() {
     let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
-    // --- SANG OPAQUE ET CONTRASTÉ SUR LE SOL ---
     bloodStains.forEach(blood => { 
         ctx.fillStyle = '#8a0303'; 
         ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.fill(); 
+        
         ctx.fillStyle = '#500000'; 
         ctx.beginPath(); ctx.arc(blood.x, blood.y, (blood.r || 15) * 0.6, 0, Math.PI * 2); ctx.fill(); 
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
+        
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.r || 15, 0, Math.PI * 2); ctx.stroke();
     });
 
@@ -164,9 +160,7 @@ window.renderGameView = function() {
             else if (item.type === 'potion_blue') { ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(item.x, item.y + 6 + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(item.x - 5, item.y - 4 + floatY, 10, 12); ctx.fillStyle = '#2980b9'; ctx.fillRect(item.x - 4, item.y - 8 + floatY, 8, 4); } 
             else if (item.type === 'key_skull') { ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(item.x, item.y + floatY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#bdc3c7'; ctx.fillRect(item.x - 3, item.y + 10 + floatY, 6, 15); ctx.fillStyle = '#2c3e50'; ctx.fillRect(item.x - 2, item.y + 2 + floatY, 4, 4); } 
             else if (item.type === 'coin') { 
-                ctx.translate(item.x, item.y + floatY); 
-                let scaleX = Math.abs(Math.cos(Date.now() / 200)); 
-                ctx.scale(scaleX, 1); 
+                ctx.translate(item.x, item.y + floatY); let scaleX = Math.abs(Math.cos(Date.now() / 200)); ctx.scale(scaleX, 1); 
                 let coinImg = assetsManager.images['gold_coin'];
                 if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
                     let displaySize = item.size * 2.5; 
@@ -219,8 +213,6 @@ window.renderGameView = function() {
         } 
         else if (enemy.attackAnimTimer > 0) {
             action = 'attack';
-            
-            // --- GESTION DES ANIMATIONS D'ATTAQUE MULTI-FRAMES ---
             let t = enemy.attackAnimTimer;
             if (prefix === 'Skeleton' || prefix === 'Mage') {
                 if (t > 15) skinName = `${prefix}_${dir}_attack1`;
@@ -285,18 +277,15 @@ window.renderGameView = function() {
         }
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
         
-        // --- CORRECTION ULTIME MAGE SANS BOULE ORANGE ---
         if (enemy.ultiAnimTimer > 0) { 
             ctx.save(); 
             ctx.globalCompositeOperation = 'screen'; 
             let imgUlt = assetsManager.images['Ulti_fire_mage']; 
             if (imgUlt && imgUlt.complete && imgUlt.naturalWidth > 0) { 
-                let progress = 1 - (enemy.ultiAnimTimer / 30); 
                 let expSize = enemy.size * 3.5; 
                 ctx.globalAlpha = enemy.ultiAnimTimer / 30; 
                 ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize); 
             } else {
-                // Effet d'explosion vectoriel net (plus de boule orange floue)
                 let progress = 1 - (enemy.ultiAnimTimer / 30); 
                 let radius = progress * enemy.size * 2.5;
                 ctx.globalAlpha = 1 - progress;
@@ -322,6 +311,7 @@ window.renderGameView = function() {
         ctx.fillStyle = '#111'; ctx.fillRect(bx, by, barWidth, barHeight); ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; let hpPercent = Math.max(0, boss.health) / boss.maxHealth; ctx.fillRect(bx + 2, by + 2, (barWidth - 4) * hpPercent, barHeight - 4); ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, by - 8); ctx.textAlign = 'left';
     }
 
+    // --- RENDU DES PROJECTILES ---
     projectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle); ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); ctx.shadowBlur = 10;
         if (p.isNecro) { ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(-2, 0, p.size-2, 0, Math.PI*2); ctx.fill(); } 
@@ -364,12 +354,9 @@ window.renderGameView = function() {
         let prefixP = player.heroClass ? player.heroClass.charAt(0).toUpperCase() + player.heroClass.slice(1).toLowerCase() : 'Knight';
         if (prefixP === 'Mage') prefixP = 'Burned'; 
         
-        // --- ANIMATIONS MULTIPLES POUR LE JOUEUR ---
         let actionP = 'view';
         if ((typeof isAttacking !== 'undefined' && isAttacking) || attackCooldown > 0) {
             actionP = 'attack';
-            
-            // Calcul automatique des frames selon la vitesse du Héros
             let midTime = 15;
             if (prefixP === 'Knight') midTime = 20;
             else if (prefixP === 'Burned') midTime = 17;
@@ -428,9 +415,18 @@ window.renderGameView = function() {
             if (player.heroClass === 'Necromancer') { ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(15, 0); ctx.lineTo(-10, 10); ctx.fill(); ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(5, 0, 15, -Math.PI/2, Math.PI/2); ctx.stroke(); } 
             else if (player.heroClass === 'Knight') { 
                 ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-15, -15, 30, 30); ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -10, 5, 20); ctx.save(); 
-                if(isAttacking) { ctx.translate(15, 15); ctx.rotate(Math.PI/4); } else { ctx.translate(5, 20); } 
-                ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -4, 10, 8); ctx.fillStyle = '#ecf0f1'; ctx.fillRect(10, -2, 35, 4); ctx.restore(); 
-                if (isAttacking) { ctx.strokeStyle = 'rgba(236, 240, 241, 0.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, player.size + 15, -Math.PI/3, Math.PI/3); ctx.stroke(); } 
+                if (attackCooldown > 0) {
+                    let progress = (40 - attackCooldown) / 40;
+                    let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3);
+                    ctx.rotate(swipeAngle);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); ctx.stroke();
+                } else {
+                    ctx.translate(5, 12); 
+                }
+                ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -3, 6, 6); 
+                ctx.fillStyle = '#ecf0f1'; ctx.fillRect(6, -2, 28, 4); 
+                ctx.restore();
             }
         }
         ctx.restore(); ctx.globalAlpha = 1.0; 
