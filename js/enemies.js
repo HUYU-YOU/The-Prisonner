@@ -126,12 +126,20 @@ window.updateEnemies = function() {
         }
 
         let minDistToTarget = 9999;
-        if (!isElfInvuln) minDistToTarget = Math.hypot(player.x - enemy.x, player.y - enemy.y); 
+        if (!isElfInvuln) {
+            minDistToTarget = Math.hypot(player.x - enemy.x, player.y - enemy.y); 
+        }
         
-        let dx = 0, dy = 0, dist = minDistToTarget; 
-        if (dist !== 9999 && dist > 0) { dx = player.x - enemy.x; dy = player.y - enemy.y; }
+        let dx = 0; 
+        let dy = 0; 
+        let dist = minDistToTarget; 
+        
+        if (dist !== 9999 && dist > 0) { 
+            dx = player.x - enemy.x; 
+            dy = player.y - enemy.y; 
+        }
 
-        // --- I.A DE TIR À DISTANCE (LE RETOUR) ---
+        // --- I.A DE TIR À DISTANCE ---
         let isRanged = ['skeleton', 'mage', 'dragon', 'spider'].includes(enemy.type);
         if (isRanged && dist < 500 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6, pType = 'bone', pColor = '#ecf0f1', pSize = 5, pDmg = 10;
@@ -159,55 +167,87 @@ window.updateEnemies = function() {
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
         
         let dx_mov = 0, dy_mov = 0; 
-        if (dist > 0 && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+        if (dist > 0 && dist < 9999) { 
+            dx_mov = (dx / dist) * currentEnemySpeed; 
+            dy_mov = (dy / dist) * currentEnemySpeed; 
+        }
 
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
             if (idx !== otherIdx) {
-                let diffX = enemy.x - otherEnemy.x; let diffY = enemy.y - otherEnemy.y;
+                let diffX = enemy.x - otherEnemy.x; 
+                let diffY = enemy.y - otherEnemy.y;
                 if (Math.abs(diffX) < 60 && Math.abs(diffY) < 60) {
                     let distSq = diffX*diffX + diffY*diffY;
                     let minDistSq = ((enemy.size + otherEnemy.size) * 0.4) ** 2;
                     if (distSq < minDistSq && distSq > 0) {
                         let repDist = Math.sqrt(distSq);
-                        repulseX += (diffX / repDist) * 1.5; repulseY += (diffY / repDist) * 1.5;
+                        repulseX += (diffX / repDist) * 1.5; 
+                        repulseY += (diffY / repDist) * 1.5;
                     }
                 }
             }
         });
-        dx_mov += repulseX; dy_mov += repulseY;
+        dx_mov += repulseX; 
+        dy_mov += repulseY;
 
         let isBoss = ['troll', 'mage', 'dragon'].includes(enemy.type);
 
-        let oldEx = enemy.x; enemy.x += dx_mov; 
-        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
+        let oldEx = enemy.x; 
+        enemy.x += dx_mov; 
         
-        let oldEy = enemy.y; enemy.y += dy_mov; 
-        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } }
+        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) {
+            enemy.x = oldEx;
+        }
+        for (let c = 0; c < currentCrates.length; c++) { 
+            let obj = currentCrates[c]; 
+            if (!obj.isBroken && window.checkCollision(enemy, obj)) { 
+                enemy.x = oldEx; break; 
+            } 
+        }
+        
+        let oldEy = enemy.y; 
+        enemy.y += dy_mov; 
+        
+        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) {
+            enemy.y = oldEy;
+        }
+        for (let c = 0; c < currentCrates.length; c++) { 
+            let obj = currentCrates[c]; 
+            if (!obj.isBroken && window.checkCollision(enemy, obj)) { 
+                enemy.y = oldEy; break; 
+            } 
+        }
 
         if (currentRoomId === 8 && !worldState.bossDefeated && isBoss) {
-            let sCX = canvas.width / 2; let sCY = canvas.height / 2;
-            let dXStair = (enemy.x + enemy.size/2) - sCX; let dYStair = (enemy.y + enemy.size/2) - sCY;
-            let distToStairs = Math.hypot(dXStair, dYStair); let minStairDist = 75 + enemy.size/2 + 5; 
+            let sCX = canvas.width / 2;
+            let sCY = canvas.height / 2;
+            let dXStair = (enemy.x + enemy.size/2) - sCX;
+            let dYStair = (enemy.y + enemy.size/2) - sCY;
+            let distToStairs = Math.hypot(dXStair, dYStair);
+            let minStairDist = 75 + enemy.size/2 + 5; 
+            
             if (distToStairs < minStairDist && distToStairs > 0) {
                 let overlap = minStairDist - distToStairs;
-                enemy.x += (dXStair / distToStairs) * overlap; enemy.y += (dYStair / distToStairs) * overlap;
+                enemy.x += (dXStair / distToStairs) * overlap;
+                enemy.y += (dYStair / distToStairs) * overlap;
             }
         }
 
         let eMaxX = bRight - arenaShrink - enemy.size; 
         let eMaxY = bBot - arenaShrink - enemy.size;
-        if (enemy.x < minLimitX) enemy.x = minLimitX; if (enemy.y < minLimitY) enemy.y = minLimitY; 
-        if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
+        
+        if (enemy.x < minLimitX) enemy.x = minLimitX; 
+        if (enemy.y < minLimitY) enemy.y = minLimitY; 
+        if (enemy.x > eMaxX) enemy.x = eMaxX; 
+        if (enemy.y > eMaxY) enemy.y = eMaxY;
 
         if (playerInvulnerableTimer <= 0 && !enemy.invulnerable && window.checkCollision(player, enemy)) {
             playerStats.health -= 20; 
             if (typeof window.triggerShake === 'function') window.triggerShake(12, 20); 
             enemy.attackAnimTimer = 30;
             
-            // --- SANG GÉNÉRÉ SUR LE JOUEUR (Corps à corps) ---
+            // --- SANG DU JOUEUR TOUCHÉ (HIT) ---
             let randHit = Math.floor(Math.random() * 3) + 1;
             bloodStains.push({
                 type: 'hit',
@@ -229,7 +269,9 @@ window.updateEnemies = function() {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-            if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
+            if (player.heroClass === 'Necromancer') { 
+                necroKills.push(e.type); 
+            }
 
             if (e.type === 'troll' && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
@@ -241,7 +283,7 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
-            // --- ÉNORME SANG ALÉATOIRE (Mort de l'ennemi) ---
+            // --- SANG DE LA MORT DE L'ENNEMI (KILL) ---
             let killNum = Math.floor(Math.random() * 3) + 1;
             bloodStains.push({
                 type: 'kill',
