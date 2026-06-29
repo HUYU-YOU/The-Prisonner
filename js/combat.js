@@ -40,19 +40,10 @@ window.handlePlayerAttack = function() {
                     } else { 
                         enemy.health -= 50; 
                         
-                        // SANG DE DÉGÂTS (SAUF POUR SQUELETTE)
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            bloodStains.push({
-                                type: 'hit',
-                                imgId: 'bloods_hit_view' + hitNum,
-                                x: enemy.x + enemy.size/2,
-                                y: enemy.y + enemy.size/2,
-                                size: enemy.size * 1.5,
-                                rotation: Math.random() * Math.PI * 2,
-                                life: maxLife
-                            });
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         
                         if (typeof window.triggerShake === 'function') {
@@ -113,19 +104,10 @@ window.updateProjectiles = function() {
                     }
                 }
                 
-                // SANG DE DÉGÂTS PROJECTILES (SAUF SQUELETTE)
                 if (enemy.type !== 'skeleton') {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    bloodStains.push({
-                        type: 'hit',
-                        imgId: 'bloods_hit_view' + hitNum,
-                        x: enemy.x + enemy.size/2,
-                        y: enemy.y + enemy.size/2,
-                        size: enemy.size * 1.5,
-                        rotation: Math.random() * Math.PI * 2,
-                        life: maxLife
-                    });
+                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
@@ -145,6 +127,14 @@ window.updateProjectiles = function() {
         let ep = enemyProjectiles[i];
         ep.x += ep.vx; ep.y += ep.vy;
         
+        // --- MÉCANIQUE BOOMERANG DE L'ÉPÉE DE L'ARMURE ---
+        if (ep.type === 'armor_sword') {
+            if (ep.lifeTimer === undefined) ep.lifeTimer = 0;
+            ep.lifeTimer++;
+            if (ep.lifeTimer === 30) { ep.vx *= -1; ep.vy *= -1; } // L'épée fait demi-tour !
+            if (ep.lifeTimer >= 60) { enemyProjectiles.splice(i, 1); continue; } // L'épée disparaît
+        }
+        
         let epHitbox = { x: ep.x - ep.size, y: ep.y - ep.size, size: ep.size * 2 };
         
         if (ep.x < bLeft || ep.y < bTop || ep.x > bRight || ep.y > bBot) { 
@@ -160,24 +150,37 @@ window.updateProjectiles = function() {
             
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
-            // SANG GÉNÉRÉ SUR LE JOUEUR
             let hitNum = Math.floor(Math.random() * 3) + 1;
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            bloodStains.push({
-                type: 'hit',
-                imgId: 'bloods_hit_view' + hitNum,
-                x: player.x + player.size/2,
-                y: player.y + player.size/2,
-                size: player.size * 1.5,
-                rotation: Math.random() * Math.PI * 2,
-                life: maxLife
-            });
+            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
             
             playerInvulnerableTimer = 45;
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
             
             enemyProjectiles.splice(i, 1);
+        }
+    }
+    
+    // --- GESTION DES DÉGÂTS DES MÉTÉORES (HAZARDS D'ELYSIA) ---
+    if (typeof hazards !== 'undefined') {
+        for (let i = hazards.length - 1; i >= 0; i--) {
+            let h = hazards[i];
+            h.timer--;
+            if (h.timer <= 0) {
+                // EXPLOSION : On vérifie si le joueur est dans le rayon du météore
+                if (!isElfInvuln && playerInvulnerableTimer <= 0) {
+                    let distH = Math.hypot((player.x + player.size/2) - h.x, (player.y + player.size/2) - h.y);
+                    if (distH < h.radius) {
+                        playerStats.health -= h.damage || 20;
+                        playerInvulnerableTimer = 45;
+                        if (typeof window.triggerShake === 'function') window.triggerShake(15, 25);
+                        if (typeof window.updateHUD === 'function') window.updateHUD();
+                        if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+                    }
+                }
+                hazards.splice(i, 1); // Disparition du météore
+            }
         }
     }
 };
@@ -210,18 +213,13 @@ window.updateItemsAndCrates = function() {
         if (!crate.isBroken && crate.health <= 0) {
             crate.isBroken = true; 
             if (crate.type === 'chest') {
-                if (!worldState.openedChests) worldState.openedChests = {}; 
-                worldState.openedChests[crate.id] = true;
-                
+                if (!worldState.openedChests) worldState.openedChests = {}; worldState.openedChests[crate.id] = true;
                 currentItems.push({ id: 'potion_chest_' + Date.now(), type: 'potion_green', x: crate.x + 25, y: crate.y + 25, size: 15, collected: false });
                 currentItems.push({ id: 'coin_chest1_' + Date.now(), type: 'coin', x: crate.x + 10, y: crate.y + 40, size: 8, collected: false });
                 currentItems.push({ id: 'coin_chest2_' + Date.now(), type: 'coin', x: crate.x + 40, y: crate.y + 40, size: 8, collected: false });
-                
                 if (typeof window.spawnParticles === 'function') window.spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#f1c40f', 30);
             } else {
-                if (!worldState.brokenCrates) worldState.brokenCrates = {}; 
-                worldState.brokenCrates[crate.id] = true;
-                
+                if (!worldState.brokenCrates) worldState.brokenCrates = {}; worldState.brokenCrates[crate.id] = true;
                 currentItems.push({ id: 'coin_' + Date.now() + i, type: 'coin', x: crate.x + 15, y: crate.y + 15, size: 8, collected: false });
             }
         }
