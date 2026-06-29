@@ -88,13 +88,17 @@ window.renderGameView = function() {
     bloodStains.forEach(blood => { 
         ctx.save();
         let alpha = 1.0;
-        if (blood.life !== undefined && blood.life < 300) { alpha = Math.max(0, blood.life / 300); }
+        let fadeTime = 300;
+        if (blood.life !== undefined && blood.life < fadeTime) {
+            alpha = Math.max(0, blood.life / fadeTime);
+        }
         ctx.globalAlpha = alpha;
         
         ctx.translate(blood.x, blood.y);
         if (blood.rotation) ctx.rotate(blood.rotation);
         
         let bImg = window.getAsset(blood.imgId);
+        
         if (bImg && bImg.complete && bImg.naturalWidth > 0) {
             let s = blood.size || 40;
             ctx.drawImage(bImg, -s/2, -s/2, s, s);
@@ -148,11 +152,7 @@ window.renderGameView = function() {
             if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') { ctx.rotate(Math.sin(Date.now() / 20) * 0.1); }
             
             if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); } 
-            else { 
-                ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; 
-                if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; 
-                ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); 
-            }
+            else { ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); }
             ctx.restore();
         });
     }
@@ -194,13 +194,8 @@ window.renderGameView = function() {
             
             if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
                 let displaySize = item.size * 2.5; 
-                
-                // --- AJUSTEMENT DES TAILLES DES ITEMS ---
-                if (assetName === 'gold_coin') {
-                    displaySize = item.size * 3.5; 
-                } else if (assetName && assetName.includes('key')) {
-                    displaySize = item.size * 1.2; 
-                }
+                if (assetName === 'gold_coin') { displaySize = item.size * 3.5; } 
+                else if (assetName && assetName.includes('key')) { displaySize = item.size * 1.2; }
                 
                 ctx.drawImage(itemImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
@@ -214,17 +209,35 @@ window.renderGameView = function() {
 
     if (typeof hazards !== 'undefined') {
         hazards.forEach(h => { 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill(); 
-            let fallH = (h.timer / h.maxTimer) * 150; ctx.fillStyle = 'rgba(192, 57, 43, 0.9)'; ctx.beginPath(); ctx.arc(h.x, h.y - fallH, h.radius * (1 - (h.timer/h.maxTimer)*0.5), 0, Math.PI*2); ctx.fill(); 
-            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.stroke(); 
+            ctx.save();
+            let isElysia = h.isElysia || false;
+            let assetName = isElysia ? 'Attack_meteorites_elysia' : 'Attack_meteorites_dragon';
+            let metImg = window.getAsset(assetName);
+            
+            let fallH = (h.timer / h.maxTimer) * 150; 
+            
+            if (metImg && metImg.complete && metImg.naturalWidth > 0) {
+                ctx.drawImage(metImg, h.x - h.radius, h.y - fallH - h.radius, h.radius*2, h.radius*2);
+                ctx.strokeStyle = isElysia ? 'rgba(232, 67, 147, 0.5)' : 'rgba(231, 76, 60, 0.5)'; 
+                ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.stroke(); 
+            } else {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = 'rgba(192, 57, 43, 0.9)'; ctx.beginPath(); ctx.arc(h.x, h.y - fallH, h.radius * (1 - (h.timer/h.maxTimer)*0.5), 0, Math.PI*2); ctx.fill(); 
+                ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.stroke(); 
+            }
+            ctx.restore();
         });
     }
 
     if (typeof necroSummons !== 'undefined') {
         necroSummons.forEach(s => {
             ctx.save(); ctx.translate(s.x + s.size/2, s.y + s.size/2);
-            if (s.type === 'fusion') { ctx.fillStyle = '#8e44ad'; ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size); ctx.fillStyle = '#1abc9c'; ctx.beginPath(); ctx.arc(0, 0, s.size/4, 0, Math.PI*2); ctx.fill(); } 
-            else { ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'; ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill(); }
+            if (s.type === 'fusion') { 
+                ctx.fillStyle = '#8e44ad'; ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size); 
+                ctx.fillStyle = '#1abc9c'; ctx.beginPath(); ctx.arc(0, 0, s.size/4, 0, Math.PI*2); ctx.fill(); 
+            } else { 
+                ctx.fillStyle = 'rgba(44, 62, 80, 0.7)'; ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill(); 
+            }
             ctx.restore(); 
         });
     }
@@ -235,18 +248,24 @@ window.renderGameView = function() {
         let angleToPlayer = Math.atan2(dy, dx); 
         let dir = window.getDirectionName(angleToPlayer);
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
-        let action = 'view'; let skinName = '';
+        let action = 'view';
+        let skinName = '';
 
-        if (enemy.blockAnimTimer > 0) { action = 'block'; skinName = `${prefix}_${dir}_${action}`; } 
-        else if (enemy.attackAnimTimer > 0) {
+        if (enemy.blockAnimTimer > 0) {
+            action = 'block'; skinName = `${prefix}_${dir}_${action}`;
+        } else if (enemy.attackAnimTimer > 0) {
             action = 'attack'; let t = enemy.attackAnimTimer;
-            if (prefix === 'Skeleton' || prefix === 'Mage') { if (t > 15) skinName = `${prefix}_${dir}_attack1`; else skinName = `${prefix}_${dir}_attack2`; } 
-            else if (prefix === 'Dragon') { if (t > 20) skinName = `${prefix}_${dir}_attack1`; else if (t > 10) skinName = `${prefix}_${dir}_attack2`; else skinName = `${prefix}_${dir}_attack3`; } 
-            else { skinName = `${prefix}_${dir}_${action}`; }
+            if (prefix === 'Skeleton' || prefix === 'Mage') {
+                if (t > 15) skinName = `${prefix}_${dir}_attack1`; else skinName = `${prefix}_${dir}_attack2`;
+            } else if (prefix === 'Dragon') {
+                if (t > 20) skinName = `${prefix}_${dir}_attack1`; else if (t > 10) skinName = `${prefix}_${dir}_attack2`; else skinName = `${prefix}_${dir}_attack3`;
+            } else { skinName = `${prefix}_${dir}_${action}`; }
         } else { skinName = `${prefix}_${dir}_${action}`; }
 
         let img = window.getAsset(skinName); let is8Dir = true;
+        
         if (!img || !img.complete || img.naturalWidth === 0) { skinName = `${prefix}_${dir}_view`; img = window.getAsset(skinName); }
+        
         if (!img || !img.complete || img.naturalWidth === 0) { 
             is8Dir = false; let fallbackName = ''; let lowPrefix = prefix.toLowerCase();
             if (lowPrefix === 'goblin') { if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; else fallbackName = 'goblin_top_view'; } 
@@ -256,36 +275,17 @@ window.renderGameView = function() {
         }
 
         let wobble = Math.sin(enemy.wobble) * 0.15; let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
+        
         if (is8Dir) { ctx.rotate(wobble); } else { ctx.rotate(angleToPlayer - (Math.PI / 2) + wobble); }
         ctx.scale(scalePulse, scalePulse); 
         
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
-        if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
-        else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
-        else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
-        
         if (img && img.complete && img.naturalWidth > 0) {
-            let displaySize = enemy.size * 2.5; 
-            if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
-                ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
-            } else { ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); }
-        } else { ctx.shadowColor = 'transparent'; ctx.fillStyle = '#e74c3c'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size); }
-        
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-        if (enemy.ultiAnimTimer > 0) { 
-            ctx.save(); ctx.globalCompositeOperation = 'screen'; let imgUlt = window.getAsset('Ulti_fire_mage'); 
-            if (imgUlt && imgUlt.complete && imgUlt.naturalWidth > 0) { let expSize = enemy.size * 3.5; ctx.globalAlpha = enemy.ultiAnimTimer / 30; ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize); } 
-            ctx.restore(); 
+            let displaySize = enemy.size * 2.5; ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
+        } else { 
+            ctx.fillStyle = '#e74c3c'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size); 
         }
         
-        if (enemy.isBurning) { ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); }
-        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); ctx.stroke(); }
         ctx.restore(); 
-        
-        if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type)) { 
-            ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
-            ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
-        } 
     });
 
     let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
@@ -305,30 +305,47 @@ window.renderGameView = function() {
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
     }
 
+    // --- SKINS DES PROJECTILES DU JOUEUR ---
     projectiles.forEach(p => { 
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle); ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); ctx.restore();
+        ctx.save(); ctx.translate(p.x, p.y); 
+        
+        let pImgName = 'Attack_arrow_elf';
+        if (p.type === 'fire_mage') pImgName = 'Attack_fire_mage';
+        else if (p.type === 'fire_necromancien') pImgName = 'Attack_fire_necromancien';
+
+        let pImg = window.getAsset(pImgName);
+        if (pImg && pImg.complete && pImg.naturalWidth > 0) {
+            ctx.rotate(p.angle + Math.PI / 2); // Rotation vers la cible (car les images regardent vers le NORD)
+            ctx.drawImage(pImg, -p.size*2.5, -p.size*2.5, p.size*5, p.size*5);
+        } else {
+            ctx.rotate(p.angle); 
+            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); 
+        }
+        ctx.restore();
     });
     
+    // --- SKINS DES PROJECTILES DES ENNEMIS ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); ctx.translate(p.x, p.y); let pAngle = Math.atan2(p.vy, p.vx); 
         
-        if (p.type === 'armor_sword') {
-            // Dessin basique rotatif pour l'épée boomerang en attendant l'asset !
-            ctx.rotate(Date.now() / 100); ctx.fillStyle = p.color; ctx.fillRect(-15, -4, 30, 8); 
-        }
-        else if (p.type === 'bone') { 
-            ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
-        } 
-        else if (p.type === 'bat_web') { 
-            ctx.rotate(pAngle); ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); 
-        } 
-        else if (p.type === 'fire') { 
-            let fireImg = window.getAsset('Attack_fire_mage'); 
-            if (fireImg && fireImg.complete && fireImg.naturalWidth > 0) { ctx.rotate(pAngle + Math.PI / 2); ctx.globalCompositeOperation = 'screen'; let dSize = p.size * 5.0; ctx.drawImage(fireImg, -dSize/2, -dSize/2, dSize, dSize); } 
-            else { ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); } 
-        } 
-        else { 
-            ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
+        let epImgName = '';
+        if (p.type === 'bone_skeleton') epImgName = 'Attack_bone_skeleton';
+        else if (p.type === 'fire_mage') epImgName = 'Attack_fire_mage';
+        else if (p.type === 'fire_dragon') epImgName = 'Attack_fire_dragon';
+        else if (p.type === 'fire_deathgod') epImgName = 'Attack_fire_deathgod';
+        else if (p.type === 'fire_elysia') epImgName = 'Attack_fire_elysia';
+        else if (p.type === 'armor_sword') epImgName = 'Attack_sword_armor';
+        
+        let epImg = window.getAsset(epImgName);
+        
+        if (epImg && epImg.complete && epImg.naturalWidth > 0) {
+            ctx.rotate(pAngle + Math.PI / 2); // Rotation pour faire pointer le sprite
+            if (p.type === 'armor_sword') { ctx.rotate(Date.now() / 100); } // Le boomerang tourne !
+            ctx.drawImage(epImg, -p.size*2, -p.size*2, p.size*4, p.size*4);
+        } else {
+            if (p.type === 'bone_skeleton') { ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); } 
+            else if (p.type === 'bat_web') { ctx.rotate(pAngle); ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); } 
+            else { ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); }
         }
         ctx.restore();
     });
@@ -345,9 +362,11 @@ window.renderGameView = function() {
         let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
         let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
         let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
+        
         if (player.dashTimer > 0) tilt = Math.PI / 8; 
         
-        ctx.save(); ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
+        ctx.save(); 
+        ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
 
         let dirP = window.getDirectionName(player.faceAngle);
         let prefixP = player.heroClass ? player.heroClass : 'Knight';
@@ -367,6 +386,7 @@ window.renderGameView = function() {
         let is8DirP = true;
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) { pImg = window.getAsset(`${prefixP}_${dirP}_view`); }
+
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
             is8DirP = false;
             if (player.heroClass === 'Elf') {
@@ -387,6 +407,20 @@ window.renderGameView = function() {
             if (player.heroClass === 'Elf' && !is8DirP) displaySize = player.size * 6.0;
             if (player.heroClass === 'Mage' && !is8DirP) displaySize = player.size * 3.5;
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
+            
+            // --- NOUVEAU : ANIMATION DE FRAPPE DE L'ÉPÉE DU CHEVALIER ---
+            if (prefixP === 'Knight' && attackCooldown > 0) {
+                let swordImg = window.getAsset('Attack_sword_knight');
+                if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
+                    ctx.save();
+                    let progress = (40 - attackCooldown) / 40;
+                    ctx.translate(15, 0); // Décalé légèrement devant lui
+                    ctx.rotate(Math.PI / 2); // Pointé devant
+                    ctx.globalAlpha = 1 - progress; // S'estompe rapidement
+                    ctx.drawImage(swordImg, -30, -30, 60, 60);
+                    ctx.restore();
+                }
+            }
         } else {
             if (prefixP === 'Knight') {
                 ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
