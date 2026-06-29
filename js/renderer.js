@@ -110,13 +110,12 @@ window.renderGameView = function() {
     let wallB = assetsManager.images['front_wall']; 
     if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
-    // --- RENDU DU SANG EN IMAGES ---
     bloodStains.forEach(blood => { 
         ctx.save();
-        
         let alpha = 1.0;
-        if (blood.life !== undefined && blood.life < 300) {
-            alpha = Math.max(0, blood.life / 300);
+        let fadeTime = 300;
+        if (blood.life !== undefined && blood.life < fadeTime) {
+            alpha = Math.max(0, blood.life / fadeTime);
         }
         ctx.globalAlpha = alpha;
         
@@ -254,9 +253,6 @@ window.renderGameView = function() {
         }
     });
 
-    // ========================================================================
-    // --- RENDU DES ITEMS AU SOL (AVEC VRAIES IMAGES DE CLÉS ET POTIONS) ---
-    // ========================================================================
     currentItems.forEach(item => {
         if (!item.collected) {
             let floatY = Math.sin(Date.now() / 200) * 3; 
@@ -266,7 +262,6 @@ window.renderGameView = function() {
             let scaleX = 1;
             let assetName = null;
 
-            // Correspondance entre le type et l'image (dans assets.js)
             if (item.type === 'key') assetName = 'gold_key';
             else if (item.type === 'key_skull') assetName = 'skeleton_key';
             else if (item.type === 'key_orb') assetName = 'portal_key';
@@ -275,7 +270,6 @@ window.renderGameView = function() {
             else if (item.type === 'potion_blue') assetName = 'potion3';
             else if (item.type === 'potion_red') assetName = 'potion4';
             else if (item.type === 'coin') {
-                // Utilise le nom 'gold_coin' s'il n'y a pas de 's' dans ton assetsManager
                 assetName = 'gold_coin';
                 scaleX = Math.abs(Math.cos(Date.now() / 200)); 
             }
@@ -288,25 +282,26 @@ window.renderGameView = function() {
             
             if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
                 let displaySize = item.size * 2.5; 
+                
+                // --- TAILLES RÉAJUSTÉES ICI ---
+                if (assetName === 'gold_coin') {
+                    displaySize = item.size * 3.5; // Pièces plus grosses
+                } else if (assetName && assetName.includes('key')) {
+                    displaySize = item.size * 1.2; // Clés plus petites
+                }
+                
                 ctx.drawImage(itemImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
-                // Fallbacks si l'image n'est pas trouvée
                 if (item.type === 'coin') {
                     ctx.fillStyle = '#f1c40f'; 
-                    ctx.beginPath(); 
-                    ctx.arc(0, 0, item.size, 0, Math.PI*2); 
-                    ctx.fill(); 
+                    ctx.beginPath(); ctx.arc(0, 0, item.size, 0, Math.PI*2); ctx.fill(); 
                 } else if (item.type.includes('potion')) {
                     ctx.fillStyle = item.type === 'potion_green' ? '#2ecc71' : '#e74c3c';
-                    ctx.beginPath(); 
-                    ctx.arc(0, 6, 10, 0, Math.PI * 2); 
-                    ctx.fill(); 
+                    ctx.beginPath(); ctx.arc(0, 6, 10, 0, Math.PI * 2); ctx.fill(); 
                     ctx.fillRect(-5, -4, 10, 12); 
                 } else {
                     ctx.fillStyle = '#f1c40f'; 
-                    ctx.beginPath(); 
-                    ctx.arc(0, 0, 8, 0, Math.PI * 2); 
-                    ctx.fill(); 
+                    ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill(); 
                     ctx.fillRect(6, -3, 18, 6); 
                 }
             }
@@ -358,9 +353,6 @@ window.renderGameView = function() {
         });
     }
 
-    // ========================================================================
-    // --- RENDU DES ENNEMIS ---
-    // ========================================================================
     currentEnemies.forEach(enemy => {
         ctx.save(); 
         ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
@@ -436,83 +428,15 @@ window.renderGameView = function() {
         
         ctx.scale(scalePulse, scalePulse); 
         
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; 
-        ctx.shadowBlur = 10; 
-        ctx.shadowOffsetX = 4; 
-        ctx.shadowOffsetY = 4;
-        
-        if (enemy.type === 'troll') { 
-            ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; 
-        } else if (enemy.type === 'mage') { 
-            ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; 
-        } else if (enemy.type === 'dragon') { 
-            ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; 
-        }
-        
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 2.5; 
-            if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
-                ctx.save(); 
-                ctx.beginPath(); 
-                ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); 
-                ctx.clip(); 
-                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
-                ctx.restore(); 
-            } else { 
-                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
-            }
+            ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
         } else { 
-            ctx.shadowColor = 'transparent'; 
             ctx.fillStyle = '#e74c3c'; 
             ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size); 
         }
         
-        ctx.shadowColor = 'transparent'; 
-        ctx.shadowBlur = 0;
-        
-        if (enemy.ultiAnimTimer > 0) { 
-            ctx.save(); 
-            ctx.globalCompositeOperation = 'screen'; 
-            let imgUlt = window.getAsset('Ulti_fire_mage'); 
-            if (imgUlt && imgUlt.complete && imgUlt.naturalWidth > 0) { 
-                let expSize = enemy.size * 3.5; 
-                ctx.globalAlpha = enemy.ultiAnimTimer / 30; 
-                ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize); 
-            } else {
-                let progress = 1 - (enemy.ultiAnimTimer / 30); 
-                let radius = progress * enemy.size * 2.5;
-                ctx.globalAlpha = 1 - progress;
-                ctx.beginPath(); 
-                ctx.arc(0, 0, radius, 0, Math.PI*2);
-                ctx.fillStyle = '#e74c3c'; 
-                ctx.fill();
-            }
-            ctx.restore(); 
-        }
-        
-        if (enemy.isBurning) { 
-            ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; 
-            ctx.beginPath(); 
-            ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); 
-            ctx.fill(); 
-        }
-        
-        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { 
-            ctx.strokeStyle = '#8e44ad'; 
-            ctx.lineWidth = 3; 
-            ctx.beginPath(); 
-            ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); 
-            ctx.stroke(); 
-        }
         ctx.restore(); 
-        
-        if (!['troll', 'mage', 'dragon'].includes(enemy.type)) { 
-            ctx.fillStyle = '#111'; 
-            ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
-            
-            ctx.fillStyle = '#e74c3c'; 
-            ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
-        } 
     });
 
     let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon'].includes(e.type));
@@ -539,33 +463,8 @@ window.renderGameView = function() {
         ctx.save(); 
         ctx.translate(p.x, p.y); 
         ctx.rotate(p.angle); 
-        ctx.shadowColor = p.isNecro ? '#8e44ad' : (p.isFire ? '#e67e22' : '#ecf0f1'); 
-        ctx.shadowBlur = 10;
-        
-        if (p.isNecro) { 
-            ctx.fillStyle = '#8e44ad'; 
-            ctx.beginPath(); 
-            ctx.arc(0, 0, p.size, 0, Math.PI*2); 
-            ctx.fill(); 
-        } 
-        else if (p.isFire) { 
-            let imgFire = window.getAsset('Attack_fire_mage'); 
-            if (imgFire && imgFire.complete && imgFire.naturalWidth > 0) { 
-                ctx.globalCompositeOperation = 'screen'; 
-                ctx.rotate(Math.PI / 2); 
-                let pSize = p.size * 5.0; 
-                ctx.drawImage(imgFire, -pSize/2, -pSize/2, pSize, pSize); 
-            } else { 
-                ctx.fillStyle = '#e67e22'; 
-                ctx.beginPath(); 
-                ctx.arc(0, 0, p.size, 0, Math.PI*2); 
-                ctx.fill(); 
-            } 
-        } 
-        else { 
-            ctx.fillStyle = '#bdc3c7'; 
-            ctx.fillRect(-8, -1, 16, 2); 
-        }
+        ctx.fillStyle = '#ecf0f1'; 
+        ctx.fillRect(-8, -1, 16, 2); 
         ctx.restore();
     });
     
@@ -577,9 +476,7 @@ window.renderGameView = function() {
         if (p.type === 'bone') { 
             ctx.rotate(pAngle); 
             ctx.fillStyle = '#ecf0f1'; 
-            let l = p.size * 1.5; 
-            let w = p.size * 0.3; 
-            let r = p.size * 0.6; 
+            let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; 
             
             ctx.fillRect(-l, -w, l * 2, w * 2); 
             ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); 
@@ -734,7 +631,6 @@ window.renderGameView = function() {
         ctx.globalAlpha = 1.0; 
     }
     
-    // --- L'ICÔNE DE PIÈCE DANS L'HUD EN HAUT À GAUCHE ---
     if (playerStats.inventory.coins !== undefined) {
         let coinImg = window.getAsset('gold_coin');
         if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
