@@ -7,16 +7,12 @@ document.addEventListener('contextmenu', event => event.preventDefault());
 window.update = function() {
     if (gameState === "MENU") {
         if (keys['space']) {
-            if (typeof spaceHoldTimer === 'undefined') {
-                spaceHoldTimer = 0;
-            }
+            if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
             spaceHoldTimer++;
             if (spaceHoldTimer >= 300) { 
                 spaceHoldTimer = 0; 
                 keys['space'] = false; 
-                if (typeof window.startArenaMode === 'function') {
-                    window.startArenaMode('Necromancer'); 
-                }
+                if (typeof window.startArenaMode === 'function') window.startArenaMode('Necromancer'); 
             }
         } else { 
             spaceHoldTimer = 0; 
@@ -31,77 +27,45 @@ window.update = function() {
     }
     
     if (gameState === "GAMEOVER") { 
-        if (typeof window.renderGameView === 'function') {
-            window.renderGameView(); 
-        }
+        if (typeof window.renderGameView === 'function') window.renderGameView(); 
         requestAnimationFrame(window.update); 
         return; 
     }
     
-    // --- GESTION DU MODE ARÈNE (VAGUES) ---
     if (currentRoomId === 999) {
-        if (waveStartDelay > 0) {
-            waveStartDelay--;
-        }
+        if (waveStartDelay > 0) waveStartDelay--;
         
-        // LA MAP RÉTRÉCIT À LA VAGUE 9 UNIQUEMENT (Avant le boss)
-        if (arenaWave === 9 && arenaState === "PLAYING" && arenaShrink < 150) { 
+        // --- LA MAP SE RÉTRÉCIT UNIQUEMENT VAGUE 10 ---
+        if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
-        } else if (arenaWave !== 9) {
+        } else if (arenaWave !== 10) {
             arenaShrink = 0; 
         }
 
         if (arenaState === "WAITING") {
-            if (typeof arenaTimer === 'undefined') {
-                arenaTimer = 0;
-            }
+            if (typeof arenaTimer === 'undefined') arenaTimer = 0;
             arenaTimer--;
             
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
                 
-                // UNE POTION VERTE TOUTES LES 5 VAGUES (Sans regagner de vie)
                 if (arenaWave > 0 && arenaWave % 5 === 0) {
-                    currentItems.push({ 
-                        id: 'pot_g_' + arenaWave, 
-                        type: 'potion_green', 
-                        x: canvas.width / 2, 
-                        y: canvas.height / 2, 
-                        size: 15, 
-                        collected: false 
-                    });
-                    if (typeof window.spawnParticles === 'function') {
-                        window.spawnParticles(canvas.width / 2, canvas.height / 2, '#2ecc71', 15);
-                    }
+                    currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
+                    if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
-                if (arenaWave === 10) { 
-                    window.spawnEnemy('troll', 1); 
-                } else if (arenaWave === 20) { 
-                    window.spawnEnemy('mage', 1); 
-                } else if (arenaWave === 30) { 
-                    window.spawnEnemy('dragon', 1); 
-                } else if (arenaWave === 35) { 
-                    window.spawnEnemy('troll', 1); 
-                    window.spawnEnemy('mage', 1); 
-                    window.spawnEnemy('goblin', 3); 
-                } else if (arenaWave === 40) { 
-                    window.spawnEnemy('deathgod', 1); 
-                } else if (arenaWave === 45) { 
-                    window.spawnEnemy('mage', 1); 
-                    window.spawnEnemy('dragon', 1); 
-                    window.spawnEnemy('skeleton', 3); 
-                } else if (arenaWave === 50) { 
-                    window.spawnEnemy('elysia', 1); 
-                } else {
+                if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
+                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
+                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
+                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); }
+                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); }
+                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); }
+                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); }
+                else {
                     let countGoblin = 3 + Math.floor(arenaWave * 1.2);
                     window.spawnEnemy('goblin', countGoblin);
-                    if (arenaWave >= 3) {
-                        window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
-                    }
-                    if (arenaWave >= 15) {
-                        window.spawnEnemy('spider', 2);
-                    }
+                    if (arenaWave >= 3) window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
+                    if (arenaWave >= 15) window.spawnEnemy('spider', 2);
                 }
                 arenaWave++;
             }
@@ -109,42 +73,31 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                if (typeof window.updateHUD === 'function') {
-                    window.updateHUD();
-                }
+                if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
     }
 
-    if (!worldState.openedDoors) {
-        worldState.openedDoors = {};
-    }
-    
+    if (!worldState.openedDoors) worldState.openedDoors = {};
     let roomChanged = false;
+    
     currentDoors.forEach(door => {
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (window.checkCollision(player, door)) { 
-                player.y = door.y - player.size - 5; 
-            } 
+            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } 
             return;
         }
         
         if (!roomChanged && window.checkCollision(player, door)) { 
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; 
-                    door.locked = false; 
-                    worldState.unlockedDoors[door.id] = true; 
-                    if (typeof window.updateHUD === 'function') {
-                        window.updateHUD();
-                    }
+                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; 
+                    if (typeof window.updateHUD === 'function') window.updateHUD();
+                    
                     if (door.dest !== null) { 
                         worldState.openedDoors[door.id] = true; 
                         if (typeof window.saveRoomState === 'function') window.saveRoomState(); 
                         if (typeof window.loadRoom === 'function') window.loadRoom(door.dest, door.face); 
-                        player.x = door.spawnX; 
-                        player.y = door.spawnY; 
-                        roomChanged = true; 
+                        player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
                     }
                 } else {
                     if (door.face === 'north') player.y = door.y + door.height; 
@@ -156,23 +109,16 @@ window.update = function() {
                 worldState.openedDoors[door.id] = true; 
                 if (typeof window.saveRoomState === 'function') window.saveRoomState(); 
                 if (typeof window.loadRoom === 'function') window.loadRoom(door.dest, door.face); 
-                player.x = door.spawnX; 
-                player.y = door.spawnY; 
-                roomChanged = true; 
+                player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
             } 
         }
     });
     
-    if (roomChanged) { 
-        requestAnimationFrame(window.update); 
-        return; 
-    }
+    if (roomChanged) { requestAnimationFrame(window.update); return; }
     
     if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
         if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
-        keys['space'] = false; 
-        keys['0'] = false; 
-        keys['control'] = false; 
+        keys['space'] = false; keys['0'] = false; keys['control'] = false; 
     }
     
     if (leftClickHeld) {
@@ -201,8 +147,7 @@ window.update = function() {
     if (playerPoisonTimer > 0) {
         playerPoisonTimer--;
         if (playerPoisonTimer % 60 === 0 && playerStats.health > 1) {
-            playerStats.health -= 5; 
-            if (playerStats.health < 1) playerStats.health = 1;
+            playerStats.health -= 5; if (playerStats.health < 1) playerStats.health = 1;
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
         }
     }
@@ -219,13 +164,10 @@ window.update = function() {
     
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
-    let dx_mov = 0; 
-    let dy_mov = 0;
+    let dx_mov = 0; let dy_mov = 0;
     
     if (player.dashTimer > 0) {
-        player.dashTimer--; 
-        dx_mov = player.dashVx; 
-        dy_mov = player.dashVy;
+        player.dashTimer--; dx_mov = player.dashVx; dy_mov = player.dashVy;
     } else {
         if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
         if (keys['d'] || keys['arrowright'])              dx_mov += currentSpeedPlayer;
@@ -233,34 +175,22 @@ window.update = function() {
         if (keys['s'] || keys['arrowdown'])               dy_mov += currentSpeedPlayer;
     }
     
-    let oldPx = player.x; 
-    player.x += dx_mov;
+    let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { 
-        player.x = oldPx; 
-        player.dashTimer = 0; 
+        player.x = oldPx; player.dashTimer = 0; 
     } 
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
-        if (!obj.isBroken && window.checkCollision(player, obj)) { 
-            player.x = oldPx; 
-            player.dashTimer = 0; 
-            break; 
-        }
+        if (!obj.isBroken && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
     }
     
-    let oldPy = player.y; 
-    player.y += dy_mov;
+    let oldPy = player.y; player.y += dy_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { 
-        player.y = oldPy; 
-        player.dashTimer = 0; 
+        player.y = oldPy; player.dashTimer = 0; 
     } 
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
-        if (!obj.isBroken && window.checkCollision(player, obj)) { 
-            player.y = oldPy; 
-            player.dashTimer = 0; 
-            break; 
-        }
+        if (!obj.isBroken && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
     }
     
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
@@ -287,35 +217,17 @@ window.update = function() {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
     
-    // Nettoyage des particules
     for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i]; 
-        p.x += p.vx; 
-        p.y += p.vy; 
-        p.life -= 0.03; 
-        if (p.life <= 0) {
-            particles.splice(i, 1);
-        }
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
+        if (p.life <= 0) particles.splice(i, 1);
     }
     
-    // --- GESTION DU FONDU DU SANG (Disparaît avec la vie) ---
     for (let i = bloodStains.length - 1; i >= 0; i--) {
         let b = bloodStains[i];
-        if (b.life === undefined) {
-            b.life = (currentRoomId === 999) ? 1200 : 3600; 
-        }
+        if (b.life === undefined) b.life = (currentRoomId === 999) ? 1200 : 3600; 
         b.life--;
-        
-        // Disparaît progressivement sur les 300 dernières frames (5 sec)
-        if (b.life < 300) {
-            b.opacity = b.life / 300; 
-        } else {
-            b.opacity = 1.0;
-        }
-        
-        if (b.life <= 0) {
-            bloodStains.splice(i, 1);
-        }
+        if (b.life < 300) { b.opacity = b.life / 300; } else { b.opacity = 1.0; }
+        if (b.life <= 0) bloodStains.splice(i, 1);
     }
 
     if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
@@ -327,19 +239,13 @@ window.update = function() {
         if (window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
-                setTimeout(() => { 
-                    alert("FÉLICITATIONS !\n\nLa suite de l'aventure arrive très bientôt..."); 
-                    window.location.reload(); 
-                }, 100); 
+                setTimeout(() => { alert("FÉLICITATIONS !\n\nLa suite de l'aventure arrive très bientôt..."); window.location.reload(); }, 100); 
                 return;
             }
         }
     }
     
-    if (typeof window.renderGameView === 'function') {
-        window.renderGameView(); 
-    }
+    if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
-
 window.update();
