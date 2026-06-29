@@ -9,14 +9,8 @@ window.update = function() {
         if (keys['space']) {
             if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
             spaceHoldTimer++;
-            if (spaceHoldTimer >= 300) { 
-                spaceHoldTimer = 0; 
-                keys['space'] = false; 
-                if(typeof window.startArenaMode==='function') window.startArenaMode('Necromancer'); 
-            }
-        } else { 
-            spaceHoldTimer = 0; 
-        }
+            if (spaceHoldTimer >= 300) { spaceHoldTimer = 0; keys['space'] = false; if(typeof window.startArenaMode==='function') window.startArenaMode('Necromancer'); }
+        } else { spaceHoldTimer = 0; }
         requestAnimationFrame(window.update); return;
     }
     
@@ -31,7 +25,7 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        // --- LA MAP SE RÉTRÉCIT UNIQUEMENT VAGUE 10 (BOSS TROLL) ---
+        // LA MAP SE RÉTRÉCIT UNIQUEMENT VAGUE 10
         if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
         } else if (arenaWave !== 10) {
@@ -53,12 +47,13 @@ window.update = function() {
                 if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
                 else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
                 else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
-                else if (arenaWave === 35) { 
-                    window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); 
-                }
-                else if (arenaWave === 45) { 
-                    window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); 
-                }
+                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); }
+                
+                // --- NOUVEAUX BOSS ICI ---
+                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); }
+                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); }
+                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); }
+                
                 else {
                     let countGoblin = 3 + Math.floor(arenaWave * 1.2);
                     window.spawnEnemy('goblin', countGoblin);
@@ -195,10 +190,9 @@ window.update = function() {
         if (p.life <= 0) particles.splice(i, 1);
     }
     
-    // --- GESTION DU FONDU DU SANG (20s EN ARÈNE, 60s EN HISTOIRE) ---
     for (let i = bloodStains.length - 1; i >= 0; i--) {
         let b = bloodStains[i];
-        let maxLife = (currentRoomId === 999) ? 1200 : 3600; // 1200 frames = 20 secondes
+        let maxLife = (currentRoomId === 999) ? 1200 : 3600; 
         if (b.life === undefined) b.life = maxLife; 
         b.life--;
         
@@ -207,7 +201,6 @@ window.update = function() {
         } else {
             b.opacity = 1.0;
         }
-        
         if (b.life <= 0) bloodStains.splice(i, 1);
     }
 
