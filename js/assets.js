@@ -214,3 +214,18 @@ assetsManager.load('bloods_kill_view3', 'assets/effects/bloods_kill_view3.png');
 assetsManager.load('skeleton_kill_view1', 'assets/effects/skeleton_kill_view1.png');
 assetsManager.load('skeleton_kill_view2', 'assets/effects/skeleton_kill_view2.png');
 assetsManager.load('skeleton_kill_view3', 'assets/effects/skeleton_kill_view3.png');
+
+// --- PROJECTILES ET ATTAQUES MAGIQUES ---
+assetsManager.load('Attack_fire_mage', 'assets/skins/Attack/Attack_fire_mage.jpeg'); // ou .png
+assetsManager.load('Attack_fire_necromancien', 'assets/skins/Attack/Attack_fire_necromancien.jpeg');
+assetsManager.load('Attack_fire_elysia', 'assets/skins/Attack/Attack_fire_elysia.jpeg');
+assetsManager.load('Attack_fire_dragon', 'assets/skins/Attack/Attack_fire_dragon.jpeg');
+assetsManager.load('Attack_fire_deathgod', 'assets/skins/Attack/Attack_fire_deathgod.jpeg');
+assetsManager.load('Attack_bone_skeleton', 'assets/skins/Attack/Attack_bone_skeleton.jpeg');
+assetsManager.load('Attack_sword_armor', 'assets/skins/Attack/Attack_sword_armor.jpeg');
+assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
+assetsManager.load('Attack_sword_knight', 'assets/skins/Attack/Attack_sword_knight.jpeg');
+
+// --- MÉTÉORES (DANGERS VENANT DU CIEL) ---
+assetsManager.load('Attack_meteorites_elysia', 'assets/skins/Attack/Attack_meteorites_elysia.jpeg');
+assetsManager.load('Attack_meteorites_dragon', 'assets/skins/Attack/Attack_meteorites_dragon.jpeg');
