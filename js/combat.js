@@ -40,17 +40,20 @@ window.handlePlayerAttack = function() {
                     } else { 
                         enemy.health -= 50; 
                         
-                        // --- GÉNÉRATION DU SANG EN IMAGE (Coup au Corps-à-Corps) ---
-                        let hitNum = Math.floor(Math.random() * 3) + 1;
-                        bloodStains.push({
-                            type: 'hit',
-                            imgId: 'bloods_hit_view' + hitNum,
-                            x: enemy.x + enemy.size/2,
-                            y: enemy.y + enemy.size/2,
-                            size: enemy.size * 1.5,
-                            rotation: Math.random() * Math.PI * 2,
-                            life: 3600
-                        });
+                        // SANG DE DÉGÂTS (SAUF POUR SQUELETTE)
+                        if (enemy.type !== 'skeleton') {
+                            let hitNum = Math.floor(Math.random() * 3) + 1;
+                            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                            bloodStains.push({
+                                type: 'hit',
+                                imgId: 'bloods_hit_view' + hitNum,
+                                x: enemy.x + enemy.size/2,
+                                y: enemy.y + enemy.size/2,
+                                size: enemy.size * 1.5,
+                                rotation: Math.random() * Math.PI * 2,
+                                life: maxLife
+                            });
+                        }
                         
                         if (typeof window.triggerShake === 'function') {
                             window.triggerShake(5, 8); 
@@ -110,17 +113,20 @@ window.updateProjectiles = function() {
                     }
                 }
                 
-                // --- GÉNÉRATION DU SANG EN IMAGE (Coup par Projectile / Magie) ---
-                let hitNum = Math.floor(Math.random() * 3) + 1;
-                bloodStains.push({
-                    type: 'hit',
-                    imgId: 'bloods_hit_view' + hitNum,
-                    x: enemy.x + enemy.size/2,
-                    y: enemy.y + enemy.size/2,
-                    size: enemy.size * 1.5,
-                    rotation: Math.random() * Math.PI * 2,
-                    life: 3600
-                });
+                // SANG DE DÉGÂTS PROJECTILES (SAUF SQUELETTE)
+                if (enemy.type !== 'skeleton') {
+                    let hitNum = Math.floor(Math.random() * 3) + 1;
+                    let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                    bloodStains.push({
+                        type: 'hit',
+                        imgId: 'bloods_hit_view' + hitNum,
+                        x: enemy.x + enemy.size/2,
+                        y: enemy.y + enemy.size/2,
+                        size: enemy.size * 1.5,
+                        rotation: Math.random() * Math.PI * 2,
+                        life: maxLife
+                    });
+                }
                 
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 if (isPiercingElf || player.heroClass === 'Mage') { 
@@ -154,8 +160,9 @@ window.updateProjectiles = function() {
             
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
-            // --- SANG GÉNÉRÉ SUR LE JOUEUR (Dégâts Reçus) ---
+            // SANG GÉNÉRÉ SUR LE JOUEUR
             let hitNum = Math.floor(Math.random() * 3) + 1;
+            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
             bloodStains.push({
                 type: 'hit',
                 imgId: 'bloods_hit_view' + hitNum,
@@ -163,7 +170,7 @@ window.updateProjectiles = function() {
                 y: player.y + player.size/2,
                 size: player.size * 1.5,
                 rotation: Math.random() * Math.PI * 2,
-                life: 3600
+                life: maxLife
             });
             
             playerInvulnerableTimer = 45;
@@ -181,7 +188,6 @@ window.updateItemsAndCrates = function() {
         if (window.checkCollision(player, item)) {
             worldState.collectedItems[item.id] = true; 
             
-            // --- RAMASSAGE DE TOUS LES NOUVEAUX ITEMS ---
             if (item.type === 'key') playerStats.inventory.keys.gold++; 
             else if (item.type === 'key_skull') playerStats.inventory.keys.skull++; 
             else if (item.type === 'key_orb') playerStats.inventory.keys.orb++; 
