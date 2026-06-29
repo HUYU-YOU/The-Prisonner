@@ -185,10 +185,10 @@ assetsManager.load('Mage_southeast_view', 'assets/skins/Mage/mage_southeast_view
 assetsManager.load('Mage_southwest_view', 'assets/skins/Mage/mage_southwest_view.png');
 
 // --- EFFETS DE SANG (Dégâts et Morts) ---
-assetsManager.load('bloods_hit_view1', 'assets/effets/bloods_hit_view1.png');
-assetsManager.load('bloods_hit_view2', 'assets/effets/bloods_hit_view2.png');
-assetsManager.load('bloods_hit_view3', 'assets/effets/bloods_hit_view3.png');
+assetsManager.load('bloods_hit_view1', 'assets/effects/bloods_hit_view1.png');
+assetsManager.load('bloods_hit_view2', 'assets/effects/bloods_hit_view2.png');
+assetsManager.load('bloods_hit_view3', 'assets/effects/bloods_hit_view3.png');
 
-assetsManager.load('bloods_kill_view1', 'assets/effets/bloods_kill_view1.png');
-assetsManager.load('bloods_kill_view2', 'assets/effets/bloods_kill_view2.png');
-assetsManager.load('bloods_kill_view3', 'assets/effets/bloods_kill_view3.png');
+assetsManager.load('bloods_kill_view1', 'assets/effects/bloods_kill_view1.png');
+assetsManager.load('bloods_kill_view2', 'assets/effects/bloods_kill_view2.png');
+assetsManager.load('bloods_kill_view3', 'assets/effects/bloods_kill_view3.png');
