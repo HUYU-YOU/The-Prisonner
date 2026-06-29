@@ -40,7 +40,7 @@ window.handlePlayerAttack = function() {
                     } else { 
                         enemy.health -= 50; 
                         
-                        // --- SANG DE DÉGÂTS (HIT) AU CORPS À CORPS ---
+                        // --- GÉNÉRATION DU SANG EN IMAGE (Coup au Corps-à-Corps) ---
                         let hitNum = Math.floor(Math.random() * 3) + 1;
                         bloodStains.push({
                             type: 'hit',
@@ -52,7 +52,9 @@ window.handlePlayerAttack = function() {
                             life: 3600
                         });
                         
-                        if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
+                        if (typeof window.triggerShake === 'function') {
+                            window.triggerShake(5, 8); 
+                        }
                     }
                 }
             } 
@@ -90,9 +92,7 @@ window.updateProjectiles = function() {
 
         for (let c = 0; c < currentCrates.length; c++) {
             let obj = currentCrates[c];
-            if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { 
-                obj.health -= 50; projectileHit = true; break; 
-            }
+            if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; }
         }
 
         for (let j = 0; j < currentEnemies.length; j++) {
@@ -110,7 +110,7 @@ window.updateProjectiles = function() {
                     }
                 }
                 
-                // --- SANG DE DÉGÂTS (HIT) PAR PROJECTILES DU JOUEUR ---
+                // --- GÉNÉRATION DU SANG EN IMAGE (Coup par Projectile / Magie) ---
                 let hitNum = Math.floor(Math.random() * 3) + 1;
                 bloodStains.push({
                     type: 'hit',
@@ -137,8 +137,7 @@ window.updateProjectiles = function() {
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         let ep = enemyProjectiles[i];
-        ep.x += ep.vx; 
-        ep.y += ep.vy;
+        ep.x += ep.vx; ep.y += ep.vy;
         
         let epHitbox = { x: ep.x - ep.size, y: ep.y - ep.size, size: ep.size * 2 };
         
@@ -155,7 +154,7 @@ window.updateProjectiles = function() {
             
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
-            // --- SANG GÉNÉRÉ SUR LE JOUEUR LORS D'UN TIR REÇU ---
+            // --- SANG GÉNÉRÉ SUR LE JOUEUR (Dégâts Reçus) ---
             let hitNum = Math.floor(Math.random() * 3) + 1;
             bloodStains.push({
                 type: 'hit',
@@ -182,13 +181,14 @@ window.updateItemsAndCrates = function() {
         if (window.checkCollision(player, item)) {
             worldState.collectedItems[item.id] = true; 
             
+            // --- RAMASSAGE DE TOUS LES NOUVEAUX ITEMS ---
             if (item.type === 'key') playerStats.inventory.keys.gold++; 
-            else if (item.type === 'potion_green') playerStats.inventory.potions.green++; 
-            else if (item.type === 'potion_red') playerStats.inventory.potions.red++; 
-            else if (item.type === 'potion_blue') playerStats.inventory.potions.blue++; 
-            else if (item.type === 'potion_yellow') playerStats.inventory.potions.yellow++; 
             else if (item.type === 'key_skull') playerStats.inventory.keys.skull++; 
             else if (item.type === 'key_orb') playerStats.inventory.keys.orb++; 
+            else if (item.type === 'potion_green') playerStats.inventory.potions.green++; 
+            else if (item.type === 'potion_yellow') playerStats.inventory.potions.yellow++; 
+            else if (item.type === 'potion_blue') playerStats.inventory.potions.blue++; 
+            else if (item.type === 'potion_red') playerStats.inventory.potions.red++; 
             else if (item.type === 'coin') { 
                 playerStats.inventory.coins++; 
                 localStorage.setItem('kebra_coins', playerStats.inventory.coins); 
