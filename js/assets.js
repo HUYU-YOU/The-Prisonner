@@ -100,6 +100,7 @@ assetsManager.load('Spider_southwest_view', 'assets/skins/Spider/spider_southwes
 assetsManager.load('Spider_northwest_view', 'assets/skins/Spider/spider_northwest_view.png');
 assetsManager.load('Spider_southeast_view', 'assets/skins/Spider/spider_southeast_view.png');
 assetsManager.load('Spider_northeast_view', 'assets/skins/Spider/spider_northeast_view.png');
+assetsManager.load('spider_top_view', 'assets/skins/Spider/spider_top_view.jpeg');
 
 // --- KNIGHT 8 DIRECTIONS ---
 assetsManager.load('Knight_south_view', 'assets/skins/Knight/Knight_south_view.png');
