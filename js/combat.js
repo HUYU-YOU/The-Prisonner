@@ -40,7 +40,7 @@ window.handlePlayerAttack = function() {
                     } else { 
                         enemy.health -= 50; 
                         
-                        // SANG DE DÉGÂTS (HIT)
+                        // --- SANG DE DÉGÂTS (HIT) AU CORPS À CORPS ---
                         let hitNum = Math.floor(Math.random() * 3) + 1;
                         bloodStains.push({
                             type: 'hit',
@@ -52,9 +52,7 @@ window.handlePlayerAttack = function() {
                             life: 3600
                         });
                         
-                        if (typeof window.triggerShake === 'function') {
-                            window.triggerShake(5, 8); 
-                        }
+                        if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
                 }
             } 
@@ -62,9 +60,7 @@ window.handlePlayerAttack = function() {
         
         for (let i = 0; i < currentCrates.length; i++) {
             let obj = currentCrates[i]; 
-            if (!obj.isBroken && window.checkCollision(hitBox, obj)) { 
-                obj.health -= 50; 
-            }
+            if (!obj.isBroken && window.checkCollision(hitBox, obj)) { obj.health -= 50; }
         }
     }
 };
@@ -77,19 +73,16 @@ window.updateProjectiles = function() {
     let bBot = canvas.height - wallMargin;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
 
-    // --- COLLISION PROJECTILES DU JOUEUR ---
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i]; 
         p.x += p.vx; 
         p.y += p.vy;
         
         if (currentRoomId === 8 && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
-            projectiles.splice(i, 1); 
-            continue; 
+            projectiles.splice(i, 1); continue; 
         }
         if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { 
-            projectiles.splice(i, 1); 
-            continue; 
+            projectiles.splice(i, 1); continue; 
         }
         
         let projectileHit = false; 
@@ -98,9 +91,7 @@ window.updateProjectiles = function() {
         for (let c = 0; c < currentCrates.length; c++) {
             let obj = currentCrates[c];
             if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { 
-                obj.health -= 50; 
-                projectileHit = true; 
-                break; 
+                obj.health -= 50; projectileHit = true; break; 
             }
         }
 
@@ -112,17 +103,14 @@ window.updateProjectiles = function() {
                 if (!enemy.invulnerable) {
                     let isBlocked = false;
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
-                        isBlocked = true; 
-                        enemy.blockAnimTimer = 45; 
+                        isBlocked = true; enemy.blockAnimTimer = 45; 
                     }
                     if (!isBlocked) { 
-                        let dmg = 30; 
-                        if (player.heroClass === 'Elf') dmg = 60; 
-                        enemy.health -= dmg; 
+                        let dmg = 30; if (player.heroClass === 'Elf') dmg = 60; enemy.health -= dmg; 
                     }
                 }
                 
-                // SANG DE DÉGÂTS (HIT PAR FLÈCHE/MAGIE)
+                // --- SANG DE DÉGÂTS (HIT) PAR PROJECTILES DU JOUEUR ---
                 let hitNum = Math.floor(Math.random() * 3) + 1;
                 bloodStains.push({
                     type: 'hit',
@@ -136,18 +124,15 @@ window.updateProjectiles = function() {
                 
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 if (isPiercingElf || player.heroClass === 'Mage') { 
-                    if (!p.hitTargets) p.hitTargets = []; 
-                    p.hitTargets.push(enemy); 
+                    if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
                 } else { 
-                    projectileHit = true; 
-                    break; 
+                    projectileHit = true; break; 
                 } 
             }
         }
         if (projectileHit) projectiles.splice(i, 1); 
     }
 
-    // --- COLLISION PROJECTILES DES ENNEMIS ---
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
@@ -158,12 +143,10 @@ window.updateProjectiles = function() {
         let epHitbox = { x: ep.x - ep.size, y: ep.y - ep.size, size: ep.size * 2 };
         
         if (ep.x < bLeft || ep.y < bTop || ep.x > bRight || ep.y > bBot) { 
-            enemyProjectiles.splice(i, 1); 
-            continue; 
+            enemyProjectiles.splice(i, 1); continue; 
         }
         if (currentRoomId === 8 && window.checkCollision(epHitbox, centerStairs)) { 
-            enemyProjectiles.splice(i, 1); 
-            continue; 
+            enemyProjectiles.splice(i, 1); continue; 
         }
 
         if (!isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
@@ -172,7 +155,7 @@ window.updateProjectiles = function() {
             
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
-            // SANG SUR LE JOUEUR (HIT)
+            // --- SANG GÉNÉRÉ SUR LE JOUEUR LORS D'UN TIR REÇU ---
             let hitNum = Math.floor(Math.random() * 3) + 1;
             bloodStains.push({
                 type: 'hit',
@@ -203,7 +186,9 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'potion_green') playerStats.inventory.potions.green++; 
             else if (item.type === 'potion_red') playerStats.inventory.potions.red++; 
             else if (item.type === 'potion_blue') playerStats.inventory.potions.blue++; 
+            else if (item.type === 'potion_yellow') playerStats.inventory.potions.yellow++; 
             else if (item.type === 'key_skull') playerStats.inventory.keys.skull++; 
+            else if (item.type === 'key_orb') playerStats.inventory.keys.orb++; 
             else if (item.type === 'coin') { 
                 playerStats.inventory.coins++; 
                 localStorage.setItem('kebra_coins', playerStats.inventory.coins); 
