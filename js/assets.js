@@ -73,9 +73,16 @@ assetsManager.load('chest2', 'assets/decorations/chest2.png');
 
 assetsManager.load('bibliotheque', 'assets/decorations/bibliotheque.png');
 assetsManager.load('bench', 'assets/decorations/bench.png');
+
 // --- LOGISTIQUE ET RAMASSABLES ---
 assetsManager.load('gold_coin', 'assets/decors/gold_coin.png');
 assetsManager.load('gold_key', 'assets/decors/gold_key.png');
+assetsManager.load('skeleton_key', 'assets/decors/skeleton_key.png');
+assetsManager.load('portal_key', 'assets/decors/portal_key.png');
+assetsManager.load('potion1', 'assets/decors/potion1.png');
+assetsManager.load('potion2', 'assets/decors/potion2.png');
+assetsManager.load('potion3', 'assets/decors/potion3.png');
+assetsManager.load('potion4', 'assets/decors/potion4.png');
 
 // --- SQUELETTES 8 DIRECTIONS ---
 assetsManager.load('Skeleton_south_view', 'assets/skins/Skeleton/skeleton_south_view.png');
