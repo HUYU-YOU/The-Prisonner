@@ -49,19 +49,6 @@ assetsManager.load('Burned_top_view', 'assets/skins/Attack/Burned_top_view.jpeg'
 assetsManager.load('Attack_fire_mage', 'assets/skins/Attack/Attack_fire_mage.jpeg');
 assetsManager.load('Ulti_fire_mage', 'assets/skins/Attack/Ulti_fire_mage.jpeg');
 
-// --- SKINS ENNEMIS ET ANIMATIONS ---
-assetsManager.load('goblin_top_view', 'assets/skins/goblin_top_view.png');
-assetsManager.load('goblin_top_attack', 'assets/skins/goblin_top_attack.png');
-assetsManager.load('goblin_top_block', 'assets/skins/goblin_top_block.png');
-
-assetsManager.load('Skeleton_top_view', 'assets/skins/Skeleton_top_view.png');
-assetsManager.load('Skeleton_top_attack', 'assets/skins/Skeleton_top_attack.png');
-
-assetsManager.load('spider_top_view', 'assets/skins/spider_top_view.jpeg');
-assetsManager.load('troll_top_view', 'assets/skins/troll_top_view.png');    
-assetsManager.load('drake_top_view', 'assets/skins/drake_top_view.png');
-assetsManager.load('mage_top_view', 'assets/skins/mage_top_view.png');
-
 // --- DÉCORS ET CAISSES ---
 assetsManager.load('crate1', 'assets/decorations/crate.png');     
 assetsManager.load('crate2', 'assets/decorations/crate2.png');    
@@ -184,6 +171,36 @@ assetsManager.load('Mage_northwest_view', 'assets/skins/Mage/mage_northwest_view
 assetsManager.load('Mage_southeast_view', 'assets/skins/Mage/mage_southeast_view.png');
 assetsManager.load('Mage_southwest_view', 'assets/skins/Mage/mage_southwest_view.png');
 
+// --- DEATH GOD 8 DIRECTIONS ---
+assetsManager.load('Deathgod_south_view', 'assets/skins/deathgod/deathgod_south_view.png');
+assetsManager.load('Deathgod_north_view', 'assets/skins/deathgod/deathgod_north_view.png');
+assetsManager.load('Deathgod_east_view', 'assets/skins/deathgod/deathgod_east_view.png');
+assetsManager.load('Deathgod_west_view', 'assets/skins/deathgod/deathgod_west_view.png');
+assetsManager.load('Deathgod_northeast_view', 'assets/skins/deathgod/deathgod_northeast_view.png');
+assetsManager.load('Deathgod_northwest_view', 'assets/skins/deathgod/deathgod_northwest_view.png');
+assetsManager.load('Deathgod_southeast_view', 'assets/skins/deathgod/deathgod_southeast_view.png');
+assetsManager.load('Deathgod_southwest_view', 'assets/skins/deathgod/deathgod_southwest_view.png');
+
+// --- ELYSIA 8 DIRECTIONS ---
+assetsManager.load('Elysia_south_view', 'assets/skins/elysia/elysia_south_view.png');
+assetsManager.load('Elysia_north_view', 'assets/skins/elysia/elysia_north_view.png');
+assetsManager.load('Elysia_east_view', 'assets/skins/elysia/elysia_east_view.png');
+assetsManager.load('Elysia_west_view', 'assets/skins/elysia/elysia_west_view.png');
+assetsManager.load('Elysia_northeast_view', 'assets/skins/elysia/elysia_northeast_view.png');
+assetsManager.load('Elysia_northwest_view', 'assets/skins/elysia/elysia_northwest_view.png');
+assetsManager.load('Elysia_southeast_view', 'assets/skins/elysia/elysia_southeast_view.png');
+assetsManager.load('Elysia_southwest_view', 'assets/skins/elysia/elysia_southwest_view.png');
+
+// --- ARMOR 8 DIRECTIONS ---
+assetsManager.load('Armor_south_view', 'assets/skins/armor/armor_south_view.png');
+assetsManager.load('Armor_north_view', 'assets/skins/armor/armor_north_view.png');
+assetsManager.load('Armor_east_view', 'assets/skins/armor/armor_east_view.png');
+assetsManager.load('Armor_west_view', 'assets/skins/armor/armor_west_view.png');
+assetsManager.load('Armor_northeast_view', 'assets/skins/armor/armor_northeast_view.png');
+assetsManager.load('Armor_northwest_view', 'assets/skins/armor/armor_northwest_view.png');
+assetsManager.load('Armor_southeast_view', 'assets/skins/armor/armor_southeast_view.png');
+assetsManager.load('Armor_southwest_view', 'assets/skins/armor/armor_southwest_view.png');
+
 // --- EFFETS DE SANG (Dégâts et Morts) ---
 assetsManager.load('bloods_hit_view1', 'assets/effects/bloods_hit_view1.png');
 assetsManager.load('bloods_hit_view2', 'assets/effects/bloods_hit_view2.png');
@@ -192,3 +209,7 @@ assetsManager.load('bloods_hit_view3', 'assets/effects/bloods_hit_view3.png');
 assetsManager.load('bloods_kill_view1', 'assets/effects/bloods_kill_view1.png');
 assetsManager.load('bloods_kill_view2', 'assets/effects/bloods_kill_view2.png');
 assetsManager.load('bloods_kill_view3', 'assets/effects/bloods_kill_view3.png');
+
+assetsManager.load('skeleton_kill_view1', 'assets/effects/skeleton_kill_view1.png');
+assetsManager.load('skeleton_kill_view2', 'assets/effects/skeleton_kill_view2.png');
+assetsManager.load('skeleton_kill_view3', 'assets/effects/skeleton_kill_view3.png');
