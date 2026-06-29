@@ -40,17 +40,31 @@
                 <div class="bar-bg"><div id="mana-bar" style="width: 0%; background: #3498db;"></div></div>
             </div>
 
-            <div id="inventory-container">
+       <div id="inventory-container">
                 <div class="inventory-box" id="potion-box">
-                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('green')">🟢 <span id="p-green">0</span></div>
-                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('yellow')">🟡 <span id="p-yellow">0</span></div>
-                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('blue')">🔵 <span id="p-blue">0</span></div>
-                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('red')">🔴 <span id="p-red">0</span></div>
+                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('green')">
+                        <img src="assets/decors/potion1.png" style="width:20px; vertical-align:middle;"> <span id="p-green">0</span>
+                    </div>
+                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('yellow')">
+                        <img src="assets/decors/potion2.png" style="width:20px; vertical-align:middle;"> <span id="p-yellow">0</span>
+                    </div>
+                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('blue')">
+                        <img src="assets/decors/potion3.png" style="width:20px; vertical-align:middle;"> <span id="p-blue">0</span>
+                    </div>
+                    <div class="potion-btn" onclick="if(typeof usePotion==='function') usePotion('red')">
+                        <img src="assets/decors/potion4.png" style="width:20px; vertical-align:middle;"> <span id="p-red">0</span>
+                    </div>
                 </div>
                 <div class="inventory-box" id="key-box">
-                    <div class="key-item">🔑 <span id="key-gold">0</span></div>
-                    <div class="key-item">💀 <span id="key-skull">0</span></div>
-                    <div class="key-item">🔮 <span id="key-orb">0</span></div>
+                    <div class="key-item">
+                        <img src="assets/decors/gold_key.png" style="width:20px; vertical-align:middle;"> <span id="key-gold">0</span>
+                    </div>
+                    <div class="key-item">
+                        <img src="assets/decors/skeleton_key.png" style="width:20px; vertical-align:middle;"> <span id="key-skull">0</span>
+                    </div>
+                    <div class="key-item">
+                        <img src="assets/decors/portal_key.png" style="width:20px; vertical-align:middle;"> <span id="key-orb">0</span>
+                    </div>
                 </div>
             </div>
 
