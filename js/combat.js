@@ -11,20 +11,20 @@ window.handlePlayerAttack = function() {
         if (isUltimateActive) {
             elfStealthBroken = true; 
             let spread = 0.15;
-            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle - spread) * 12, vy: Math.sin(angle - spread) * 12, size: 5, hitTargets: [], angle: angle - spread, isFire: false });
-            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle + spread) * 12, vy: Math.sin(angle + spread) * 12, size: 5, hitTargets: [], angle: angle + spread, isFire: false });
+            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle - spread) * 12, vy: Math.sin(angle - spread) * 12, size: 5, hitTargets: [], angle: angle - spread, type: 'arrow_elf' });
+            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle + spread) * 12, vy: Math.sin(angle + spread) * 12, size: 5, hitTargets: [], angle: angle + spread, type: 'arrow_elf' });
             attackCooldown = 15;
         } else { 
-            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12, size: 5, hitTargets: [], angle: angle, isFire: false }); 
+            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12, size: 5, hitTargets: [], angle: angle, type: 'arrow_elf' }); 
             attackCooldown = 30; 
         }
     } 
     else if (player.heroClass === 'Mage') {
-        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 8, hitTargets: [], angle: angle, isFire: true }); 
+        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 8, hitTargets: [], angle: angle, type: 'fire_mage' }); 
         attackCooldown = 35;
     } 
     else if (player.heroClass === 'Necromancer') {
-        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 6, hitTargets: [], angle: angle, isFire: false, isNecro: true }); 
+        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 6, hitTargets: [], angle: angle, type: 'fire_necromancien' }); 
         attackCooldown = 15;
     } 
     else if (player.heroClass === 'Knight') {
@@ -40,24 +40,13 @@ window.handlePlayerAttack = function() {
                     } else { 
                         enemy.health -= 50; 
                         
-                        // --- SANG DE DÉGÂTS (HIT) AU CORPS À CORPS (SAUF SQUELETTE) ---
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            bloodStains.push({
-                                type: 'hit',
-                                imgId: 'bloods_hit_view' + hitNum,
-                                x: enemy.x + enemy.size/2,
-                                y: enemy.y + enemy.size/2,
-                                size: enemy.size * 1.5,
-                                rotation: Math.random() * Math.PI * 2,
-                                life: maxLife
-                            });
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         
-                        if (typeof window.triggerShake === 'function') {
-                            window.triggerShake(5, 8); 
-                        }
+                        if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
                 }
             } 
@@ -113,33 +102,22 @@ window.updateProjectiles = function() {
                         if (player.heroClass === 'Elf') dmg = 60; 
                         enemy.health -= dmg; 
                         
-                        // --- LA MAGIE ENFLAMME LES ENNEMIS ---
-                        if (p.isFire || player.heroClass === 'Mage') {
+                        if (p.type === 'fire_mage' || player.heroClass === 'Mage') {
                             enemy.isBurning = true;
-                            enemy.burnTimer = 180; // Dure 3 secondes
+                            enemy.burnTimer = 180; 
                         }
                     }
                 }
                 
-                // --- SANG DE DÉGÂTS (HIT) PAR PROJECTILE (SAUF SQUELETTE) ---
                 if (enemy.type !== 'skeleton') {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    bloodStains.push({
-                        type: 'hit',
-                        imgId: 'bloods_hit_view' + hitNum,
-                        x: enemy.x + enemy.size/2,
-                        y: enemy.y + enemy.size/2,
-                        size: enemy.size * 1.5,
-                        rotation: Math.random() * Math.PI * 2,
-                        life: maxLife
-                    });
+                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 if (isPiercingElf || player.heroClass === 'Mage') { 
-                    if (!p.hitTargets) p.hitTargets = []; 
-                    p.hitTargets.push(enemy); 
+                    if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
                 } else { 
                     projectileHit = true; break; 
                 } 
@@ -152,10 +130,8 @@ window.updateProjectiles = function() {
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         let ep = enemyProjectiles[i];
-        ep.x += ep.vx; 
-        ep.y += ep.vy;
+        ep.x += ep.vx; ep.y += ep.vy;
         
-        // --- ÉPÉE BOOMERANG DE L'ARMURE ---
         if (ep.type === 'armor_sword') {
             if (ep.lifeTimer === undefined) ep.lifeTimer = 0;
             ep.lifeTimer++;
@@ -178,45 +154,15 @@ window.updateProjectiles = function() {
             
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
-            // SANG SUR LE JOUEUR (HIT)
             let hitNum = Math.floor(Math.random() * 3) + 1;
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            bloodStains.push({
-                type: 'hit',
-                imgId: 'bloods_hit_view' + hitNum,
-                x: player.x + player.size/2,
-                y: player.y + player.size/2,
-                size: player.size * 1.5,
-                rotation: Math.random() * Math.PI * 2,
-                life: maxLife
-            });
+            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
             
             playerInvulnerableTimer = 45;
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
             
             enemyProjectiles.splice(i, 1);
-        }
-    }
-    
-    // --- GESTION DES MÉTÉORES DU DRAGON ET ELYSIA ---
-    if (typeof hazards !== 'undefined') {
-        for (let i = hazards.length - 1; i >= 0; i--) {
-            let h = hazards[i];
-            h.timer--;
-            if (h.timer <= 0) {
-                if (!isElfInvuln && playerInvulnerableTimer <= 0) {
-                    let distH = Math.hypot((player.x + player.size/2) - h.x, (player.y + player.size/2) - h.y);
-                    if (distH < h.radius) {
-                        playerStats.health -= h.damage || 20;
-                        playerInvulnerableTimer = 45;
-                        if (typeof window.triggerShake === 'function') window.triggerShake(15, 25);
-                        if (typeof window.updateHUD === 'function') window.updateHUD();
-                        if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-                    }
-                }
-                hazards.splice(i, 1); 
-            }
         }
     }
 };
