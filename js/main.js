@@ -9,8 +9,14 @@ window.update = function() {
         if (keys['space']) {
             if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
             spaceHoldTimer++;
-            if (spaceHoldTimer >= 300) { spaceHoldTimer = 0; keys['space'] = false; if(typeof window.startArenaMode==='function') window.startArenaMode('Necromancer'); }
-        } else { spaceHoldTimer = 0; }
+            if (spaceHoldTimer >= 300) { 
+                spaceHoldTimer = 0; 
+                keys['space'] = false; 
+                if(typeof window.startArenaMode==='function') window.startArenaMode('Necromancer'); 
+            }
+        } else { 
+            spaceHoldTimer = 0; 
+        }
         requestAnimationFrame(window.update); return;
     }
     
@@ -25,10 +31,10 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        // LA MAP RÉTRÉCIT À LA VAGUE 9
-        if (arenaWave === 9 && arenaState === "PLAYING" && arenaShrink < 150) { 
+        // --- LA MAP SE RÉTRÉCIT UNIQUEMENT VAGUE 10 (BOSS TROLL) ---
+        if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
-        } else if (arenaWave !== 9) {
+        } else if (arenaWave !== 10) {
             arenaShrink = 0; 
         }
 
@@ -39,7 +45,6 @@ window.update = function() {
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
                 
-                // UNE POTION VERTE TOUTES LES 5 VAGUES
                 if (arenaWave > 1 && (arenaWave - 1) % 5 === 0) {
                     currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
@@ -66,7 +71,6 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                // FINI LE SOIN AUTOMATIQUE : LA SURVIE DÉPEND DES POTIONS
                 if(typeof window.updateHUD==='function') window.updateHUD();
             }
         }
@@ -191,11 +195,19 @@ window.update = function() {
         if (p.life <= 0) particles.splice(i, 1);
     }
     
-    // --- GESTION DU FONDU DU SANG (1 MINUTE DE DURÉE DE VIE) ---
+    // --- GESTION DU FONDU DU SANG (20s EN ARÈNE, 60s EN HISTOIRE) ---
     for (let i = bloodStains.length - 1; i >= 0; i--) {
         let b = bloodStains[i];
-        if (b.life === undefined) b.life = 3600; 
+        let maxLife = (currentRoomId === 999) ? 1200 : 3600; // 1200 frames = 20 secondes
+        if (b.life === undefined) b.life = maxLife; 
         b.life--;
+        
+        if (b.life < 300) {
+            b.opacity = b.life / 300; 
+        } else {
+            b.opacity = 1.0;
+        }
+        
         if (b.life <= 0) bloodStains.splice(i, 1);
     }
 
