@@ -182,7 +182,7 @@ window.updateEnemies = function() {
                 enemy.summonTimer = 180; 
             }
             
-            if (enemy.trollDashCooldown === undefined) enemy.trollDashCooldown = 600;
+            if (enemy.trollDashCooldown === undefined) enemy.trollDashCooldown = 300;
             enemy.trollDashCooldown--;
             if (enemy.trollDashCooldown === 30) { enemy.isTelegraphing = 30; }
             if (enemy.trollDashCooldown <= 0) {
