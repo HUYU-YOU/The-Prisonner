@@ -104,6 +104,7 @@ window.renderGameView = function() {
         if (blood.rotation) ctx.rotate(blood.rotation);
         
         let bImg = window.getAsset(blood.imgId);
+        
         if (bImg && bImg.complete && bImg.naturalWidth > 0) {
             let s = blood.size || 40;
             ctx.drawImage(bImg, -s/2, -s/2, s, s);
@@ -211,7 +212,7 @@ window.renderGameView = function() {
                 if (assetName === 'gold_coin') { 
                     displaySize = item.size * 3.5; 
                 } else if (assetName && assetName.includes('key')) { 
-                    displaySize = item.size * 1.25; 
+                    displaySize = item.size * 1.25; // LA CLÉ EST 50% PLUS PETITE
                 }
                 
                 let drawWidth = displaySize;
@@ -227,7 +228,6 @@ window.renderGameView = function() {
         }
     });
 
-    // --- FINI LES POINTS ROUGES ! SI PAS D'IMAGE, NE RIEN DESSINER ---
     if (typeof hazards !== 'undefined') {
         hazards.forEach(h => { 
             ctx.save();
@@ -242,7 +242,6 @@ window.renderGameView = function() {
                 ctx.shadowBlur = 30; 
                 ctx.drawImage(metImg, h.x - h.radius*1.5, h.y - fallH - h.radius*1.5, h.radius*3, h.radius*3);
             }
-            // Retrait total du else ! Aucun cercle de secours rouge dégueulasse n'apparaitra.
             ctx.restore();
         });
     }
@@ -404,7 +403,7 @@ window.renderGameView = function() {
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
     }
 
-    // --- SKINS DES PROJECTILES DU JOUEUR (X1.5 ET LUMINEUX) ---
+    // --- SKINS DES PROJECTILES DU JOUEUR (LUMINEUX ET + GROS) ---
     projectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -417,8 +416,8 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             ctx.rotate(p.angle + Math.PI / 2);
             ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; 
-            ctx.shadowBlur = 30; // Projectiles beaucoup plus lumineux
-            let drawSize = p.size * 15.0; // PROJECTILES ÉNORMES X1.5
+            ctx.shadowBlur = 40; // Lumière intense
+            let drawSize = p.size * 15.0; // PROJECTILES ÉNORMES
             ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             ctx.rotate(p.angle); 
@@ -427,7 +426,7 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- SKINS DES PROJECTILES DES ENNEMIS (X1.5 ET LUMINEUX) ---
+    // --- SKINS DES PROJECTILES DES ENNEMIS (LUMINEUX ET + GROS) ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -450,8 +449,8 @@ window.renderGameView = function() {
                 ctx.rotate(pAngle + Math.PI / 2); 
             }
             ctx.shadowColor = p.color || '#fff'; 
-            ctx.shadowBlur = 30; // Brillance maximum !
-            let drawSize = p.size * 12.0; // PROJECTILES X1.5
+            ctx.shadowBlur = 40; // Lumière intense
+            let drawSize = p.size * 12.0; // GROS PROJECTILES
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             if (p.type === 'bone_skeleton') { ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); } 
