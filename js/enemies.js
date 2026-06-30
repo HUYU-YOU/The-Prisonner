@@ -68,7 +68,7 @@ window.updateEnemies = function() {
     
     let targetObj = fusionAggro ? fusionAggro : player;
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
-    if (fusionAggro) isElfInvuln = false; // Les monstres attaqueront la fusion de toute façon
+    if (fusionAggro) isElfInvuln = false; 
 
     currentEnemies.forEach((enemy, idx) => {
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0; 
@@ -103,7 +103,25 @@ window.updateEnemies = function() {
         let currentEnemySpeed = enemy.speed; 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
 
-        // IA DRAGON (Météores et Boules 5-way)
+        if (enemy.type === 'mage') {
+            if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
+                enemy.phase = 2; enemy.maxHealth += 300; enemy.health += 300; enemy.speed = 4.0; 
+            }
+            if (enemy.phase === 2 && dist < 200 && dist > 0) { dx = -dx; dy = -dy; }
+            if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) {
+                window.spawnEnemy('skeleton', 1, enemy.x + 20, enemy.y + 20); window.spawnEnemy('spider', 1, enemy.x - 20, enemy.y - 20);
+                enemy.summonTimer = enemy.phase === 2 ? 250 : 400; 
+            }
+            if (enemy.phase === 2 && enemy.burstCount > 0) {
+                if (enemy.burstTimer <= 0 || enemy.burstTimer === undefined) {
+                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*7, vy: Math.sin(angleToPlayer)*7, size: 8, type: 'fire_mage_corompue', color: '#e67e22', damage: 15 });
+                    enemy.burstCount--; enemy.burstTimer = 10; enemy.attackAnimTimer = 15;
+                } else { enemy.burstTimer--; }
+            }
+        }
+        
         if (enemy.type === 'dragon') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; 
@@ -111,15 +129,15 @@ window.updateEnemies = function() {
             if (enemy.summonTimer === undefined) enemy.summonTimer = 60;
             enemy.summonTimer--;
             let isPhase2 = (enemy.phase === 2);
-            let hpRatio = enemy.health / enemy.maxHealth; 
+            let hpRatio = Math.max(0.1, enemy.health / enemy.maxHealth);
             
-            let spawnRate = isPhase2 ? Math.max(15, 60 * hpRatio) : 80;
+            let spawnRate = isPhase2 ? Math.max(10, 40 * hpRatio) : 70;
             
             if (enemy.summonTimer <= 0) {
                 let mx = bLeft + Math.random() * (bRight - bLeft);
                 let my = bTop + Math.random() * (bBot - bTop);
                 if (typeof hazards !== 'undefined') {
-                    let fallSpeed = isPhase2 ? Math.max(20, 50 * hpRatio) : 60; 
+                    let fallSpeed = isPhase2 ? Math.max(15, 40 * hpRatio) : 50; 
                     hazards.push({ x: mx, y: my, radius: 45, timer: fallSpeed, maxTimer: fallSpeed, damage: 30, isDragon: true });
                 }
                 enemy.summonTimer = spawnRate; 
@@ -127,18 +145,129 @@ window.updateEnemies = function() {
             
             if (enemy.shootCooldown <= 0 && !isElfInvuln) {
                 let pSpeed = 8;
-                // 5 Boules de feu directionnelles !
                 for(let k = -2; k <= 2; k++) {
-                    let spreadAngle = angleToPlayer + (k * 0.25);
+                    let spreadAngle = angleToPlayer + (k * 0.2);
                     enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 12, type: 'fire_dragon', color: '#e74c3c', damage: 25 });
                 }
-                enemy.shootCooldown = 60; // 1 Fois par seconde
+                enemy.shootCooldown = 60; 
                 enemy.attackAnimTimer = 30; 
             }
         }
 
-        // AUTRES TIRS ET STOP DISTANCE POUR L'AGGRO DE LA FUSION
-        let isRanged = ['skeleton', 'mage', 'spider', 'deathgod', 'elysia', 'armor'].includes(enemy.type);
+        if (enemy.type === 'troll') {
+            if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) {
+                window.spawnEnemy('goblin', 1, enemy.x + 20, enemy.y + 20); 
+                enemy.summonTimer = 180; 
+            }
+            
+            if (enemy.trollDashCooldown === undefined) enemy.trollDashCooldown = 600;
+            enemy.trollDashCooldown--;
+            if (enemy.trollDashCooldown === 30) { enemy.isTelegraphing = 30; }
+            if (enemy.trollDashCooldown <= 0) {
+                enemy.isDashing = 10; 
+                enemy.trollDashCooldown = (enemy.health <= enemy.maxHealth / 2) ? 180 : 600; 
+            }
+            if (enemy.isTelegraphing > 0) {
+                enemy.isTelegraphing--; currentEnemySpeed = -1.5; enemy.wobble += 0.5; 
+            } else if (enemy.isDashing > 0) { 
+                enemy.isDashing--; currentEnemySpeed *= 3.5; 
+            }
+        }
+
+        if (enemy.type === 'deathgod') {
+            if (enemy.phase === 1) {
+                if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
+                enemy.summonTimer--;
+                if (enemy.summonTimer <= 0) { window.spawnEnemy('armor', 1, enemy.x + 30, enemy.y + 30); enemy.summonTimer = 300; } 
+                
+                if (enemy.shootCooldown <= 0 && !isElfInvuln) { enemy.burstCount = 3; enemy.shootCooldown = 60; }
+                if (enemy.burstCount > 0) {
+                    if (enemy.burstTimer === undefined || enemy.burstTimer <= 0) {
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*7, vy: Math.sin(angleToPlayer)*7, size: 6, type: 'fire_deathgod', color: '#2c3e50', damage: 15 });
+                        enemy.burstCount--; enemy.burstTimer = 5; enemy.attackAnimTimer = 15;
+                    } else { enemy.burstTimer--; }
+                }
+
+                if (enemy.health <= enemy.maxHealth / 2) {
+                    enemy.phase = 2; enemy.x = canvas.width/2 - enemy.size/2; enemy.y = canvas.height/2 - enemy.size/2;
+                    enemy.invulnerable = true; enemy.speed = 0; enemy.phaseTimer = 240; enemy.summonTimer = 360; enemy.shootCooldown = 60;
+                }
+            } else if (enemy.phase === 2) {
+                currentEnemySpeed = 0;
+                enemy.phaseTimer--;
+                if (enemy.phaseTimer <= 0) { enemy.health -= (enemy.maxHealth * 0.05); enemy.phaseTimer = 240; } 
+                
+                enemy.summonTimer--;
+                if (enemy.summonTimer <= 0) { window.spawnEnemy('armor', 1, canvas.width/2 + (Math.random()*200-100), canvas.height/2 + (Math.random()*200-100)); enemy.summonTimer = 360; }
+                
+                if (enemy.shootCooldown <= 0) {
+                    for(let i=0; i<8; i++) {
+                        let angle = (Math.PI*2 / 8) * i + enemy.wobble;
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*5, vy: Math.sin(angle)*5, size: 8, type: 'fire_deathgod', color: '#2c3e50', damage: 15 });
+                    }
+                    enemy.shootCooldown = 40; enemy.attackAnimTimer = 15;
+                }
+            }
+        }
+
+        if (enemy.type === 'armor') {
+            if (enemy.dashTimer === undefined) enemy.dashTimer = 180;
+            enemy.dashTimer--;
+            if (enemy.dashTimer <= 0) { enemy.isDashing = 15; enemy.dashTimer = 180; }
+            if (enemy.isDashing > 0) { enemy.isDashing--; currentEnemySpeed *= 3; }
+            
+            if (enemy.shootCooldown <= 0 && dist < 400 && !isElfInvuln) {
+                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*8, vy: Math.sin(angleToPlayer)*8, size: 15, type: 'armor_sword', color: '#7f8c8d', damage: playerStats.maxHealth * 0.32, lifeTimer: 0 });
+                enemy.shootCooldown = 180; enemy.attackAnimTimer = 20;
+            }
+        }
+
+        if (enemy.type === 'elysia') {
+            let hpRatio = Math.max(0.1, enemy.health / enemy.maxHealth); 
+            if (enemy.phase === 1) {
+                if (enemy.dashTimer === undefined) enemy.dashTimer = 150;
+                enemy.dashTimer--;
+                if(enemy.dashTimer <= 0) { enemy.isDashing = 20; enemy.dashTimer = 150 * hpRatio; }
+                if (enemy.isDashing > 0) { enemy.isDashing--; currentEnemySpeed *= 4; }
+                
+                if (enemy.shootCooldown <= 0) {
+                    for(let i=0; i<8; i++) {
+                        let angle = (Math.PI*2 / 8) * i;
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*6, vy: Math.sin(angle)*6, size: 6, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
+                    }
+                    enemy.shootCooldown = 90 * hpRatio; enemy.attackAnimTimer = 15;
+                }
+                
+                if (enemy.health <= enemy.maxHealth / 2) {
+                    enemy.phase = 2; enemy.x = canvas.width/2 - enemy.size/2; enemy.y = canvas.height/2 - enemy.size/2;
+                    enemy.invulnerable = true; enemy.speed = 0; enemy.phaseTimer = 300; enemy.summonTimer = 60;
+                }
+            } else if (enemy.phase === 2) {
+                currentEnemySpeed = 0;
+                enemy.phaseTimer--;
+                if (enemy.phaseTimer <= 0) { enemy.health -= (enemy.maxHealth * 0.05); enemy.phaseTimer = 300; } 
+                
+                if (enemy.shootCooldown <= 0) {
+                    for(let i=0; i<12; i++) {
+                        let angle = (Math.PI*2 / 12) * i + enemy.wobble*2;
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*4, vy: Math.sin(angle)*4, size: 8, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
+                    }
+                    enemy.shootCooldown = 60 * hpRatio; enemy.attackAnimTimer = 10;
+                }
+                
+                enemy.summonTimer--;
+                if (enemy.summonTimer <= 0) {
+                    let mx = bLeft + Math.random()*(bRight - bLeft);
+                    let my = bTop + Math.random()*(bBot - bTop);
+                    if (typeof hazards !== 'undefined') hazards.push({ x: mx, y: my, radius: 40, timer: 60, maxTimer: 60, damage: playerStats.maxHealth * 0.34, isElysia: true });
+                    enemy.summonTimer = 40 * hpRatio; 
+                }
+            }
+        }
+
+        let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider'].includes(enemy.type);
         if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
             if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4; pSize = 9; pDmg = 5; }
@@ -147,24 +276,20 @@ window.updateEnemies = function() {
             else if (enemy.type === 'elysia') { pType = 'fire_elysia'; pColor = '#e84393'; pSpeed = 7; pSize = 12; pDmg = 15; }
             else if (enemy.type === 'armor') { pType = 'armor_sword'; pColor = '#7f8c8d'; pSpeed = 8; pSize = 15; pDmg = 35; }
 
-            enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer) * pSpeed, vy: Math.sin(angleToPlayer) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
-            enemy.shootCooldown = (enemy.type === 'mage') ? 120 : 150;
-            enemy.attackAnimTimer = 30; 
+            if (enemy.type !== 'dragon') {
+                if (enemy.type === 'mage' && enemy.phase === 2) {
+                    enemy.burstCount = 2; enemy.shootCooldown = 40; 
+                } else {
+                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer) * pSpeed, vy: Math.sin(angleToPlayer) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
+                    enemy.shootCooldown = (enemy.type === 'mage') ? 120 : 150;
+                }
+                enemy.attackAnimTimer = 30; 
+            }
         }
-
-        // --- ARRÊT À DISTANCE POUR LA FUSION ---
-        let stopDist = 0;
-        if (isRanged && fusionAggro) {
-            stopDist = 250; // Les mages restent à 250px de la fusion !
-        } else if (isRanged) {
-            stopDist = 150; // S'arrêtent à 150px du joueur
-        }
-
+        
+        let stopDist = (isRanged && fusionAggro) ? 250 : 0;
         let dx_mov = 0, dy_mov = 0; 
-        if (dist > stopDist && dist < 9999) { 
-            dx_mov = (dx / dist) * currentEnemySpeed; 
-            dy_mov = (dy / dist) * currentEnemySpeed; 
-        }
+        if (dist > stopDist && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
 
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
@@ -186,11 +311,8 @@ window.updateEnemies = function() {
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
         if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.x = oldEx; break; } }
-        
         let oldEy = enemy.y; enemy.y += dy_mov; 
         if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(enemy, obj)) { enemy.y = oldEy; break; } }
 
         let eMaxX = bRight - arenaShrink - enemy.size; 
         let eMaxY = bBot - arenaShrink - enemy.size;
@@ -198,15 +320,23 @@ window.updateEnemies = function() {
         if (enemy.x > eMaxX) enemy.x = eMaxX; if (enemy.y > eMaxY) enemy.y = eMaxY;
 
         if (!enemy.invulnerable) {
-            // L'ennemi attaque la Fusion au CAC
             if (fusionAggro && window.checkCollision(fusionAggro, enemy)) {
                 if (enemy.attackAnimTimer <= 0) {
                     let dmg = 20;
-                    fusionAggro.health -= dmg; enemy.attackAnimTimer = 30;
+                    if (enemy.type === 'armor') dmg = fusionAggro.maxHealth * 0.32;
+                    else if (enemy.type === 'elysia') dmg = fusionAggro.maxHealth * 0.34;
+                    else if (enemy.type === 'deathgod') dmg = fusionAggro.maxHealth * 0.25;
+                    
+                    fusionAggro.health -= dmg; 
+                    enemy.attackAnimTimer = 30;
                 }
             } 
             else if (!fusionAggro && playerInvulnerableTimer <= 0 && window.checkCollision(player, enemy)) {
                 let dmg = 20;
+                if (enemy.type === 'armor') dmg = playerStats.maxHealth * 0.32;
+                else if (enemy.type === 'elysia') dmg = playerStats.maxHealth * 0.34;
+                else if (enemy.type === 'deathgod') dmg = playerStats.maxHealth * 0.25;
+                
                 playerStats.health -= dmg; 
                 enemy.attackAnimTimer = 30;
                 
@@ -221,7 +351,6 @@ window.updateEnemies = function() {
         }
     });
 
-    // --- I.A DE LA FUSION (AoE au CAC) ET DES ÂMES ---
     if (typeof necroSummons !== 'undefined') {
         for (let i = 0; i < necroSummons.length; i++) {
             let summon = necroSummons[i]; let repX = 0, repY = 0;
@@ -268,14 +397,12 @@ window.updateEnemies = function() {
 
                 if (summon.attackCooldown <= 0) {
                     if (summon.type === 'fusion') {
-                        summon.damage = 40; // 40 DÉGÂTS PAR ATTAQUE POUR LA FUSION
+                        summon.damage = 40; 
                         if (minDist < 350 && minDist > 100) { 
-                            // Tire de loin
                             projectiles.push({ x: summon.x + summon.size/2, y: summon.y + summon.size/2, vx: Math.cos(angle)*10, vy: Math.sin(angle)*10, size: 12, hitTargets: [], angle: angle, type: 'fire_fusion', pierce: true });
                             summon.attackCooldown = 45; summon.attackAnimTimer = 20;
                         } else if (minDist <= 100) { 
-                            // ZONE D'EFFET AU CAC !
-                            let hitBox = { x: summon.x - 60, y: summon.y - 60, width: summon.size + 120, height: summon.size + 120 };
+                            let hitBox = { x: summon.x - 50, y: summon.y - 50, width: summon.size + 100, height: summon.size + 100 };
                             currentEnemies.forEach(e => {
                                 if (!e.invulnerable && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
@@ -306,6 +433,7 @@ window.updateEnemies = function() {
 
             if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
+                // LA CLÉ SPAWN SUR LE CADAVRE DU BOSS
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
             
