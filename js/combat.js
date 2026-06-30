@@ -43,7 +43,8 @@ window.handlePlayerAttack = function() {
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                            // SANG DIVISÉ PAR DEUX ICI (* 0.75 au lieu de 1.5)
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
@@ -112,11 +113,14 @@ window.updateProjectiles = function() {
                 if (enemy.type !== 'skeleton') {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                    // SANG DIVISÉ PAR DEUX ICI (* 0.75 au lieu de 1.5)
+                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
-                // --- TRANSPERCEMENT POUR LA FUSION ---
-                let isPiercing = (player.heroClass === 'Elf' && isUltimateActive) || player.heroClass === 'Mage' || p.type === 'fire_fusion' || p.type === 'fire_necromancien';
+                // --- SEULE LA FUSION, LE MAGE ET L'ELFE ULTIME TRANSSPERCENT (LE NÉCRO NORMAL S'ARRÊTE) ---
+                let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
+                let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
+                
                 if (isPiercing) { 
                     if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
                 } else { 
@@ -164,7 +168,8 @@ window.updateProjectiles = function() {
             
             let hitNum = Math.floor(Math.random() * 3) + 1;
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
+            // SANG DIVISÉ PAR DEUX ICI (* 0.75 au lieu de 1.5)
+            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
             
             playerInvulnerableTimer = 45;
             if (typeof window.updateHUD === 'function') window.updateHUD();
