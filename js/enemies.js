@@ -29,7 +29,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         let size = 40, hp = 90, spd = 3.5, col = '#27ae60';
         if (type === 'skeleton') { hp = 50; spd = 2; col = '#bdc3c7'; }
         else if (type === 'spider') { size = 30; hp = 1; spd = 7; col = '#8e44ad'; }
-        else if (type === 'troll') { size = 80; hp = 1500; spd = 3.5; col = '#117a65'; }
+        else if (type === 'troll') { size = 80; hp = 1000; spd = 3.5; col = '#117a65'; }
         else if (type === 'mage') { size = 60; hp = 900; spd = 2; col = '#9b59b6'; }
         else if (type === 'dragon') { size = 150; hp = 3000; spd = 1.0; col = '#8b0000'; }
         else if (type === 'deathgod') { size = 70; hp = 1000; spd = 4.5; col = '#2c3e50'; }
@@ -43,7 +43,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         currentEnemies.push({ 
             x: ex, y: ey, size: size, health: hp, maxHealth: hp, speed: spd, color: col, type: type, 
             shootCooldown: Math.random() * 60 + 60, summonTimer: 180, wobble: Math.random() * Math.PI * 2,
-            timeAlive: 0, phase: 1, invulnerable: false, isBurning: false, burnTicks: 0, burnTimer: 0,
+            timeAlive: 0, phase: 1, invulnerable: false, isBurning: false, burnTimer: 0,
             slowTimer: 0, isPermanentlySlowed: false, killedBySummon: false, killedByNecro: false,
             attackAnimTimer: 0, blockAnimTimer: 0, ultiAnimTimer: 0, dashTimer: 180, isDashing: 0,
             burstCount: 0, burstTimer: 0, phaseTimer: 0 
@@ -63,9 +63,6 @@ window.updateEnemies = function() {
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
 
-    // ========================================================================
-    // --- 1. GESTION DES ENNEMIS ---
-    // ========================================================================
     currentEnemies.forEach((enemy, idx) => {
         if (enemy.attackAnimTimer === undefined) enemy.attackAnimTimer = 0; 
         if (enemy.blockAnimTimer === undefined) enemy.blockAnimTimer = 0; 
@@ -97,7 +94,6 @@ window.updateEnemies = function() {
         let currentEnemySpeed = enemy.speed; 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
 
-        // IA BOSS : MAGE
         if (enemy.type === 'mage') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.maxHealth += 300; enemy.health += 300; enemy.speed = 4.0; 
@@ -112,13 +108,12 @@ window.updateEnemies = function() {
             }
             if (enemy.phase === 2 && enemy.burstCount > 0) {
                 if (enemy.burstTimer <= 0 || enemy.burstTimer === undefined) {
-                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*7, vy: Math.sin(angleToPlayer)*7, size: 8, type: 'fire_mage', color: '#e67e22', damage: 15 });
+                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*7, vy: Math.sin(angleToPlayer)*7, size: 8, type: 'fire_mage_corompue', color: '#e67e22', damage: 15 });
                     enemy.burstCount--; enemy.burstTimer = 10; enemy.attackAnimTimer = 15;
                 } else { enemy.burstTimer--; }
             }
         }
         
-        // IA BOSS : DRAGON
         if (enemy.type === 'dragon') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.summonTimer = 60;
@@ -140,7 +135,6 @@ window.updateEnemies = function() {
             }
         }
 
-        // IA BOSS : TROLL
         if (enemy.type === 'troll') {
             if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
             enemy.summonTimer--;
@@ -164,7 +158,6 @@ window.updateEnemies = function() {
             }
         }
 
-        // IA BOSS : DEATH GOD
         if (enemy.type === 'deathgod') {
             if (enemy.phase === 1) {
                 if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
@@ -202,7 +195,6 @@ window.updateEnemies = function() {
             }
         }
 
-        // IA ARMURE SANS TÊTE
         if (enemy.type === 'armor') {
             if (enemy.dashTimer === undefined) enemy.dashTimer = 180;
             enemy.dashTimer--;
@@ -215,7 +207,6 @@ window.updateEnemies = function() {
             }
         }
 
-        // IA ELYSIA
         if (enemy.type === 'elysia') {
             let hpRatio = Math.max(0.1, enemy.health / enemy.maxHealth); 
             if (enemy.phase === 1) {
@@ -260,13 +251,12 @@ window.updateEnemies = function() {
             }
         }
 
-        // --- I.A DE TIR CLASSIQUE ---
         let isRanged = ['skeleton', 'mage', 'dragon', 'spider'].includes(enemy.type);
         if (isRanged && dist < 500 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 5, pDmg = 10;
             
             if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4; pSize = 6; pDmg = 5; }
-            else if (enemy.type === 'mage') { pType = 'fire_mage'; pColor = '#e67e22'; pSpeed = 7; pSize = 8; pDmg = 15; }
+            else if (enemy.type === 'mage') { pType = 'fire_mage_corompue'; pColor = '#e67e22'; pSpeed = 7; pSize = 8; pDmg = 15; }
             else if (enemy.type === 'dragon') { pType = 'fire_dragon'; pColor = '#e74c3c'; pSpeed = 8; pSize = 12; pDmg = 25; }
 
             let angle = Math.atan2(dy, dx);
@@ -353,9 +343,6 @@ window.updateEnemies = function() {
         }
     });
 
-    // ========================================================================
-    // --- 2. GESTION DES INVOCATIONS DU NECROMANCIEN (I.A. ALLIÉE) ---
-    // ========================================================================
     if (typeof necroSummons !== 'undefined') {
         for (let i = necroSummons.length - 1; i >= 0; i--) {
             let summon = necroSummons[i];
@@ -365,7 +352,6 @@ window.updateEnemies = function() {
             if (summon.attackCooldown > 0) summon.attackCooldown--;
             if (summon.attackAnimTimer > 0) summon.attackAnimTimer--;
             
-            // CIBLAGE DU MONSTRE LE PLUS PROCHE
             let nearestEnemy = null;
             let minDist = 9999;
             currentEnemies.forEach(e => {
@@ -381,13 +367,11 @@ window.updateEnemies = function() {
                 let angle = Math.atan2(dy, dx);
                 summon.faceAngle = angle;
 
-                // DÉPLACEMENT
                 if (minDist > 150) {
                     summon.x += Math.cos(angle) * summon.speed;
                     summon.y += Math.sin(angle) * summon.speed;
                 }
 
-                // ATTAQUE
                 if (summon.attackCooldown <= 0 && minDist < 350) {
                     if (summon.type === 'fusion') {
                         projectiles.push({ x: summon.x + summon.size/2, y: summon.y + summon.size/2, vx: Math.cos(angle)*8, vy: Math.sin(angle)*8, size: 12, hitTargets: [], angle: angle, type: 'fire_necromancien' });
@@ -402,14 +386,10 @@ window.updateEnemies = function() {
         }
     }
 
-    // ========================================================================
-    // --- 3. MORT DES ENNEMIS ET SANG ---
-    // ========================================================================
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
             
-            // Le Nécromancien capture l'âme
             if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
 
             if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
@@ -425,7 +405,7 @@ window.updateEnemies = function() {
             let killNum = Math.floor(Math.random() * 3) + 1;
             let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            let killSize = e.type === 'skeleton' ? (e.size * 2.5) / 3 : e.size * 2.5; 
+            let killSize = e.type === 'skeleton' ? ((e.size * 2.5) / 2) : e.size * 2.5; // X1.5 pour le tas d'os
             
             bloodStains.push({
                 type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2,
