@@ -202,6 +202,26 @@ assetsManager.load('Armor_northwest_view', 'assets/skins/armor/armor_northwest_v
 assetsManager.load('Armor_southeast_view', 'assets/skins/armor/armor_southeast_view.png');
 assetsManager.load('Armor_southwest_view', 'assets/skins/armor/armor_southwest_view.png');
 
+// --- AMES (SOUL) 8 DIRECTIONS ---
+assetsManager.load('Soul_south_view', 'assets/skins/soul/soul_south_view.png');
+assetsManager.load('Soul_north_view', 'assets/skins/soul/soul_north_view.png');
+assetsManager.load('Soul_east_view', 'assets/skins/soul/soul_east_view.png');
+assetsManager.load('Soul_west_view', 'assets/skins/soul/soul_west_view.png');
+assetsManager.load('Soul_northeast_view', 'assets/skins/soul/soul_northeast_view.png');
+assetsManager.load('Soul_northwest_view', 'assets/skins/soul/soul_northwest_view.png');
+assetsManager.load('Soul_southeast_view', 'assets/skins/soul/soul_southeast_view.png');
+assetsManager.load('Soul_southwest_view', 'assets/skins/soul/soul_southwest_view.png');
+
+// --- FUSION 8 DIRECTIONS ---
+assetsManager.load('Fusion_south_view', 'assets/skins/fusion/fusion_south_view.png');
+assetsManager.load('Fusion_north_view', 'assets/skins/fusion/fusion_north_view.png');
+assetsManager.load('Fusion_east_view', 'assets/skins/fusion/fusion_east_view.png');
+assetsManager.load('Fusion_west_view', 'assets/skins/fusion/fusion_west_view.png');
+assetsManager.load('Fusion_northeast_view', 'assets/skins/fusion/fusion_northeast_view.png');
+assetsManager.load('Fusion_northwest_view', 'assets/skins/fusion/fusion_northwest_view.png');
+assetsManager.load('Fusion_southeast_view', 'assets/skins/fusion/fusion_southeast_view.png');
+assetsManager.load('Fusion_southwest_view', 'assets/skins/fusion/fusion_southwest_view.png');
+
 // --- EFFETS DE SANG (Dégâts et Morts) ---
 assetsManager.load('bloods_hit_view1', 'assets/effects/bloods_hit_view1.png');
 assetsManager.load('bloods_hit_view2', 'assets/effects/bloods_hit_view2.png');
