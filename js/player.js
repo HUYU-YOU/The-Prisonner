@@ -78,6 +78,48 @@ window.usePotion = function(color) {
         }
     }
 };
+window.activateUltimate = function() {
+    if (playerStats.mana < 100) return;
+
+    if (player.heroClass === 'Necromancer') {
+        if (typeof necroSummons !== 'undefined' && necroSummons.length > 0) {
+            let totalHP = 0; 
+            necroSummons.forEach(s => totalHP += s.health);
+            necroSummons = []; 
+            totalHP *= 2; 
+            // Création de la FUSION
+            necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 3.5, attackCooldown: 0, invulnerableTimer: 180, faceAngle: 0 }); 
+        } else if (typeof necroKills !== 'undefined' && necroKills.length > 0) {
+            necroKills.forEach(kill => {
+                // Création des AMES
+                necroSummons.push({ type: 'soul', x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: 100, maxHealth: 100, damage: 20, size: 30, speed: 4.5, attackCooldown: 0, faceAngle: 0 });
+            });
+            necroKills = []; 
+        } else { return; }
+    }
+    
+    isUltimateActive = true; 
+    playerStats.mana = 0; 
+    ultimateTimer = 600; 
+    elfStealthBroken = false; 
+    
+    if (player.heroClass === 'Knight') {
+        playerInvulnerableTimer = 300; 
+    } else if (player.heroClass === 'Mage') {
+        currentEnemies.forEach(enemy => {
+            let ultDmg = enemy.isBurning ? 100 : 50; 
+            if (!enemy.invulnerable) {
+                enemy.health -= ultDmg;
+                enemy.ultiAnimTimer = 30;
+            }
+            enemy.isBurning = true; 
+            enemy.burnTimer = 180;
+        });
+    }
+    
+    if (typeof window.triggerShake === 'function') window.triggerShake(12, 15); 
+    if (typeof window.updateHUD === 'function') window.updateHUD();
+};
 
 window.triggerDash = function() {
     if (gameState !== "PLAYING") return;
