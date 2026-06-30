@@ -3,7 +3,8 @@
 // ============================================================================
 
 window.startHeroHold = function(heroClass) {
-    isHolding = true; holdCompleted = false;
+    isHolding = true; 
+    holdCompleted = false;
     holdTimer = setTimeout(() => { 
         holdCompleted = true; 
         if (typeof window.startArenaMode === 'function') window.startArenaMode(heroClass); 
@@ -66,10 +67,23 @@ window.startArenaMode = function(heroClass) {
 window.usePotion = function(color) {
     if (playerStats.inventory.potions[color] > 0) {
         let potionUsed = false;
-        if (color === 'green' && playerStats.health < playerStats.maxHealth) { playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.2)); potionUsed = true; } 
-        else if (color === 'red' && playerStats.health < playerStats.maxHealth) { playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.5)); potionUsed = true; } 
-        else if (color === 'blue' && playerStats.mana < 100) { playerStats.mana = Math.min(100, playerStats.mana + 20); potionUsed = true; } 
-        else if (color === 'yellow') { playerPoisonTimer = 0; playerSlowTimer = 0; potionUsed = true; }
+        if (color === 'green' && playerStats.health < playerStats.maxHealth) { 
+            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.2)); 
+            potionUsed = true; 
+        } 
+        else if (color === 'red' && playerStats.health < playerStats.maxHealth) { 
+            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.5)); 
+            potionUsed = true; 
+        } 
+        else if (color === 'blue' && playerStats.mana < 100) { 
+            playerStats.mana = Math.min(100, playerStats.mana + 20); 
+            potionUsed = true; 
+        } 
+        else if (color === 'yellow') { 
+            playerPoisonTimer = 0; 
+            playerSlowTimer = 0; 
+            potionUsed = true; 
+        }
         
         if (potionUsed) { 
             playerStats.inventory.potions[color]--; 
@@ -78,6 +92,23 @@ window.usePotion = function(color) {
         }
     }
 };
+
+window.triggerDash = function() {
+    if (gameState !== "PLAYING") return;
+    if (player.dashCooldown <= 0 && player.dashTimer <= 0) {
+        let dx = mouse.x - (player.x + player.size / 2); 
+        let dy = mouse.y - (player.y + player.size / 2);
+        let dist = Math.hypot(dx, dy); 
+        if (dist === 0) { dx = 1; dy = 0; dist = 1; }
+        
+        player.dashVx = (dx/dist) * (player.speed * 4); 
+        player.dashVy = (dy/dist) * (player.speed * 4);
+        player.dashTimer = 12; 
+        player.dashCooldown = 60; 
+        playerInvulnerableTimer = 15; 
+    }
+};
+
 window.activateUltimate = function() {
     if (playerStats.mana < 100) return;
 
@@ -87,14 +118,31 @@ window.activateUltimate = function() {
             necroSummons.forEach(s => totalHP += s.health);
             necroSummons = []; 
             totalHP *= 2; 
-            // Création de la FUSION
-            necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 3.5, attackCooldown: 0, invulnerableTimer: 180, faceAngle: 0 }); 
+            
+            // --- INVOCATION DE LA FUSION ---
+            necroSummons.push({ 
+                type: 'fusion', x: player.x, y: player.y - 30, 
+                health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 4.5, 
+                attackCooldown: 0, invulnerableTimer: 180, faceAngle: 0 
+            }); 
+            if(typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 80, true);
         } else if (typeof necroKills !== 'undefined' && necroKills.length > 0) {
+            
+            // --- INVOCATION DES ÂMES (SOUL) ---
             necroKills.forEach(kill => {
-                // Création des AMES
-                necroSummons.push({ type: 'soul', x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: 100, maxHealth: 100, damage: 20, size: 30, speed: 4.5, attackCooldown: 0, faceAngle: 0 });
+                let sz = 30, hp = 100, dmg = 20, spd = 4.5;
+                if(kill === 'troll') { hp = 300; sz = 40; dmg = 40; spd = 3.5; }
+                else if(kill === 'dragon') { hp = 500; sz = 50; dmg = 60; spd = 3; }
+                else if(kill === 'deathgod' || kill === 'elysia') { hp = 600; sz = 50; dmg = 70; spd = 4; }
+                
+                necroSummons.push({ 
+                    type: 'soul', x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), 
+                    health: hp, maxHealth: hp, damage: dmg, size: sz, speed: spd, 
+                    attackCooldown: 0, invulnerableTimer: 0, faceAngle: 0 
+                });
             });
             necroKills = []; 
+            if(typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
         } else { return; }
     }
     
@@ -102,60 +150,6 @@ window.activateUltimate = function() {
     playerStats.mana = 0; 
     ultimateTimer = 600; 
     elfStealthBroken = false; 
-    
-    if (player.heroClass === 'Knight') {
-        playerInvulnerableTimer = 300; 
-    } else if (player.heroClass === 'Mage') {
-        currentEnemies.forEach(enemy => {
-            let ultDmg = enemy.isBurning ? 100 : 50; 
-            if (!enemy.invulnerable) {
-                enemy.health -= ultDmg;
-                enemy.ultiAnimTimer = 30;
-            }
-            enemy.isBurning = true; 
-            enemy.burnTimer = 180;
-        });
-    }
-    
-    if (typeof window.triggerShake === 'function') window.triggerShake(12, 15); 
-    if (typeof window.updateHUD === 'function') window.updateHUD();
-};
-
-window.triggerDash = function() {
-    if (gameState !== "PLAYING") return;
-    if (player.dashCooldown <= 0 && player.dashTimer <= 0) {
-        let dx = mouse.x - (player.x + player.size / 2); let dy = mouse.y - (player.y + player.size / 2);
-        let dist = Math.hypot(dx, dy); if (dist === 0) { dx = 1; dy = 0; dist = 1; }
-        player.dashVx = (dx/dist) * (player.speed * 4); player.dashVy = (dy/dist) * (player.speed * 4);
-        player.dashTimer = 12; player.dashCooldown = 60; playerInvulnerableTimer = 15; 
-        // L'effet dégueulasse des particules grises au démarrage a été retiré.
-    }
-};
-
-window.activateUltimate = function() {
-    if (playerStats.mana < 100) return;
-
-    if (player.heroClass === 'Necromancer') {
-        if (typeof necroSummons !== 'undefined' && necroSummons.length > 0) {
-            let totalHP = 0; necroSummons.forEach(s => totalHP += s.health);
-            necroSummons = []; totalHP *= 2; 
-            necroSummons.push({ type: 'fusion', x: player.x, y: player.y - 30, health: totalHP, maxHealth: totalHP, damage: 60, size: 60, speed: 4.5, attackCooldown: 0, invulnerableTimer: 180 }); 
-            if(typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#f1c40f', 80, true);
-        } else if (typeof necroKills !== 'undefined' && necroKills.length > 0) {
-            necroKills.forEach(kill => {
-                let sz = 30, hp = 40, dmg = 15, spd = 4.5;
-                if(kill === 'troll') { hp = 200; sz = 60; dmg = 30; spd = 3.5; }
-                else if(kill === 'mage') { hp = 100; sz = 45; dmg = 20; spd = 4; }
-                else if(kill === 'dragon') { hp = 500; sz = 80; dmg = 50; spd = 3; }
-                else if(kill === 'spider') { sz = 20; hp = 20; dmg = 10; spd = 6; }
-                necroSummons.push({ type: kill, x: player.x + (Math.random()*80-40), y: player.y + (Math.random()*80-40), health: hp, maxHealth: hp, damage: dmg, size: sz, speed: spd, attackCooldown: 0, invulnerableTimer: 0 });
-            });
-            necroKills = []; 
-            if(typeof window.spawnParticles === 'function') window.spawnParticles(player.x + player.size/2, player.y + player.size/2, '#2ecc71', 50, true);
-        } else { return; }
-    }
-    
-    isUltimateActive = true; playerStats.mana = 0; ultimateTimer = 600; elfStealthBroken = false; 
     
     if (player.heroClass === 'Knight') {
         playerInvulnerableTimer = 300; 
@@ -169,7 +163,9 @@ window.activateUltimate = function() {
                 enemy.health -= ultDmg;
                 enemy.ultiAnimTimer = 30;
             }
-            enemy.isBurning = true; enemy.burnTicks = 10; enemy.burnTimer = 60;
+            enemy.isBurning = true; 
+            enemy.burnTicks = 10; 
+            enemy.burnTimer = 60;
             if(typeof window.spawnParticles === 'function') window.spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#e67e22', 30, true);
         });
     }
@@ -181,7 +177,10 @@ window.activateUltimate = function() {
 window.handlePlayerDeath = function() {
     gameState = "GAMEOVER"; 
     setTimeout(() => {
-        gameState = "MENU"; isArenaMode = false; isUltimateActive = false;
+        gameState = "MENU"; 
+        isArenaMode = false; 
+        isUltimateActive = false;
+        
         currentEnemies = []; bloodStains = []; projectiles = []; enemyProjectiles = []; hazards = []; particles = [];
         shakeTimer = 0; shakeIntensity = 0; playerPoisonTimer = 0; playerSlowTimer = 0; arenaShrink = 0; 
         spaceHoldTimer = 0; waveStartDelay = 0; necroKills = []; necroSummons = [];
@@ -192,7 +191,8 @@ window.handlePlayerDeath = function() {
         let menuScreen = document.getElementById('menu-screen'); if (menuScreen) menuScreen.style.display = 'flex';
         let audioUi = document.getElementById('audio-ui'); if (audioUi) audioUi.style.display = 'flex';
         
-        playerStats.health = playerStats.maxHealth; playerStats.mana = 0; 
+        playerStats.health = playerStats.maxHealth; 
+        playerStats.mana = 0; 
         if (typeof window.updateHUD === 'function') window.updateHUD();
     }, 3000); 
 };
