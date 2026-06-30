@@ -14,28 +14,21 @@ window.update = function() {
                 keys['space'] = false; 
                 if (typeof window.startArenaMode === 'function') window.startArenaMode('Necromancer'); 
             }
-        } else { 
-            spaceHoldTimer = 0; 
-        }
-        requestAnimationFrame(window.update); 
-        return;
+        } else { spaceHoldTimer = 0; }
+        requestAnimationFrame(window.update); return;
     }
     
     if (gameState === "PAUSED" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
-        requestAnimationFrame(window.update); 
-        return; 
+        requestAnimationFrame(window.update); return; 
     }
-    
     if (gameState === "GAMEOVER") { 
         if (typeof window.renderGameView === 'function') window.renderGameView(); 
-        requestAnimationFrame(window.update); 
-        return; 
+        requestAnimationFrame(window.update); return; 
     }
     
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        // --- LA MAP SE RÉTRÉCIT UNIQUEMENT VAGUE 10 ---
         if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
         } else if (arenaWave !== 10) {
@@ -79,36 +72,62 @@ window.update = function() {
     }
 
     if (!worldState.openedDoors) worldState.openedDoors = {};
-    let roomChanged = false;
+    if (!worldState.droppedItems) worldState.droppedItems = {}; // Pour sauvegarder les items au sol
     
+    let roomChanged = false;
     currentDoors.forEach(door => {
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } 
-            return;
+            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } return;
         }
-        
         if (!roomChanged && window.checkCollision(player, door)) { 
+            let canPass = false;
+            
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; 
+                    playerStats.inventory.keys.gold--; 
+                    door.locked = false; 
+                    worldState.unlockedDoors[door.id] = true; 
+                    canPass = true;
                     if (typeof window.updateHUD === 'function') window.updateHUD();
-                    
-                    if (door.dest !== null) { 
-                        worldState.openedDoors[door.id] = true; 
-                        if (typeof window.saveRoomState === 'function') window.saveRoomState(); 
-                        if (typeof window.loadRoom === 'function') window.loadRoom(door.dest, door.face); 
-                        player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
-                    }
                 } else {
                     if (door.face === 'north') player.y = door.y + door.height; 
                     else if (door.face === 'south') player.y = door.y - player.size;
                     else if (door.face === 'east') player.x = door.x - player.size; 
                     else if (door.face === 'west') player.x = door.x + door.width;
                 }
-            } else if (door.dest !== null) { 
+            } else {
+                canPass = true;
+            }
+
+            if (canPass && door.dest !== null) { 
+                // 1. Sauvegarde des items actuels au sol avant de partir
+                worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(currentItems));
+                
                 worldState.openedDoors[door.id] = true; 
+                
+                // Détermine la porte de retour pour l'ouvrir automatiquement
+                let returnFace = 'south';
+                if (door.face === 'north') returnFace = 'south';
+                else if (door.face === 'south') returnFace = 'north';
+                else if (door.face === 'east') returnFace = 'west';
+                else if (door.face === 'west') returnFace = 'east';
+
                 if (typeof window.saveRoomState === 'function') window.saveRoomState(); 
                 if (typeof window.loadRoom === 'function') window.loadRoom(door.dest, door.face); 
+                
+                // 2. Recharge les items si on avait laissé des choses dans cette salle
+                if (worldState.droppedItems[door.dest]) {
+                    currentItems = JSON.parse(JSON.stringify(worldState.droppedItems[door.dest]));
+                }
+
+                // 3. Ouvre la porte par laquelle on vient d'arriver
+                currentDoors.forEach(d => {
+                    if (d.face === returnFace) {
+                        worldState.openedDoors[d.id] = true;
+                        d.locked = false;
+                    }
+                });
+
                 player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
             } 
         }
@@ -131,7 +150,6 @@ window.update = function() {
     
     if (player.dashCooldown === undefined) player.dashCooldown = 0;
     if (player.dashCooldown > 0) player.dashCooldown--;
-    
     if (attackCooldown > 0) attackCooldown--;
     if (player.heroClass === 'Knight' && attackCooldown < 25) isAttacking = false;
 
@@ -154,13 +172,8 @@ window.update = function() {
     
     if (playerSlowTimer > 0) playerSlowTimer--;
     if (playerInvulnerableTimer > 0) playerInvulnerableTimer--;
-    
     let manaBar = document.getElementById('mana-bar');
-    if (playerStats.mana >= 100) { 
-        if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; 
-    } else { 
-        if (manaBar) manaBar.style.opacity = "1"; 
-    }
+    if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
@@ -176,18 +189,14 @@ window.update = function() {
     }
     
     let oldPx = player.x; player.x += dx_mov;
-    if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { 
-        player.x = oldPx; player.dashTimer = 0; 
-    } 
+    if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
     }
     
     let oldPy = player.y; player.y += dy_mov;
-    if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { 
-        player.y = oldPy; player.dashTimer = 0; 
-    } 
+    if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
@@ -203,16 +212,12 @@ window.update = function() {
     let minLimitY = bTop + arenaShrink;
     let maxLimitX = bRight - arenaShrink - player.size;
     let maxLimitY = bBot - arenaShrink - player.size;
-    
-    if (player.x < minLimitX) player.x = minLimitX; 
-    if (player.y < minLimitY) player.y = minLimitY;
-    if (player.x > maxLimitX) player.x = maxLimitX; 
-    if (player.y > maxLimitY) player.y = maxLimitY;
+    if (player.x < minLimitX) player.x = minLimitX; if (player.y < minLimitY) player.y = minLimitY;
+    if (player.x > maxLimitX) player.x = maxLimitX; if (player.y > maxLimitY) player.y = maxLimitY;
     
     if (currentRoomId === 1 && typeof bookshelf !== 'undefined' && player.x + player.size > bookshelf.x && player.y + player.size > bookshelf.y && player.y < bookshelf.y + bookshelf.height) {
         player.x = bookshelf.x - player.size;
     }
-    
     if (player.dashTimer <= 0) {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
@@ -244,7 +249,6 @@ window.update = function() {
             }
         }
     }
-    
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
