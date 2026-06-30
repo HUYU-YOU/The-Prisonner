@@ -104,7 +104,6 @@ window.renderGameView = function() {
         if (blood.rotation) ctx.rotate(blood.rotation);
         
         let bImg = window.getAsset(blood.imgId);
-        
         if (bImg && bImg.complete && bImg.naturalWidth > 0) {
             let s = blood.size || 40;
             ctx.drawImage(bImg, -s/2, -s/2, s, s);
@@ -208,11 +207,10 @@ window.renderGameView = function() {
                 let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight;
                 let displaySize = item.size * 2.5; 
                 
-                // --- TAILLES REDIMENSIONNÉES ICI (Clés Divisées par 2) ---
                 if (assetName === 'gold_coin') { 
                     displaySize = item.size * 3.5; 
                 } else if (assetName && assetName.includes('key')) { 
-                    displaySize = item.size * 1.25; // LA CLÉ EST 50% PLUS PETITE
+                    displaySize = item.size * 1.25; 
                 }
                 
                 let drawWidth = displaySize;
@@ -263,7 +261,7 @@ window.renderGameView = function() {
             ctx.shadowBlur = 15;
             
             if (sImg && sImg.complete && sImg.naturalWidth > 0) {
-                let displaySize = s.size * 3.75; // INVOCATIONS +50%
+                let displaySize = s.size * 3.75; // INVOCATIONS MAINTENUES À +50%
                 ctx.drawImage(sImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
                 ctx.fillStyle = s.type === 'fusion' ? '#f1c40f' : '#8e44ad';
@@ -356,7 +354,12 @@ window.renderGameView = function() {
         else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
         
         if (img && img.complete && img.naturalWidth > 0) {
-            let displaySize = enemy.size * 3.75; // ENNEMIS +50% TAILLE
+            // --- REDUCTION DE LA TAILLE PAR DEUX POUR CERTAINS ENNEMIS ICI ---
+            let displaySize = enemy.size * 3.75; 
+            if (['troll', 'dragon', 'goblin', 'skeleton'].includes(enemy.type.toLowerCase())) {
+                displaySize = enemy.size * 1.875; // Divisé par 2
+            }
+            
             if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
                 ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
@@ -403,7 +406,7 @@ window.renderGameView = function() {
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
     }
 
-    // --- SKINS DES PROJECTILES DU JOUEUR (LUMINEUX ET + GROS) ---
+    // --- PROJECTILES DU JOUEUR (LUMINEUX ET X1.5) ---
     projectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -416,8 +419,8 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             ctx.rotate(p.angle + Math.PI / 2);
             ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; 
-            ctx.shadowBlur = 40; // Lumière intense
-            let drawSize = p.size * 15.0; // PROJECTILES ÉNORMES
+            ctx.shadowBlur = 40; 
+            let drawSize = p.size * 15.0; 
             ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             ctx.rotate(p.angle); 
@@ -426,7 +429,7 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- SKINS DES PROJECTILES DES ENNEMIS (LUMINEUX ET + GROS) ---
+    // --- PROJECTILES DES ENNEMIS (LUMINEUX ET X1.5) ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -449,8 +452,8 @@ window.renderGameView = function() {
                 ctx.rotate(pAngle + Math.PI / 2); 
             }
             ctx.shadowColor = p.color || '#fff'; 
-            ctx.shadowBlur = 40; // Lumière intense
-            let drawSize = p.size * 12.0; // GROS PROJECTILES
+            ctx.shadowBlur = 40; 
+            let drawSize = p.size * 12.0; 
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             if (p.type === 'bone_skeleton') { ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); } 
@@ -531,9 +534,14 @@ window.renderGameView = function() {
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
-            if (player.heroClass === 'Elf' && !is8DirP) displaySize = player.size * 9.0;
-            if (player.heroClass === 'Mage' && !is8DirP) displaySize = player.size * 5.25;
+            let displaySize = player.size * 3.75; 
+            
+            // --- REDUCTION DE LA TAILLE DE L'ELFE PAR 2 ICI ---
+            if (player.heroClass === 'Elf') {
+                displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
+            } else if (player.heroClass === 'Mage' && !is8DirP) {
+                displaySize = player.size * 5.25;
+            }
             
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
