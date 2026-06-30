@@ -12,8 +12,14 @@ window.spawnParticles = function(x, y, color, count, isGlow = false) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
         particles.push({ 
-            x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
-            life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
+            x: x, 
+            y: y, 
+            vx: Math.cos(angle) * speed, 
+            vy: Math.sin(angle) * speed, 
+            life: 1.0, 
+            color: color, 
+            size: Math.random() * 5 + 3, 
+            glow: isGlow 
         });
     }
 };
@@ -198,12 +204,15 @@ window.renderGameView = function() {
             let itemImg = window.getAsset(assetName);
             
             if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
-                // --- CONSERVE LE RATIO NATUREL ET APPLIQUE LE MULTIPLICATEUR ---
-                let displaySize = item.size * 2.5; 
                 let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight;
+                let displaySize = item.size * 2.5; 
                 
-                if (assetName === 'gold_coin') { displaySize = item.size * 3.5; } 
-                else if (assetName && assetName.includes('key')) { displaySize = item.size * 2.25; } // (1.5 * 1.5 pour x1.5 de base)
+                // --- TAILLES REDIMENSIONNÉES ICI (Clés Divisées par 2) ---
+                if (assetName === 'gold_coin') { 
+                    displaySize = item.size * 3.5; 
+                } else if (assetName && assetName.includes('key')) { 
+                    displaySize = item.size * 1.25; 
+                }
                 
                 let drawWidth = displaySize;
                 let drawHeight = displaySize / imgRatio;
@@ -218,6 +227,7 @@ window.renderGameView = function() {
         }
     });
 
+    // --- FINI LES POINTS ROUGES ! SI PAS D'IMAGE, NE RIEN DESSINER ---
     if (typeof hazards !== 'undefined') {
         hazards.forEach(h => { 
             ctx.save();
@@ -228,18 +238,19 @@ window.renderGameView = function() {
             let fallH = (h.timer / h.maxTimer) * 150; 
             
             if (metImg && metImg.complete && metImg.naturalWidth > 0) {
-                ctx.drawImage(metImg, h.x - h.radius, h.y - fallH - h.radius, h.radius*2, h.radius*2);
-            } else {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2); ctx.fill(); 
-                ctx.fillStyle = 'rgba(192, 57, 43, 0.9)'; ctx.beginPath(); ctx.arc(h.x, h.y - fallH, h.radius * (1 - (h.timer/h.maxTimer)*0.5), 0, Math.PI*2); ctx.fill(); 
+                ctx.shadowColor = isElysia ? '#e84393' : '#e74c3c'; 
+                ctx.shadowBlur = 30; 
+                ctx.drawImage(metImg, h.x - h.radius*1.5, h.y - fallH - h.radius*1.5, h.radius*3, h.radius*3);
             }
+            // Retrait total du else ! Aucun cercle de secours rouge dégueulasse n'apparaitra.
             ctx.restore();
         });
     }
 
     if (typeof necroSummons !== 'undefined') {
         necroSummons.forEach(s => {
-            ctx.save(); ctx.translate(s.x + s.size/2, s.y + s.size/2);
+            ctx.save(); 
+            ctx.translate(s.x + s.size/2, s.y + s.size/2);
             
             let dir = window.getDirectionName(s.faceAngle || 0);
             let prefix = s.type === 'fusion' ? 'Fusion' : 'Soul';
@@ -249,10 +260,11 @@ window.renderGameView = function() {
             let scalePulse = 1 + Math.sin(Date.now() / 200) * 0.05;
             ctx.scale(scalePulse, scalePulse);
             
-            ctx.shadowColor = s.type === 'fusion' ? '#f1c40f' : '#8e44ad'; ctx.shadowBlur = 15;
+            ctx.shadowColor = s.type === 'fusion' ? '#f1c40f' : '#8e44ad'; 
+            ctx.shadowBlur = 15;
             
             if (sImg && sImg.complete && sImg.naturalWidth > 0) {
-                let displaySize = s.size * 2.5;
+                let displaySize = s.size * 3.75; // INVOCATIONS +50%
                 ctx.drawImage(sImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
                 ctx.fillStyle = s.type === 'fusion' ? '#f1c40f' : '#8e44ad';
@@ -263,58 +275,109 @@ window.renderGameView = function() {
     }
 
     currentEnemies.forEach(enemy => {
-        ctx.save(); ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
-        let dx = (player.x + player.size/2) - (enemy.x + enemy.size/2); let dy = (player.y + player.size/2) - (enemy.y + enemy.size/2);
-        let angleToPlayer = Math.atan2(dy, dx); 
-        let dir = window.getDirectionName(angleToPlayer);
+        ctx.save(); 
+        ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
+        
+        let angleToTarget = enemy.faceAngleTarget !== undefined ? enemy.faceAngleTarget : Math.atan2((player.y + player.size/2) - (enemy.y + enemy.size/2), (player.x + player.size/2) - (enemy.x + enemy.size/2));
+        let dir = window.getDirectionName(angleToTarget);
+        
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
         let action = 'view';
         let skinName = '';
 
-        if (enemy.blockAnimTimer > 0) { action = 'block'; skinName = `${prefix}_${dir}_${action}`; } 
+        if (enemy.blockAnimTimer > 0) {
+            action = 'block';
+            skinName = `${prefix}_${dir}_${action}`;
+        } 
         else if (enemy.attackAnimTimer > 0) {
-            action = 'attack'; let t = enemy.attackAnimTimer;
-            if (prefix === 'Skeleton' || prefix === 'Mage') { if (t > 15) skinName = `${prefix}_${dir}_attack1`; else skinName = `${prefix}_${dir}_attack2`; } 
-            else if (prefix === 'Dragon') { if (t > 20) skinName = `${prefix}_${dir}_attack1`; else if (t > 10) skinName = `${prefix}_${dir}_attack2`; else skinName = `${prefix}_${dir}_attack3`; } 
-            else { skinName = `${prefix}_${dir}_${action}`; }
-        } else { skinName = `${prefix}_${dir}_${action}`; }
+            action = 'attack';
+            let t = enemy.attackAnimTimer;
+            if (prefix === 'Skeleton' || prefix === 'Mage') {
+                if (t > 15) skinName = `${prefix}_${dir}_attack1`;
+                else skinName = `${prefix}_${dir}_attack2`;
+            } else if (prefix === 'Dragon') {
+                if (t > 20) skinName = `${prefix}_${dir}_attack1`;
+                else if (t > 10) skinName = `${prefix}_${dir}_attack2`;
+                else skinName = `${prefix}_${dir}_attack3`;
+            } else {
+                skinName = `${prefix}_${dir}_${action}`;
+            }
+        } else {
+            skinName = `${prefix}_${dir}_${action}`;
+        }
 
-        let img = window.getAsset(skinName); let is8Dir = true;
+        let img = window.getAsset(skinName); 
+        let is8Dir = true;
         
-        if (!img || !img.complete || img.naturalWidth === 0) { skinName = `${prefix}_${dir}_view`; img = window.getAsset(skinName); }
         if (!img || !img.complete || img.naturalWidth === 0) { 
-            is8Dir = false; let fallbackName = ''; let lowPrefix = prefix.toLowerCase();
-            if (lowPrefix === 'goblin') { if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; else fallbackName = 'goblin_top_view'; } 
-            else if (lowPrefix === 'skeleton') { if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; else fallbackName = 'Skeleton_top_view'; } 
-            else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
+            skinName = `${prefix}_${dir}_view`;
+            img = window.getAsset(skinName); 
+        }
+        
+        if (!img || !img.complete || img.naturalWidth === 0) { 
+            is8Dir = false; 
+            let fallbackName = ''; 
+            let lowPrefix = prefix.toLowerCase();
+            
+            if (lowPrefix === 'goblin') { 
+                if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; 
+                else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; 
+                else fallbackName = 'goblin_top_view'; 
+            } 
+            else if (lowPrefix === 'skeleton') { 
+                if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; 
+                else fallbackName = 'Skeleton_top_view'; 
+            } 
+            else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; 
+            else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; 
+            else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; 
+            else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
+            
             img = window.getAsset(fallbackName); 
         }
 
-        let wobble = Math.sin(enemy.wobble) * 0.15; let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
+        let wobble = Math.sin(enemy.wobble) * 0.15; 
+        let scalePulse = 1 + Math.sin(enemy.wobble * 2) * 0.05;  
         
-        if (is8Dir) { ctx.rotate(wobble); } else { ctx.rotate(angleToPlayer - (Math.PI / 2) + wobble); }
+        if (is8Dir) {
+            ctx.rotate(wobble); 
+        } else {
+            ctx.rotate(angleToTarget - (Math.PI / 2) + wobble); 
+        }
+        
         ctx.scale(scalePulse, scalePulse); 
         
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; 
+        ctx.shadowBlur = 10; 
+        ctx.shadowOffsetX = 4; 
+        ctx.shadowOffsetY = 4;
+        
         if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
         
         if (img && img.complete && img.naturalWidth > 0) {
-            let displaySize = enemy.size * 2.5; ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
+            let displaySize = enemy.size * 3.75; // ENNEMIS +50% TAILLE
+            if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
+                ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
+                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
+            } else { 
+                ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); 
+            }
         } else { 
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(-enemy.size/2, -enemy.size/2, enemy.size, enemy.size); 
         }
         
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-        if (enemy.ultiAnimTimer > 0 && enemy.type === 'mage') { 
-            ctx.save(); ctx.globalCompositeOperation = 'screen'; let imgUlt = window.getAsset('Ulti_fire_mage'); 
-            if (imgUlt && imgUlt.complete && imgUlt.naturalWidth > 0) { let expSize = enemy.size * 3.5; ctx.globalAlpha = enemy.ultiAnimTimer / 30; ctx.drawImage(imgUlt, -expSize/2, -expSize/2, expSize, expSize); } 
-            ctx.restore(); 
+        ctx.shadowColor = 'transparent'; 
+        ctx.shadowBlur = 0;
+        
+        if (enemy.isBurning) { 
+            ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); 
         }
         
-        if (enemy.isBurning) { ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); }
-        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); ctx.stroke(); }
+        if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { 
+            ctx.strokeStyle = '#8e44ad'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + 6, 0, Math.PI*2); ctx.stroke(); 
+        }
         ctx.restore(); 
         
         if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type)) { 
@@ -333,25 +396,29 @@ window.renderGameView = function() {
         else if (boss.type === 'elysia') bossName = "ELYSIA";
         
         let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
-        let barWidth = 600; let bx = canvas.width/2 - barWidth/2;
+        let barWidth = 600; 
+        let bx = canvas.width/2 - barWidth/2;
         
         ctx.fillStyle = '#111'; ctx.fillRect(bx, 30, barWidth, 24); 
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
     }
 
-    // --- PROJECTILES DU JOUEUR (AVEC SCALING X1.5) ---
+    // --- SKINS DES PROJECTILES DU JOUEUR (X1.5 ET LUMINEUX) ---
     projectiles.forEach(p => { 
-        ctx.save(); ctx.translate(p.x, p.y); 
+        ctx.save(); 
+        ctx.translate(p.x, p.y); 
         
         let pImgName = 'Attack_arrow_elf';
         if (p.type === 'fire_mage') pImgName = 'Attack_fire_mage';
-        else if (p.type === 'fire_necromancien') pImgName = 'Attack_fire_necromancien';
+        else if (p.type === 'fire_necromancien' || p.type === 'fire_fusion') pImgName = 'Attack_fire_necromancien';
 
         let pImg = window.getAsset(pImgName);
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             ctx.rotate(p.angle + Math.PI / 2);
-            let drawSize = p.size * 7.5; // (x1.5 scaling)
+            ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; 
+            ctx.shadowBlur = 30; // Projectiles beaucoup plus lumineux
+            let drawSize = p.size * 15.0; // PROJECTILES ÉNORMES X1.5
             ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             ctx.rotate(p.angle); 
@@ -360,9 +427,11 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- PROJECTILES DES ENNEMIS (AVEC SCALING X1.5) ---
+    // --- SKINS DES PROJECTILES DES ENNEMIS (X1.5 ET LUMINEUX) ---
     enemyProjectiles.forEach(p => { 
-        ctx.save(); ctx.translate(p.x, p.y); let pAngle = Math.atan2(p.vy, p.vx); 
+        ctx.save(); 
+        ctx.translate(p.x, p.y); 
+        let pAngle = Math.atan2(p.vy, p.vx); 
         
         let epImgName = '';
         if (p.type === 'bone_skeleton') epImgName = 'Attack_bone_skeleton';
@@ -380,7 +449,9 @@ window.renderGameView = function() {
             } else {
                 ctx.rotate(pAngle + Math.PI / 2); 
             }
-            let drawSize = p.size * 6.0; // (x1.5 scaling)
+            ctx.shadowColor = p.color || '#fff'; 
+            ctx.shadowBlur = 30; // Brillance maximum !
+            let drawSize = p.size * 12.0; // PROJECTILES X1.5
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             if (p.type === 'bone_skeleton') { ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); } 
@@ -402,48 +473,69 @@ window.renderGameView = function() {
         let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
         let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
         let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
+        
         if (player.dashTimer > 0) tilt = Math.PI / 8; 
         
-        ctx.save(); ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
+        ctx.save(); 
+        ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
 
         let dirP = window.getDirectionName(player.faceAngle);
         let prefixP = player.heroClass ? player.heroClass : 'Knight';
         
-        if (prefixP === 'Mage') { prefixP = 'Burned'; } 
-        else { prefixP = prefixP.charAt(0).toUpperCase() + prefixP.slice(1).toLowerCase(); }
+        if (prefixP === 'Mage') {
+            prefixP = 'Burned'; 
+        } else {
+            prefixP = prefixP.charAt(0).toUpperCase() + prefixP.slice(1).toLowerCase();
+        }
         
         let actionP = 'view';
         if ((typeof isAttacking !== 'undefined' && isAttacking) || attackCooldown > 0) {
             actionP = 'attack';
             let midTime = prefixP === 'Knight' ? 20 : 15;
-            if (attackCooldown > midTime) actionP = 'attack1'; else actionP = 'attack2';
+            
+            if (attackCooldown > midTime) actionP = 'attack1';
+            else actionP = 'attack2';
         }
         
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         let pImg = window.getAsset(skinNameP);
         let is8DirP = true;
 
-        if (!pImg || !pImg.complete || pImg.naturalWidth === 0) { pImg = window.getAsset(`${prefixP}_${dirP}_view`); }
+        if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
+            let pSkinName = `${prefixP}_${dirP}_view`;
+            pImg = window.getAsset(pSkinName);
+        }
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
             is8DirP = false;
             if (player.heroClass === 'Elf') {
-                let angle = player.faceAngle; let pSkinNameFallback = 'Elf_front'; 
+                let angle = player.faceAngle; 
+                let pSkinNameFallback = 'Elf_front'; 
+                
                 if (angle > -Math.PI/4 && angle <= Math.PI/4) pSkinNameFallback = 'Elf_est'; 
                 else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) pSkinNameFallback = 'Elf_front'; 
                 else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) pSkinNameFallback = 'Elf_back'; 
                 else pSkinNameFallback = 'Elf_west';                                                      
-                pImg = window.getAsset(pSkinNameFallback); is8DirP = true; 
-            } else if (player.heroClass === 'Mage') { pImg = window.getAsset('Burned_top_view'); }
+                
+                pImg = window.getAsset(pSkinNameFallback); 
+                is8DirP = true; 
+            } else if (player.heroClass === 'Mage') {
+                pImg = window.getAsset('Burned_top_view');
+            }
         }
 
-        if (is8DirP) { ctx.rotate(tilt); } 
-        else { if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); else ctx.rotate(player.faceAngle + tilt); }
+        if (is8DirP) {
+            ctx.rotate(tilt); 
+        } else {
+            if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
+            else ctx.rotate(player.faceAngle + tilt); 
+        }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 2.5; 
-            if (player.heroClass === 'Elf' && !is8DirP) displaySize = player.size * 6.0;
-            if (player.heroClass === 'Mage' && !is8DirP) displaySize = player.size * 3.5;
+            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
+            if (player.heroClass === 'Elf' && !is8DirP) displaySize = player.size * 9.0;
+            if (player.heroClass === 'Mage' && !is8DirP) displaySize = player.size * 5.25;
+            
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
             if (prefixP === 'Knight' && attackCooldown > 0) {
@@ -451,49 +543,91 @@ window.renderGameView = function() {
                 if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
                     ctx.save();
                     let progress = (40 - attackCooldown) / 40;
-                    ctx.translate(15, 0); 
+                    ctx.translate(25, 0); 
                     ctx.rotate(Math.PI / 2); 
                     ctx.globalAlpha = 1 - progress; 
-                    ctx.drawImage(swordImg, -30, -30, 60, 60);
+                    ctx.shadowColor = '#ecf0f1'; 
+                    ctx.shadowBlur = 15; 
+                    ctx.drawImage(swordImg, -45, -45, 90, 90);
                     ctx.restore();
                 }
             }
         } else {
             if (prefixP === 'Knight') {
-                ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
+                ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
+                
                 ctx.save();
                 if (attackCooldown > 0) {
-                    let progress = (40 - attackCooldown) / 40; let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3); ctx.rotate(swipeAngle);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); ctx.stroke();
-                } else { ctx.translate(5, 12); }
-                ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -3, 6, 6); ctx.fillStyle = '#ecf0f1'; ctx.fillRect(6, -2, 28, 4); ctx.restore();
-            } else { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); }
+                    let progress = (40 - attackCooldown) / 40;
+                    let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3);
+                    ctx.rotate(swipeAngle);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); ctx.stroke();
+                } else {
+                    ctx.translate(5, 12); 
+                }
+                ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -3, 6, 6); 
+                ctx.fillStyle = '#ecf0f1'; ctx.fillRect(6, -2, 28, 4); 
+                ctx.restore();
+            } else {
+                ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
+            }
         }
-        ctx.restore(); ctx.globalAlpha = 1.0; 
+        ctx.restore(); 
+        ctx.globalAlpha = 1.0; 
     }
     
     if (playerStats.inventory.coins !== undefined) {
         let coinImg = window.getAsset('gold_coin');
-        if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) { ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30); } 
-        else { ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill(); }
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left'; ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
+        if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+            ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
+        } else {
+            ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.fillStyle = '#fff'; 
+        ctx.font = 'bold 24px Arial'; 
+        ctx.textAlign = 'left';
+        ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
     particles.forEach(p => { 
-        ctx.globalAlpha = Math.max(0, p.life); if (p.glow) { ctx.save(); ctx.shadowColor = p.color; ctx.shadowBlur = 10; } 
-        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); if (p.glow) ctx.restore(); 
+        ctx.globalAlpha = Math.max(0, p.life); 
+        if (p.glow) { 
+            ctx.save(); 
+            ctx.shadowColor = p.color; 
+            ctx.shadowBlur = 10; 
+        } 
+        ctx.fillStyle = p.color; 
+        ctx.beginPath(); 
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); 
+        ctx.fill(); 
+        if (p.glow) ctx.restore(); 
     });
     ctx.globalAlpha = 1.0; 
     
     ctx.save();
-    let gradient = ctx.createRadialGradient(player.x + player.size/2, player.y + player.size/2, 100, player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7);
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.restore();
+    let gradient = ctx.createRadialGradient(
+        player.x + player.size/2, player.y + player.size/2, 100, 
+        player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
+    );
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');        
+    gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height); 
+    ctx.restore();
     
     if (currentRoomId === 999) {
-        ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#ecf0f1'; 
+        ctx.font = 'bold 28px Arial'; 
+        ctx.textAlign = 'center';
         let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
-        if (arenaState === "WAITING" && arenaTimer > 0) { ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40); } 
-        else if (displayWave > 0) { ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40); }
+        if (arenaState === "WAITING" && arenaTimer > 0) {
+            ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
+        } else if (displayWave > 0) {
+            ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
+        }
         ctx.textAlign = 'left';
     }
     ctx.restore(); 
