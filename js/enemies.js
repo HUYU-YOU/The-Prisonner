@@ -56,9 +56,6 @@ window.updateEnemies = function() {
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin; 
     let bBot = canvas.height - wallMargin;
-    
-    let minLimitX = bLeft + arenaShrink; 
-    let minLimitY = bTop + arenaShrink;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
     let fusionAggro = null;
@@ -342,7 +339,8 @@ window.updateEnemies = function() {
                 
                 let randHit = Math.floor(Math.random() * 3) + 1;
                 let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                // SANG DIVISÉ PAR DEUX ICI (* 0.75 au lieu de 1.5)
+                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 
                 playerInvulnerableTimer = 60; 
                 if (typeof window.updateHUD === 'function') window.updateHUD(); 
@@ -407,7 +405,7 @@ window.updateEnemies = function() {
                                 if (!e.invulnerable && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
                                     let hitNum = Math.floor(Math.random() * 3) + 1;
-                                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: e.size * 1.5, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: e.size * 0.75, rotation: Math.random() * Math.PI * 2, life: 1200 });
                                 }
                             });
                             summon.attackCooldown = 30; summon.attackAnimTimer = 20;
@@ -416,7 +414,7 @@ window.updateEnemies = function() {
                         if (minDist < 50) { 
                             nearestEnemy.health -= summon.damage; summon.attackCooldown = 60; summon.attackAnimTimer = 20;
                             let hitNum = Math.floor(Math.random() * 3) + 1;
-                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: nearestEnemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: nearestEnemy.size * 0.75, rotation: Math.random() * Math.PI * 2, life: 1200 });
                         }
                     }
                 }
@@ -433,7 +431,7 @@ window.updateEnemies = function() {
 
             if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
-                // LA CLÉ SPAWN SUR LE CADAVRE DU BOSS
+                hazards = []; // Nettoie les météores à la mort du boss (Mode Histoire)
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
             
@@ -444,7 +442,10 @@ window.updateEnemies = function() {
             let killNum = Math.floor(Math.random() * 3) + 1;
             let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            let killSize = e.type === 'skeleton' ? ((e.size * 3.75) / 3) : e.size * 3.75; 
+            
+            // SANG DIVISÉ PAR DEUX ICI (* 1.875 au lieu de 3.75)
+            let killSize = e.size * 1.875; 
+            if (e.type === 'skeleton') killSize = killSize / 3;
             
             bloodStains.push({ type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2, size: killSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
             
@@ -453,6 +454,7 @@ window.updateEnemies = function() {
             currentEnemies.splice(i, 1);
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
                 worldState.clearedRooms[currentRoomId] = true;
+                hazards = []; // Nettoie le ciel quand on a clean une salle
             }
             if (typeof window.updateHUD === 'function') window.updateHUD();
         }
