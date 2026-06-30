@@ -29,9 +29,12 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        if (arenaWave === 10 && arenaState === "PLAYING" && arenaShrink < 150) { 
+        // --- LA MAP RÉTRÉCIT UNIQUEMENT QUAND UN TROLL EST PRÉSENT ---
+        let hasTroll = typeof currentEnemies !== 'undefined' && currentEnemies.some(e => e.type === 'troll');
+        
+        if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
-        } else if (arenaWave !== 10) {
+        } else if (!hasTroll) {
             arenaShrink = 0; 
         }
 
@@ -66,13 +69,14 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
+                hazards = []; // Nettoie les météores en fin de vague
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
     }
 
     if (!worldState.openedDoors) worldState.openedDoors = {};
-    if (!worldState.droppedItems) worldState.droppedItems = {}; // Pour sauvegarder les items au sol
+    if (!worldState.droppedItems) worldState.droppedItems = {};
     
     let roomChanged = false;
     currentDoors.forEach(door => {
@@ -81,13 +85,9 @@ window.update = function() {
         }
         if (!roomChanged && window.checkCollision(player, door)) { 
             let canPass = false;
-            
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; 
-                    door.locked = false; 
-                    worldState.unlockedDoors[door.id] = true; 
-                    canPass = true;
+                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; canPass = true;
                     if (typeof window.updateHUD === 'function') window.updateHUD();
                 } else {
                     if (door.face === 'north') player.y = door.y + door.height; 
@@ -95,17 +95,12 @@ window.update = function() {
                     else if (door.face === 'east') player.x = door.x - player.size; 
                     else if (door.face === 'west') player.x = door.x + door.width;
                 }
-            } else {
-                canPass = true;
-            }
+            } else { canPass = true; }
 
             if (canPass && door.dest !== null) { 
-                // 1. Sauvegarde des items actuels au sol avant de partir
                 worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(currentItems));
-                
                 worldState.openedDoors[door.id] = true; 
                 
-                // Détermine la porte de retour pour l'ouvrir automatiquement
                 let returnFace = 'south';
                 if (door.face === 'north') returnFace = 'south';
                 else if (door.face === 'south') returnFace = 'north';
@@ -115,12 +110,9 @@ window.update = function() {
                 if (typeof window.saveRoomState === 'function') window.saveRoomState(); 
                 if (typeof window.loadRoom === 'function') window.loadRoom(door.dest, door.face); 
                 
-                // 2. Recharge les items si on avait laissé des choses dans cette salle
                 if (worldState.droppedItems[door.dest]) {
                     currentItems = JSON.parse(JSON.stringify(worldState.droppedItems[door.dest]));
                 }
-
-                // 3. Ouvre la porte par laquelle on vient d'arriver
                 currentDoors.forEach(d => {
                     if (d.face === returnFace) {
                         worldState.openedDoors[d.id] = true;
