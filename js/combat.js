@@ -1,7 +1,3 @@
-// ============================================================================
-// js/combat.js - GESTION DES ATTAQUES, PROJECTILES ET DESTRUCTIONS
-// ============================================================================
-
 window.handlePlayerAttack = function() {
     let dx = mouse.x - (player.x + player.size / 2); 
     let dy = mouse.y - (player.y + player.size / 2);
