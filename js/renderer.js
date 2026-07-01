@@ -420,12 +420,24 @@ window.renderGameView = function() {
             ctx.rotate(p.angle + Math.PI / 2);
             ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; 
             ctx.shadowBlur = 40; 
-            let drawSize = p.size * 15.0; 
+            let drawSize = p.size * 10.0; 
             ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
             ctx.rotate(p.angle); 
             ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); 
         }
+        // --- RÉDUCTION DES PROJECTILES MAGE ET NÉCROMANCIEN (-50%) ---
+            if (p.type === 'fire_mage' || p.type === 'fire_necromancien') {
+                drawSize = drawSize / 2; // Divisé par 2
+            }
+            
+            ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
+        } else {
+            ctx.rotate(p.angle); 
+            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); 
+        }
+        ctx.restore();
+    });
         ctx.restore();
     });
     
