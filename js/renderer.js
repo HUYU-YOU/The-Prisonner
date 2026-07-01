@@ -98,6 +98,7 @@ window.renderGameView = function() {
         if (blood.rotation) ctx.rotate(blood.rotation);
         
         let bImg = window.getAsset(blood.imgId);
+        
         if (bImg && bImg.complete && bImg.naturalWidth > 0) {
             let s = blood.size || 40;
             ctx.drawImage(bImg, -s/2, -s/2, s, s);
@@ -273,6 +274,10 @@ window.renderGameView = function() {
         let dir = window.getDirectionName(angleToTarget);
         
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
+        
+        // --- ADAPTATION DES NOMS DE SKINS ---
+        if (prefix === 'Small_golem') prefix = 'Golem';
+
         let action = 'view';
         let skinName = '';
 
@@ -310,19 +315,17 @@ window.renderGameView = function() {
             let fallbackName = ''; 
             let lowPrefix = prefix.toLowerCase();
             
-            if (lowPrefix === 'goblin') { 
-                if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; 
-                else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; 
-                else fallbackName = 'goblin_top_view'; 
-            } 
-            else if (lowPrefix === 'skeleton') { 
-                if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; 
-                else fallbackName = 'Skeleton_top_view'; 
-            } 
+            if (lowPrefix === 'goblin') fallbackName = 'goblin_top_view'; 
+            else if (lowPrefix === 'skeleton') fallbackName = 'Skeleton_top_view'; 
             else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; 
             else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; 
             else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; 
             else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
+            else if (lowPrefix === 'orc') fallbackName = 'goblin_top_view'; 
+            else if (lowPrefix === 'golem' || lowPrefix === 'small_golem') fallbackName = 'Skeleton_top_view'; 
+            else if (lowPrefix === 'minotaure') fallbackName = 'troll_top_view';
+            else if (lowPrefix === 'gargouille') fallbackName = 'drake_top_view';
+            else if (lowPrefix === 'wolf') fallbackName = 'spider_top_view';
             
             img = window.getAsset(fallbackName); 
         }
@@ -343,18 +346,18 @@ window.renderGameView = function() {
         ctx.shadowOffsetX = 4; 
         ctx.shadowOffsetY = 4;
         
-        if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
+        if (enemy.type === 'troll' || enemy.type === 'orc') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
-        else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
+        else if (enemy.type === 'dragon' || enemy.type === 'minotaure') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
-            // --- REDUCTION DE LA TAILLE DE CERTAINS ENNEMIS ---
-            if (['troll', 'dragon', 'goblin', 'skeleton'].includes(enemy.type.toLowerCase())) {
+            // --- REDUCTION DE LA TAILLE DE CERTAINS ENNEMIS (-50%) ---
+            if (['troll', 'dragon', 'goblin', 'skeleton', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) {
                 displaySize = enemy.size * 1.875; 
             }
             
-            if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
+            if ((enemy.type === 'mage' || enemy.type === 'spider' || enemy.type === 'wolf') && !is8Dir) { 
                 ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
             } else { 
@@ -376,13 +379,13 @@ window.renderGameView = function() {
         }
         ctx.restore(); 
         
-        if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type)) { 
+        if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(enemy.type)) { 
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
         } 
     });
 
-    let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
+    let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(e.type));
     if (boss) {
         let bossName = "BOSS";
         if (boss.type === 'troll') bossName = "TROLL CORROMPU";
@@ -390,6 +393,8 @@ window.renderGameView = function() {
         else if (boss.type === 'dragon') bossName = "DRAGON MAUDIT";
         else if (boss.type === 'deathgod') bossName = "DEATH GOD";
         else if (boss.type === 'elysia') bossName = "ELYSIA";
+        else if (boss.type === 'minotaure') bossName = "MINOTAURE";
+        else if (boss.type === 'gargouille') bossName = "GARGOUILLE";
         
         let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
         let barWidth = 600; 
@@ -441,6 +446,9 @@ window.renderGameView = function() {
         else if (p.type === 'fire_deathgod') epImgName = 'Attack_fire_deathgod';
         else if (p.type === 'fire_elysia') epImgName = 'Attack_fire_elysia';
         else if (p.type === 'armor_sword') epImgName = 'Attack_sword_armor';
+        // --- NOUVEAUX PROJECTILES ---
+        else if (p.type === 'rock_golem') epImgName = 'Attack_rock_golem';
+        else if (p.type === 'rock_gargouille') epImgName = 'Attack_rock_gargouille';
         
         let epImg = window.getAsset(epImgName);
         
@@ -533,9 +541,9 @@ window.renderGameView = function() {
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 3.75; 
+            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
             
-            // --- REDUCTION DE LA TAILLE DE L'ELFE ---
+            // --- REDUCTION DE LA TAILLE DE L'ELFE PAR 2 ICI ---
             if (player.heroClass === 'Elf') {
                 displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
             } else if (player.heroClass === 'Mage' && !is8DirP) {
