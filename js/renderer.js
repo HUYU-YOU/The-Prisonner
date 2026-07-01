@@ -412,32 +412,34 @@ window.renderGameView = function() {
         ctx.translate(p.x, p.y); 
         
         let pImgName = 'Attack_arrow_elf';
-        if (p.type === 'fire_mage') pImgName = 'Attack_fire_mage';
-        else if (p.type === 'fire_necromancien' || p.type === 'fire_fusion') pImgName = 'Attack_fire_necromancien';
+        if (p.type === 'fire_mage') {
+            pImgName = 'Attack_fire_mage';
+        } else if (p.type === 'fire_necromancien' || p.type === 'fire_fusion') {
+            pImgName = 'Attack_fire_necromancien';
+        }
 
         let pImg = window.getAsset(pImgName);
+
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             ctx.rotate(p.angle + Math.PI / 2);
             ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; 
             ctx.shadowBlur = 40; 
+            
             let drawSize = p.size * 10.0; 
-            ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
-        } else {
-            ctx.rotate(p.angle); 
-            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); 
-        }
-        // --- RÉDUCTION DES PROJECTILES MAGE ET NÉCROMANCIEN (-50%) ---
+            
+            // --- RÉDUCTION DES PROJECTILES MAGE ET NÉCROMANCIEN (-50%) ---
             if (p.type === 'fire_mage' || p.type === 'fire_necromancien') {
-                drawSize = drawSize / 2; // Divisé par 2
+                drawSize = drawSize / 2;
             }
             
             ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
+            
         } else {
             ctx.rotate(p.angle); 
-            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); 
+            ctx.fillStyle = '#ecf0f1'; 
+            ctx.fillRect(-8, -1, 16, 2); 
         }
-        ctx.restore();
-    });
+        
         ctx.restore();
     });
     
@@ -529,7 +531,7 @@ window.renderGameView = function() {
                 if (angle > -Math.PI/4 && angle <= Math.PI/4) pSkinNameFallback = 'Elf_est'; 
                 else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) pSkinNameFallback = 'Elf_front'; 
                 else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) pSkinNameFallback = 'Elf_back'; 
-                else pSkinNameFallback = 'Elf_west';                                                      
+                else pSkinNameFallback = 'Elf_west';                                               
                 
                 pImg = window.getAsset(pSkinNameFallback); 
                 is8DirP = true; 
