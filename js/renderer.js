@@ -1,7 +1,3 @@
-// ============================================================================
-// js/renderer.js - MOTEUR DE RENDU VISUEL ET EFFETS
-// ============================================================================
-
 window.triggerShake = function(intensity, duration) { 
     shakeIntensity = intensity; 
     shakeTimer = duration; 
