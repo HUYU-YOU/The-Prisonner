@@ -384,7 +384,6 @@ window.updateEnemies = function() {
                 }
             });
 
-            // Si plus d'ennemis, on suit gentiment le joueur
             let isTargetingPlayer = false;
             if (!nearestEnemy) {
                 nearestEnemy = player;
@@ -402,7 +401,7 @@ window.updateEnemies = function() {
                 if (!isTargetingPlayer) {
                     stopDistance = summon.type === 'fusion' ? 150 : 30; 
                 } else {
-                    stopDistance = 80; // S'arrête près du joueur
+                    stopDistance = 80; 
                 }
 
                 if (minDist > stopDistance) {
@@ -451,7 +450,7 @@ window.updateEnemies = function() {
 
             if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
-                if (typeof hazards !== 'undefined') hazards.length = 0; // Sécurité Météores
+                if (typeof hazards !== 'undefined') hazards.length = 0; 
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
             
