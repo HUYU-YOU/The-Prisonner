@@ -54,18 +54,21 @@ window.update = function() {
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
-                if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
-                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
-                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
-                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); }
+                // --- NOUVEAU SYSTÈME DE VAGUES AVEC LES NOUVEAUX MONSTRES ---
+                if (arenaWave === 10) { window.spawnEnemy('troll', 1); window.spawnEnemy('orc', 2); }
+                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 1); }
+                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 1); }
+                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 2); }
                 else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); }
-                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); }
+                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 2); }
                 else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); }
                 else {
-                    let countGoblin = 3 + Math.floor(arenaWave * 1.2);
-                    window.spawnEnemy('goblin', countGoblin);
-                    if (arenaWave >= 3) window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
-                    if (arenaWave >= 15) window.spawnEnemy('spider', 2);
+                    let countOrc = 2 + Math.floor(arenaWave * 1.0);
+                    window.spawnEnemy('orc', countOrc); // L'Orc remplace le gobelin
+                    if (arenaWave >= 3) window.spawnEnemy('golem', Math.floor(arenaWave / 3) + 1); // Remplace le squelette
+                    if (arenaWave >= 8) window.spawnEnemy('wolf', 2); // Remplace l'araignée
+                    if (arenaWave >= 15 && arenaWave % 3 === 0) window.spawnEnemy('minotaure', 1);
+                    if (arenaWave >= 20 && arenaWave % 4 === 0) window.spawnEnemy('gargouille', 1);
                 }
                 arenaWave++;
             }
