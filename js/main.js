@@ -29,7 +29,6 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        // --- LA MAP RÉTRÉCIT UNIQUEMENT QUAND UN TROLL EST PRÉSENT ---
         let hasTroll = typeof currentEnemies !== 'undefined' && currentEnemies.some(e => e.type === 'troll');
         
         if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { 
@@ -69,7 +68,8 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                hazards = []; // Nettoie les météores en fin de vague
+                // CORRECTION DU FREEZE : On vérifie que le tableau existe avant de le vider
+                if (typeof hazards !== 'undefined') { hazards.length = 0; }
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
@@ -79,11 +79,17 @@ window.update = function() {
     if (!worldState.droppedItems) worldState.droppedItems = {};
     
     let roomChanged = false;
-    currentDoors.forEach(door => {
+    
+    // CORRECTION DES PORTES : Utilisation d'une boucle "for" classique pour pouvoir s'arrêter (break)
+    for (let i = 0; i < currentDoors.length; i++) {
+        let door = currentDoors[i];
+        
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } return;
+            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } 
+            continue;
         }
-        if (!roomChanged && window.checkCollision(player, door)) { 
+        
+        if (window.checkCollision(player, door)) { 
             let canPass = false;
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
@@ -113,6 +119,7 @@ window.update = function() {
                 if (worldState.droppedItems[door.dest]) {
                     currentItems = JSON.parse(JSON.stringify(worldState.droppedItems[door.dest]));
                 }
+                
                 currentDoors.forEach(d => {
                     if (d.face === returnFace) {
                         worldState.openedDoors[d.id] = true;
@@ -120,10 +127,12 @@ window.update = function() {
                     }
                 });
 
-                player.x = door.spawnX; player.y = door.spawnY; roomChanged = true; 
+                player.x = door.spawnX; player.y = door.spawnY; 
+                roomChanged = true; 
+                break; // ARRÊTE LA BOUCLE ICI POUR NE PAS CORROMPRE LES ENNEMIS
             } 
         }
-    });
+    }
     
     if (roomChanged) { requestAnimationFrame(window.update); return; }
     
