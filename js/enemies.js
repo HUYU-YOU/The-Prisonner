@@ -320,7 +320,12 @@ window.updateEnemies = function() {
             if (fusionAggro && window.checkCollision(fusionAggro, enemy)) {
                 if (enemy.attackAnimTimer <= 0) {
                     let dmg = 20;
-                    fusionAggro.health -= dmg; enemy.attackAnimTimer = 30;
+                    if (enemy.type === 'armor') dmg = fusionAggro.maxHealth * 0.32;
+                    else if (enemy.type === 'elysia') dmg = fusionAggro.maxHealth * 0.34;
+                    else if (enemy.type === 'deathgod') dmg = fusionAggro.maxHealth * 0.25;
+                    
+                    fusionAggro.health -= dmg; 
+                    enemy.attackAnimTimer = 30;
                 }
             } 
             else if (!fusionAggro && playerInvulnerableTimer <= 0 && window.checkCollision(player, enemy)) {
@@ -334,6 +339,7 @@ window.updateEnemies = function() {
                 
                 let randHit = Math.floor(Math.random() * 3) + 1;
                 let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                // SANG DIVISÉ PAR DEUX ICI (* 0.75 au lieu de 1.5)
                 bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 
                 playerInvulnerableTimer = 60; 
@@ -376,7 +382,7 @@ window.updateEnemies = function() {
                 }
             });
 
-            // NOUVEAUTÉ : Si pas d'ennemis, on cible le joueur pour s'en rapprocher !
+            // NOUVEAUTÉ : Si pas d'ennemis (fin de vague), on cible le joueur pour s'en rapprocher !
             let isTargetingPlayer = false;
             if (!nearestEnemy) {
                 nearestEnemy = player;
@@ -440,7 +446,7 @@ window.updateEnemies = function() {
             if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
                 // CORRECTION FREEZE : Nettoie les météores à la mort du boss (Mode Histoire)
-                if (typeof hazards !== 'undefined') { hazards.length = 0; } 
+                if (typeof hazards !== 'undefined' && hazards) { hazards.splice(0, hazards.length); } 
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
             
@@ -451,7 +457,10 @@ window.updateEnemies = function() {
             let killNum = Math.floor(Math.random() * 3) + 1;
             let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            let killSize = e.type === 'skeleton' ? ((e.size * 3.75) / 3) : e.size * 3.75; 
+            
+            // SANG DIVISÉ PAR DEUX ICI (* 1.875 au lieu de 3.75)
+            let killSize = e.size * 1.875; 
+            if (e.type === 'skeleton') killSize = killSize / 3;
             
             bloodStains.push({ type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2, size: killSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
             
@@ -460,8 +469,8 @@ window.updateEnemies = function() {
             currentEnemies.splice(i, 1);
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
                 worldState.clearedRooms[currentRoomId] = true;
-                // CORRECTION FREEZE : Nettoie les météores quand la salle est clean
-                if (typeof hazards !== 'undefined') { hazards.length = 0; } 
+                // CORRECTION FREEZE : Nettoie les météores quand la salle est clean en mode histoire
+                if (typeof hazards !== 'undefined' && hazards) { hazards.splice(0, hazards.length); } 
             }
             if (typeof window.updateHUD === 'function') window.updateHUD();
         }
