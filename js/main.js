@@ -1,6 +1,4 @@
-// ============================================================================
-// js/main.js - MOTEUR PRINCIPAL ET BOUCLE DE JEU
-// ============================================================================
+
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
