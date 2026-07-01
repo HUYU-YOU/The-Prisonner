@@ -1,3 +1,7 @@
+// ============================================================================
+// js/combat.js - GESTION DES ATTAQUES, PROJECTILES ET DESTRUCTIONS
+// ============================================================================
+
 window.handlePlayerAttack = function() {
     let dx = mouse.x - (player.x + player.size / 2); 
     let dy = mouse.y - (player.y + player.size / 2);
@@ -36,16 +40,11 @@ window.handlePlayerAttack = function() {
                     } else { 
                         enemy.health -= 50; 
                         
-                        // SANG DE DÉGÂTS (SAUF POUR SQUELETTE) DIVISÉ PAR DEUX
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            let bSize = enemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) {
-                                bSize = bSize / 2; // Effet sang divisé par deux
-                            }
-                            
-                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                            // Sang divisé par deux (-50%)
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         if (typeof triggerShake === 'function') triggerShake(5, 8); 
                     }
@@ -121,7 +120,7 @@ window.updateProjectiles = function() {
                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
-                // LE NÉCRO NORMAL NE TRANSPERCE PAS, LA FUSION OUI
+                // LE NÉCRO NORMAL NE TRANSPERCE PAS, LA FUSION OUI !
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
                 let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
                 
