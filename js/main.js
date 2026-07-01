@@ -1,3 +1,7 @@
+// ============================================================================
+// js/main.js - MOTEUR PRINCIPAL ET BOUCLE DE JEU
+// ============================================================================
+
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
@@ -30,13 +34,12 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        // La map se rétrécit UNIQUEMENT si un troll est présent
         let hasTroll = typeof currentEnemies !== 'undefined' && currentEnemies.some(e => e.type === 'troll');
         
         if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
         } else if (!hasTroll && arenaShrink > 0) {
-            arenaShrink -= 0.5; // S'agrandit quand le boss meurt
+            arenaShrink -= 0.5; 
             if (arenaShrink < 0) arenaShrink = 0;
         }
 
@@ -71,8 +74,8 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                // CORRECTION FREEZE : On vide proprement le tableau des météores
-                if (typeof hazards !== 'undefined') hazards.length = 0; 
+                // Nettoyage ultra-sécurisé des météores
+                if (typeof hazards !== 'undefined' && Array.isArray(hazards)) hazards.splice(0, hazards.length);
                 if (typeof updateHUD === 'function') updateHUD();
             }
         }
@@ -81,7 +84,7 @@ window.update = function() {
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     
-    // --- CORRECTION DES PORTES ET OBJETS DISPARUS ---
+    // --- GESTION DES PORTES ET CHANGEMENT DE SALLE ---
     let roomChanged = false;
     let doorToPass = null;
     
@@ -114,8 +117,8 @@ window.update = function() {
     }
 
     if (doorToPass) {
-        // Sauvegarde des items de la pièce qu'on quitte
-        worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(currentItems));
+        // Sauvegarde simple sans écraser la mémoire
+        worldState.droppedItems[currentRoomId] = currentItems.map(item => ({...item}));
         worldState.openedDoors[doorToPass.id] = true;
 
         let returnFace = 'south';
@@ -127,14 +130,10 @@ window.update = function() {
         if (typeof saveRoomState === 'function') saveRoomState();
         if (typeof loadRoom === 'function') loadRoom(doorToPass.dest, doorToPass.face);
 
-        // Récupération des items de la pièce dans laquelle on entre
         if (worldState.droppedItems[doorToPass.dest]) {
-            let loaded = JSON.parse(JSON.stringify(worldState.droppedItems[doorToPass.dest]));
-            currentItems.length = 0;
-            loaded.forEach(item => currentItems.push(item));
+            currentItems.splice(0, currentItems.length, ...worldState.droppedItems[doorToPass.dest]);
         }
 
-        // Ouvre la porte dans notre dos
         if (typeof currentDoors !== 'undefined') {
             currentDoors.forEach(d => {
                 if (d.face === returnFace) {
