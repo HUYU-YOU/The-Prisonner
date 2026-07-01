@@ -98,7 +98,6 @@ window.renderGameView = function() {
         if (blood.rotation) ctx.rotate(blood.rotation);
         
         let bImg = window.getAsset(blood.imgId);
-        
         if (bImg && bImg.complete && bImg.naturalWidth > 0) {
             let s = blood.size || 40;
             ctx.drawImage(bImg, -s/2, -s/2, s, s);
@@ -256,7 +255,7 @@ window.renderGameView = function() {
             ctx.shadowBlur = 15;
             
             if (sImg && sImg.complete && sImg.naturalWidth > 0) {
-                let displaySize = s.size * 3.75; // INVOCATIONS +50%
+                let displaySize = s.size * 3.75; 
                 ctx.drawImage(sImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             } else {
                 ctx.fillStyle = s.type === 'fusion' ? '#f1c40f' : '#8e44ad';
@@ -349,8 +348,8 @@ window.renderGameView = function() {
         else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
         
         if (img && img.complete && img.naturalWidth > 0) {
-            let displaySize = enemy.size * 3.75; // ENNEMIS +50%
-            // --- REDUCTION DE LA TAILLE PAR DEUX POUR CERTAINS ENNEMIS ICI ---
+            let displaySize = enemy.size * 3.75; 
+            // --- REDUCTION DE LA TAILLE DE CERTAINS ENNEMIS ---
             if (['troll', 'dragon', 'goblin', 'skeleton'].includes(enemy.type.toLowerCase())) {
                 displaySize = enemy.size * 1.875; 
             }
@@ -401,7 +400,7 @@ window.renderGameView = function() {
         ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
     }
 
-    // --- SKINS DES PROJECTILES DU JOUEUR (LUMINEUX ET ORIENTÉS) ---
+    // --- SKINS DES PROJECTILES DU JOUEUR ---
     projectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -416,10 +415,9 @@ window.renderGameView = function() {
             ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; 
             ctx.shadowBlur = 30; 
             
-            let drawSize = p.size * 15.0; // PROJECTILES ÉNORMES
-            // --- REDUCTION POUR LE MAGE ET LE NECROMANCIEN ---
+            let drawSize = p.size * 15.0; 
             if (p.type === 'fire_mage' || p.type === 'fire_necromancien') {
-                drawSize = drawSize / 2; // Divisé par 2 !
+                drawSize = drawSize / 2; // Projectiles Nécro/Mage diminués
             }
             
             ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
@@ -430,7 +428,7 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- SKINS DES PROJECTILES DES ENNEMIS (LUMINEUX ET + GROS) ---
+    // --- SKINS DES PROJECTILES DES ENNEMIS ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -535,9 +533,9 @@ window.renderGameView = function() {
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
+            let displaySize = player.size * 3.75; 
             
-            // --- REDUCTION DE LA TAILLE DE L'ELFE PAR 2 ICI ---
+            // --- REDUCTION DE LA TAILLE DE L'ELFE ---
             if (player.heroClass === 'Elf') {
                 displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
             } else if (player.heroClass === 'Mage' && !is8DirP) {
