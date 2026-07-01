@@ -44,7 +44,7 @@ window.handlePlayerAttack = function() {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
                             let bSize = enemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) bSize /= 2;
                             bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
@@ -115,7 +115,7 @@ window.updateProjectiles = function() {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
                     let bSize = enemy.size * 1.5;
-                    if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                    if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) bSize /= 2;
                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
@@ -163,7 +163,11 @@ window.updateProjectiles = function() {
         }
 
         if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
-            playerStats.health -= ep.damage || 15;
+            // NOUVEAUX DÉGÂTS PIERRES (GOLEM ET GARGOUILLE) = 25
+            let epDmg = ep.damage || 15;
+            if (ep.type === 'rock_golem' || ep.type === 'rock_gargouille') epDmg = 25;
+            
+            playerStats.health -= epDmg;
             if (ep.type === 'bat_web') { playerSlowTimer = 120; } 
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
