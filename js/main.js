@@ -5,6 +5,19 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
+    // SÉCURITÉS ANTI-FREEZE : On force la création de tous les tableaux s'ils n'existent pas
+    window.currentItems = window.currentItems || [];
+    window.currentEnemies = window.currentEnemies || [];
+    window.currentDoors = window.currentDoors || [];
+    window.currentCrates = window.currentCrates || [];
+    window.projectiles = window.projectiles || [];
+    window.enemyProjectiles = window.enemyProjectiles || [];
+    window.particles = window.particles || [];
+    window.bloodStains = window.bloodStains || [];
+    window.hazards = window.hazards || [];
+    window.necroSummons = window.necroSummons || [];
+    window.necroKills = window.necroKills || [];
+
     if (typeof arenaShrink === 'undefined') window.arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') window.waveStartDelay = 0;
 
@@ -32,12 +45,14 @@ window.update = function() {
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
-        let hasTroll = typeof currentEnemies !== 'undefined' && currentEnemies.some(e => e.type === 'troll');
+        // --- LA MAP RÉTRÉCIT UNIQUEMENT SI UN TROLL EST SUR LE TERRAIN ---
+        let hasTroll = window.currentEnemies.some(e => e.type === 'troll');
         
         if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { 
             arenaShrink += 0.3; 
-        } else if (!hasTroll) {
-            arenaShrink = 0; 
+        } else if (!hasTroll && arenaShrink > 0) {
+            arenaShrink -= 0.5; // La map s'agrandit doucement quand le troll meurt
+            if (arenaShrink < 0) arenaShrink = 0;
         }
 
         if (arenaState === "WAITING") {
@@ -48,7 +63,7 @@ window.update = function() {
                 arenaState = "PLAYING";
                 
                 if (arenaWave > 0 && arenaWave % 5 === 0) {
-                    currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
+                    window.currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
@@ -68,11 +83,10 @@ window.update = function() {
                 arenaWave++;
             }
         } else if (arenaState === "PLAYING") {
-            if (currentEnemies.length === 0) {
+            if (window.currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                // CORRECTION FREEZE ARÈNE : Sécurisation du nettoyage des météores !
-                if (typeof hazards !== 'undefined' && hazards) { hazards.splice(0, hazards.length); }
+                window.hazards = []; // Nettoie 100% les météores
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
@@ -81,11 +95,10 @@ window.update = function() {
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     
-    // --- CORRECTION BUG PORTES ET OBJETS DISPARUS ---
     let doorToPass = null;
     
-    for (let i = 0; i < currentDoors.length; i++) {
-        let door = currentDoors[i];
+    for (let i = 0; i < window.currentDoors.length; i++) {
+        let door = window.currentDoors[i];
         
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
             if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
@@ -112,13 +125,15 @@ window.update = function() {
         }
     }
 
-    // SI LE JOUEUR PASSE LA PORTE (Sécurisé hors de la boucle pour ne pas bugger)
     if (doorToPass) {
-        // 1. Sauvegarde des items actuels de la salle avant de partir
-        worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(currentItems));
+        try {
+            worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(window.currentItems));
+        } catch (e) {
+            worldState.droppedItems[currentRoomId] = [];
+        }
+        
         worldState.openedDoors[doorToPass.id] = true;
 
-        // 2. Détermination de la porte dans le dos du joueur pour l'ouvrir
         let returnFace = 'south';
         if (doorToPass.face === 'north') returnFace = 'south';
         else if (doorToPass.face === 'south') returnFace = 'north';
@@ -128,20 +143,16 @@ window.update = function() {
         if (typeof window.saveRoomState === 'function') window.saveRoomState();
         if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
 
-        // 3. Rechargement des items qu'on avait laissés dans cette nouvelle salle
         if (worldState.droppedItems[doorToPass.dest]) {
             window.currentItems = JSON.parse(JSON.stringify(worldState.droppedItems[doorToPass.dest]));
         }
 
-        // 4. On ouvre la porte par laquelle on vient d'arriver
-        if (typeof currentDoors !== 'undefined') {
-            currentDoors.forEach(d => {
-                if (d.face === returnFace) {
-                    worldState.openedDoors[d.id] = true;
-                    d.locked = false;
-                }
-            });
-        }
+        window.currentDoors.forEach(d => {
+            if (d.face === returnFace) {
+                worldState.openedDoors[d.id] = true;
+                d.locked = false;
+            }
+        });
 
         player.x = doorToPass.spawnX;
         player.y = doorToPass.spawnY;
@@ -204,15 +215,15 @@ window.update = function() {
     
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
-    for (let i = 0; i < currentCrates.length; i++) {
-        let obj = currentCrates[i];
+    for (let i = 0; i < window.currentCrates.length; i++) {
+        let obj = window.currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
     }
     
     let oldPy = player.y; player.y += dy_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
-    for (let i = 0; i < currentCrates.length; i++) {
-        let obj = currentCrates[i];
+    for (let i = 0; i < window.currentCrates.length; i++) {
+        let obj = window.currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
     }
     
@@ -236,17 +247,17 @@ window.update = function() {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
     
-    for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
-        if (p.life <= 0) particles.splice(i, 1);
+    for (let i = window.particles.length - 1; i >= 0; i--) {
+        let p = window.particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
+        if (p.life <= 0) window.particles.splice(i, 1);
     }
     
-    for (let i = bloodStains.length - 1; i >= 0; i--) {
-        let b = bloodStains[i];
+    for (let i = window.bloodStains.length - 1; i >= 0; i--) {
+        let b = window.bloodStains[i];
         if (b.life === undefined) b.life = (currentRoomId === 999) ? 1200 : 3600; 
         b.life--;
         if (b.life < 300) { b.opacity = b.life / 300; } else { b.opacity = 1.0; }
-        if (b.life <= 0) bloodStains.splice(i, 1);
+        if (b.life <= 0) window.bloodStains.splice(i, 1);
     }
 
     if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
