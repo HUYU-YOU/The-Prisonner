@@ -222,6 +222,68 @@ assetsManager.load('Fusion_northwest_view', 'assets/skins/fusions/fusion_northwe
 assetsManager.load('Fusion_southeast_view', 'assets/skins/fusions/fusion_southeast_view.png');
 assetsManager.load('Fusion_southwest_view', 'assets/skins/fusions/fusion_southwest_view.png');
 
+// --- GOLEM ---
+assetsManager.load('Golem_north_view', 'assets/skins/Golem/golem_north_view.png');
+assetsManager.load('Golem_south_view', 'assets/skins/Golem/golem_south_view.png');
+assetsManager.load('Golem_east_view', 'assets/skins/Golem/golem_east_view.png');
+assetsManager.load('Golem_west_view', 'assets/skins/Golem/golem_west_view.png');
+assetsManager.load('Golem_northeast_view', 'assets/skins/Golem/golem_northeast_view.png');
+assetsManager.load('Golem_northwest_view', 'assets/skins/Golem/golem_northwest_view.png');
+assetsManager.load('Golem_southeast_view', 'assets/skins/Golem/golem_southeast_view.png');
+assetsManager.load('Golem_southwest_view', 'assets/skins/Golem/golem_southwest_view.png');
+
+// --- SMALL GOLEM (Utilise les mêmes images que le Golem) ---
+assetsManager.load('Small_golem_north_view', 'assets/skins/Golem/golem_north_view.png');
+assetsManager.load('Small_golem_south_view', 'assets/skins/Golem/golem_south_view.png');
+assetsManager.load('Small_golem_east_view', 'assets/skins/Golem/golem_east_view.png');
+assetsManager.load('Small_golem_west_view', 'assets/skins/Golem/golem_west_view.png');
+assetsManager.load('Small_golem_northeast_view', 'assets/skins/Golem/golem_northeast_view.png');
+assetsManager.load('Small_golem_northwest_view', 'assets/skins/Golem/golem_northwest_view.png');
+assetsManager.load('Small_golem_southeast_view', 'assets/skins/Golem/golem_southeast_view.png');
+assetsManager.load('Small_golem_southwest_view', 'assets/skins/Golem/golem_southwest_view.png');
+
+// --- ORC ---
+assetsManager.load('Orc_north_view', 'assets/skins/orc/orc_north_view.png');
+assetsManager.load('Orc_south_view', 'assets/skins/orc/orc_south_view.png');
+assetsManager.load('Orc_east_view', 'assets/skins/orc/orc_east_view.png');
+assetsManager.load('Orc_west_view', 'assets/skins/orc/orc_west_view.png');
+assetsManager.load('Orc_northeast_view', 'assets/skins/orc/orc_northeast_view.png');
+assetsManager.load('Orc_northwest_view', 'assets/skins/orc/orc_northwest_view.png');
+assetsManager.load('Orc_southeast_view', 'assets/skins/orc/orc_southeast_view.png');
+assetsManager.load('Orc_southwest_view', 'assets/skins/orc/orc_southwest_view.png');
+
+// --- WOLF ---
+assetsManager.load('Wolf_north_view', 'assets/skins/wolf/wolf_north_view.png');
+assetsManager.load('Wolf_south_view', 'assets/skins/wolf/wolf_south_view.png');
+assetsManager.load('Wolf_east_view', 'assets/skins/wolf/wolf_east_view.png');
+assetsManager.load('Wolf_west_view', 'assets/skins/wolf/wolf_west_view.png');
+assetsManager.load('Wolf_northeast_view', 'assets/skins/wolf/wolf_northeast_view.png');
+assetsManager.load('Wolf_northwest_view', 'assets/skins/wolf/wolf_northwest_view.png');
+assetsManager.load('Wolf_southeast_view', 'assets/skins/wolf/wolf_southeast_view.png');
+assetsManager.load('Wolf_southwest_view', 'assets/skins/wolf/wolf_southwest_view.png');
+
+// --- GARGOUILLE ---
+assetsManager.load('Gargouille_north_view', 'assets/skins/gargouille/gargouille_north_view.png');
+assetsManager.load('Gargouille_south_view', 'assets/skins/gargouille/gargouille_south_view.png');
+assetsManager.load('Gargouille_east_view', 'assets/skins/gargouille/gargouille_east_view.png');
+assetsManager.load('Gargouille_west_view', 'assets/skins/gargouille/gargouille_west_view.png');
+assetsManager.load('Gargouille_northeast_view', 'assets/skins/gargouille/gargouille_northeast_view.png');
+assetsManager.load('Gargouille_northwest_view', 'assets/skins/gargouille/gargouille_northwest_view.png');
+assetsManager.load('Gargouille_southeast_view', 'assets/skins/gargouille/gargouille_southeast_view.png');
+assetsManager.load('Gargouille_southwest_view', 'assets/skins/gargouille/gargouille_southwest_view.png');
+
+// --- MINOTAURE ---
+assetsManager.load('Minotaure_north_view', 'assets/skins/orc/minotaure_north_view.png');
+assetsManager.load('Minotaure_south_view', 'assets/skins/orc/minotaure_south_view.png');
+assetsManager.load('Minotaure_east_view', 'assets/skins/orc/minotaure_east_view.png');
+assetsManager.load('Minotaure_west_view', 'assets/skins/orc/minotaure_west_view.png');
+assetsManager.load('Minotaure_northeast_view', 'assets/skins/orc/minotaure_northeast_view.png');
+assetsManager.load('Minotaure_northwest_view', 'assets/skins/orc/minotaure_northwest_view.png');
+assetsManager.load('Minotaure_southeast_view', 'assets/skins/orc/minotaure_southeast_view.png');
+assetsManager.load('Minotaure_southwest_view', 'assets/skins/orc/minotaure_southwest_view.png');
+
+
+
 // --- EFFETS DE SANG (Dégâts et Morts) ---
 assetsManager.load('bloods_hit_view1', 'assets/effects/bloods_hit_view1.png');
 assetsManager.load('bloods_hit_view2', 'assets/effects/bloods_hit_view2.png');
@@ -246,7 +308,9 @@ assetsManager.load('Attack_sword_armor', 'assets/skins/Attack/Attack_sword_armor
 assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
 assetsManager.load('Attack_sword_knight', 'assets/skins/Attack/Attack_sword_knight.jpeg');
 assetsManager.load('Attack_mage_corompue', 'assets/skins/Attack/Attack_mage_corompue.jpeg');
-
+// --- NOUVELLES ATTAQUES (Projectiles) ---
+assetsManager.load('Attack_rock_golem', 'assets/skins/Attack/Attack_rock_golem.jpeg');
+assetsManager.load('Attack_rock_gargouille', 'assets/skins/Attack/Attack_rock_gargouille.jpeg');
 // --- MÉTÉORES (DANGERS VENANT DU CIEL) ---
 assetsManager.load('Attack_meteorites_elysia', 'assets/skins/Attack/Attack_meteorites_elysia.jpeg');
 assetsManager.load('Attack_meteorites_dragon', 'assets/skins/Attack/Attack_meteorites_dragon.jpeg');
