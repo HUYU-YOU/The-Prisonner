@@ -5,6 +5,9 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
+    if (typeof arenaShrink === 'undefined') window.arenaShrink = 0;
+    if (typeof waveStartDelay === 'undefined') window.waveStartDelay = 0;
+
     if (gameState === "MENU") {
         if (keys['space']) {
             if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
@@ -68,8 +71,8 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                // CORRECTION DU FREEZE : On vérifie que le tableau existe avant de le vider
-                if (typeof hazards !== 'undefined') { hazards.length = 0; }
+                // CORRECTION FREEZE ARÈNE : Sécurisation du nettoyage des météores !
+                if (typeof hazards !== 'undefined' && hazards) { hazards.splice(0, hazards.length); }
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
@@ -78,63 +81,73 @@ window.update = function() {
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     
-    let roomChanged = false;
+    // --- CORRECTION BUG PORTES ET OBJETS DISPARUS ---
+    let doorToPass = null;
     
-    // CORRECTION DES PORTES : Utilisation d'une boucle "for" classique pour pouvoir s'arrêter (break)
     for (let i = 0; i < currentDoors.length; i++) {
         let door = currentDoors[i];
         
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; } 
+            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
             continue;
         }
         
-        if (window.checkCollision(player, door)) { 
-            let canPass = false;
+        if (!doorToPass && window.checkCollision(player, door)) {
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true; canPass = true;
+                    playerStats.inventory.keys.gold--; 
+                    door.locked = false; 
+                    worldState.unlockedDoors[door.id] = true;
                     if (typeof window.updateHUD === 'function') window.updateHUD();
+                    if (door.dest !== null) doorToPass = door;
                 } else {
-                    if (door.face === 'north') player.y = door.y + door.height; 
+                    if (door.face === 'north') player.y = door.y + door.height;
                     else if (door.face === 'south') player.y = door.y - player.size;
-                    else if (door.face === 'east') player.x = door.x - player.size; 
+                    else if (door.face === 'east') player.x = door.x - player.size;
                     else if (door.face === 'west') player.x = door.x + door.width;
                 }
-            } else { canPass = true; }
-
-            if (canPass && door.dest !== null) { 
-                worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(currentItems));
-                worldState.openedDoors[door.id] = true; 
-                
-                let returnFace = 'south';
-                if (door.face === 'north') returnFace = 'south';
-                else if (door.face === 'south') returnFace = 'north';
-                else if (door.face === 'east') returnFace = 'west';
-                else if (door.face === 'west') returnFace = 'east';
-
-                if (typeof window.saveRoomState === 'function') window.saveRoomState(); 
-                if (typeof window.loadRoom === 'function') window.loadRoom(door.dest, door.face); 
-                
-                if (worldState.droppedItems[door.dest]) {
-                    currentItems = JSON.parse(JSON.stringify(worldState.droppedItems[door.dest]));
-                }
-                
-                currentDoors.forEach(d => {
-                    if (d.face === returnFace) {
-                        worldState.openedDoors[d.id] = true;
-                        d.locked = false;
-                    }
-                });
-
-                player.x = door.spawnX; player.y = door.spawnY; 
-                roomChanged = true; 
-                break; // ARRÊTE LA BOUCLE ICI POUR NE PAS CORROMPRE LES ENNEMIS
-            } 
+            } else if (door.dest !== null) {
+                doorToPass = door;
+            }
         }
     }
-    
-    if (roomChanged) { requestAnimationFrame(window.update); return; }
+
+    // SI LE JOUEUR PASSE LA PORTE (Sécurisé hors de la boucle pour ne pas bugger)
+    if (doorToPass) {
+        // 1. Sauvegarde des items actuels de la salle avant de partir
+        worldState.droppedItems[currentRoomId] = JSON.parse(JSON.stringify(currentItems));
+        worldState.openedDoors[doorToPass.id] = true;
+
+        // 2. Détermination de la porte dans le dos du joueur pour l'ouvrir
+        let returnFace = 'south';
+        if (doorToPass.face === 'north') returnFace = 'south';
+        else if (doorToPass.face === 'south') returnFace = 'north';
+        else if (doorToPass.face === 'east') returnFace = 'west';
+        else if (doorToPass.face === 'west') returnFace = 'east';
+
+        if (typeof window.saveRoomState === 'function') window.saveRoomState();
+        if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
+
+        // 3. Rechargement des items qu'on avait laissés dans cette nouvelle salle
+        if (worldState.droppedItems[doorToPass.dest]) {
+            window.currentItems = JSON.parse(JSON.stringify(worldState.droppedItems[doorToPass.dest]));
+        }
+
+        // 4. On ouvre la porte par laquelle on vient d'arriver
+        if (typeof currentDoors !== 'undefined') {
+            currentDoors.forEach(d => {
+                if (d.face === returnFace) {
+                    worldState.openedDoors[d.id] = true;
+                    d.locked = false;
+                }
+            });
+        }
+
+        player.x = doorToPass.spawnX;
+        player.y = doorToPass.spawnY;
+        requestAnimationFrame(window.update);
+        return;
+    }
     
     if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
         if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
