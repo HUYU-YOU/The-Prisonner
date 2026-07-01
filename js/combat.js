@@ -43,8 +43,9 @@ window.handlePlayerAttack = function() {
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
+                        
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
                 }
@@ -99,12 +100,11 @@ window.updateProjectiles = function() {
                     if (!isBlocked) { 
                         let dmg = 30; 
                         if (player.heroClass === 'Elf') dmg = 60; 
-                        else if (p.type === 'fire_fusion') dmg = 40; 
-                        
                         enemy.health -= dmg; 
                         
                         if (p.type === 'fire_mage' || player.heroClass === 'Mage') {
-                            enemy.isBurning = true; enemy.burnTimer = 180; 
+                            enemy.isBurning = true;
+                            enemy.burnTimer = 180; 
                         }
                     }
                 }
@@ -112,13 +112,11 @@ window.updateProjectiles = function() {
                 if (enemy.type !== 'skeleton') {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: enemy.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
                 let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
-                let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
-                
-                if (isPiercing) { 
+                if (isPiercingElf || player.heroClass === 'Mage') { 
                     if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
                 } else { 
                     projectileHit = true; break; 
@@ -129,8 +127,6 @@ window.updateProjectiles = function() {
     }
 
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
-    let fusionAggro = null;
-    if (typeof necroSummons !== 'undefined') { fusionAggro = necroSummons.find(s => s.type === 'fusion'); }
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         let ep = enemyProjectiles[i];
@@ -152,55 +148,21 @@ window.updateProjectiles = function() {
             enemyProjectiles.splice(i, 1); continue; 
         }
 
-        if (fusionAggro && window.checkCollision(fusionAggro, epHitbox)) {
-            fusionAggro.health -= ep.damage || 15;
-            enemyProjectiles.splice(i, 1);
-            continue;
-        }
-
-        if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
+        if (!isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
             playerStats.health -= ep.damage || 15;
             if (ep.type === 'bat_web') { playerSlowTimer = 120; } 
+            
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
             let hitNum = Math.floor(Math.random() * 3) + 1;
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 0.75, rotation: Math.random() * Math.PI * 2, life: maxLife });
+            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: player.size * 1.5, rotation: Math.random() * Math.PI * 2, life: maxLife });
             
             playerInvulnerableTimer = 45;
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+            
             enemyProjectiles.splice(i, 1);
-        }
-    }
-    
-    if (typeof hazards !== 'undefined') {
-        for (let i = hazards.length - 1; i >= 0; i--) {
-            let h = hazards[i];
-            h.timer--;
-            if (h.timer <= 0) {
-                let target = player;
-                if (typeof necroSummons !== 'undefined') {
-                    let fusion = necroSummons.find(s => s.type === 'fusion');
-                    if (fusion) target = fusion;
-                }
-
-                if (!isElfInvuln && playerInvulnerableTimer <= 0) {
-                    let distH = Math.hypot((target.x + target.size/2) - h.x, (target.y + target.size/2) - h.y);
-                    if (distH < h.radius) {
-                        if (target === player) {
-                            playerStats.health -= h.damage || 20;
-                            playerInvulnerableTimer = 45;
-                            if (typeof window.triggerShake === 'function') window.triggerShake(15, 25);
-                            if (typeof window.updateHUD === 'function') window.updateHUD();
-                            if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-                        } else {
-                            target.health -= h.damage || 20; 
-                        }
-                    }
-                }
-                hazards.splice(i, 1); 
-            }
         }
     }
 };
@@ -219,8 +181,10 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'potion_blue') playerStats.inventory.potions.blue++; 
             else if (item.type === 'potion_red') playerStats.inventory.potions.red++; 
             else if (item.type === 'coin') { 
-                playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); 
+                playerStats.inventory.coins++; 
+                localStorage.setItem('kebra_coins', playerStats.inventory.coins); 
             }
+            
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             currentItems.splice(i, 1); 
         }
@@ -231,12 +195,18 @@ window.updateItemsAndCrates = function() {
         if (!crate.isBroken && crate.health <= 0) {
             crate.isBroken = true; 
             if (crate.type === 'chest') {
-                if (!worldState.openedChests) worldState.openedChests = {}; worldState.openedChests[crate.id] = true;
+                if (!worldState.openedChests) worldState.openedChests = {}; 
+                worldState.openedChests[crate.id] = true;
+                
                 currentItems.push({ id: 'potion_chest_' + Date.now(), type: 'potion_green', x: crate.x + 25, y: crate.y + 25, size: 15, collected: false });
                 currentItems.push({ id: 'coin_chest1_' + Date.now(), type: 'coin', x: crate.x + 10, y: crate.y + 40, size: 8, collected: false });
                 currentItems.push({ id: 'coin_chest2_' + Date.now(), type: 'coin', x: crate.x + 40, y: crate.y + 40, size: 8, collected: false });
+                
+                if (typeof window.spawnParticles === 'function') window.spawnParticles(crate.x + crate.size/2, crate.y + crate.size/2, '#f1c40f', 30);
             } else {
-                if (!worldState.brokenCrates) worldState.brokenCrates = {}; worldState.brokenCrates[crate.id] = true;
+                if (!worldState.brokenCrates) worldState.brokenCrates = {}; 
+                worldState.brokenCrates[crate.id] = true;
+                
                 currentItems.push({ id: 'coin_' + Date.now() + i, type: 'coin', x: crate.x + 15, y: crate.y + 15, size: 8, collected: false });
             }
         }
