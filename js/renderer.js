@@ -275,6 +275,7 @@ window.renderGameView = function() {
         
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
         
+        // --- ADAPTATION DES NOMS DE SKINS ---
         if (prefix === 'Small_golem') prefix = 'Golem';
 
         let action = 'view';
@@ -351,6 +352,7 @@ window.renderGameView = function() {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
+            // --- REDUCTION DE LA TAILLE DE CERTAINS ENNEMIS (-50%) ---
             if (['troll', 'dragon', 'goblin', 'skeleton', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) {
                 displaySize = enemy.size * 1.875; 
             }
@@ -368,8 +370,29 @@ window.renderGameView = function() {
         ctx.shadowColor = 'transparent'; 
         ctx.shadowBlur = 0;
         
+        // ========================================================
+        // --- NOUVEAU RENDU DE L'EFFET DE BRÛLURE (FEU) ---
+        // ========================================================
         if (enemy.isBurning) { 
-            ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); 
+            ctx.save(); // On sauvegarde pour modifier l'alpha spécifiquement ici
+
+            // MODIFIER ICI LA VALEUR DE L'OPACITÉ (0.0 pour invisible, 1.0 pour opaque)
+            ctx.globalAlpha = 0.5; // J'ai mis 50% comme base
+
+            let burnOverlay = window.getAsset('Attack_rock_golem');
+
+            if (burnOverlay && burnOverlay.complete && burnOverlay.naturalWidth > 0) {
+                // On dessine la texture du rocher comme overlay centered et à la taille de l'ennemi.
+                // On l'agrandit légèrement (* 1.5) pour faire un effet d'aura enflammée.
+                let overlaySize = enemy.size * 1.5;
+                ctx.drawImage(burnOverlay, -overlaySize / 2, -overlaySize / 2, overlaySize, overlaySize);
+            } else {
+                // Fallback au simple cercle orange scintillant si l'image est manquante
+                ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; 
+                ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); 
+            }
+            
+            ctx.restore(); // On restaure l'alpha normal immédiatement
         }
         
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { 
@@ -549,7 +572,7 @@ window.renderGameView = function() {
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 3.75; 
+            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
             
             if (player.heroClass === 'Elf') {
                 displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
