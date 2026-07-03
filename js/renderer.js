@@ -275,7 +275,6 @@ window.renderGameView = function() {
         
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
         
-        // --- ADAPTATION DES NOMS DE SKINS ---
         if (prefix === 'Small_golem') prefix = 'Golem';
 
         let action = 'view';
@@ -310,24 +309,11 @@ window.renderGameView = function() {
             img = window.getAsset(skinName); 
         }
         
+        // --- NOUVEAU SYSTÈME DE SECOURS (Beaucoup plus propre) ---
         if (!img || !img.complete || img.naturalWidth === 0) { 
             is8Dir = false; 
-            let fallbackName = ''; 
-            let lowPrefix = prefix.toLowerCase();
-            
-            if (lowPrefix === 'goblin') fallbackName = 'goblin_top_view'; 
-            else if (lowPrefix === 'skeleton') fallbackName = 'Skeleton_top_view'; 
-            else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; 
-            else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; 
-            else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; 
-            else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
-            else if (lowPrefix === 'orc') fallbackName = 'goblin_top_view'; 
-            else if (lowPrefix === 'golem' || lowPrefix === 'small_golem') fallbackName = 'Skeleton_top_view'; 
-            else if (lowPrefix === 'minotaure') fallbackName = 'troll_top_view';
-            else if (lowPrefix === 'gargouille') fallbackName = 'drake_top_view';
-            else if (lowPrefix === 'wolf') fallbackName = 'spider_top_view';
-            
-            img = window.getAsset(fallbackName); 
+            // Si l'image manque, on charge automatiquement la vue de Face (_south_view) et on la fera tourner !
+            img = window.getAsset(`${prefix}_south_view`); 
         }
 
         let wobble = Math.sin(enemy.wobble) * 0.15; 
@@ -352,7 +338,6 @@ window.renderGameView = function() {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
-            // --- REDUCTION DE LA TAILLE DE CERTAINS ENNEMIS (-50%) ---
             if (['troll', 'dragon', 'goblin', 'skeleton', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) {
                 displaySize = enemy.size * 1.875; 
             }
@@ -370,29 +355,26 @@ window.renderGameView = function() {
         ctx.shadowColor = 'transparent'; 
         ctx.shadowBlur = 0;
         
-        // ========================================================
-        // --- NOUVEAU RENDU DE L'EFFET DE BRÛLURE (FEU) ---
-        // ========================================================
+        // ====================================================================
+        // --- NOUVELLE ANIMATION DES BRÛLURES AVEC LES SKINS D'EFFETS ---
+        // ====================================================================
         if (enemy.isBurning) { 
-            ctx.save(); // On sauvegarde pour modifier l'alpha spécifiquement ici
-
-            // MODIFIER ICI LA VALEUR DE L'OPACITÉ (0.0 pour invisible, 1.0 pour opaque)
-            ctx.globalAlpha = 0.5; // J'ai mis 50% comme base
-
-            let burnOverlay = window.getAsset('Attack_rock_golem');
+            ctx.save(); 
+            ctx.globalAlpha = 0.7; // 70% d'opacité pour que ça ressorte bien
+            
+            // On alterne entre les images 1 et 2 toutes les 200 millisecondes
+            let burnFrame = Math.floor(Date.now() / 200) % 2 === 0 ? 'burned_ennemy_view1' : 'burned_ennemy_view2';
+            let burnOverlay = window.getAsset(burnFrame);
 
             if (burnOverlay && burnOverlay.complete && burnOverlay.naturalWidth > 0) {
-                // On dessine la texture du rocher comme overlay centered et à la taille de l'ennemi.
-                // On l'agrandit légèrement (* 1.5) pour faire un effet d'aura enflammée.
-                let overlaySize = enemy.size * 1.5;
+                // On met l'effet de brûlure légèrement plus grand que l'ennemi
+                let overlaySize = enemy.size * 1.8; 
                 ctx.drawImage(burnOverlay, -overlaySize / 2, -overlaySize / 2, overlaySize, overlaySize);
             } else {
-                // Fallback au simple cercle orange scintillant si l'image est manquante
                 ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; 
                 ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); 
             }
-            
-            ctx.restore(); // On restaure l'alpha normal immédiatement
+            ctx.restore(); 
         }
         
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { 
@@ -443,7 +425,6 @@ window.renderGameView = function() {
             
             let drawSize = p.size * 15.0; 
             
-            // --- TRANSFORMATION EN LIGNE POUR LE MAGE ET REDUCTION NECRO ---
             if (p.type === 'fire_mage') {
                 ctx.drawImage(pImg, -drawSize / 4, -drawSize, drawSize / 2, drawSize * 2);
             } else {
@@ -478,7 +459,6 @@ window.renderGameView = function() {
         let epImg = window.getAsset(epImgName);
         
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
-            // --- ANIMATIONS ROTATIVES POUR BOOMERANG ET ROCHERS ---
             if (p.type === 'armor_sword') {
                 ctx.rotate(Date.now() / 40); 
             } else if (p.type === 'rock_golem') {
@@ -548,31 +528,22 @@ window.renderGameView = function() {
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
             is8DirP = false;
-            if (player.heroClass === 'Elf') {
-                let angle = player.faceAngle; 
-                let pSkinNameFallback = 'Elf_front'; 
-                
-                if (angle > -Math.PI/4 && angle <= Math.PI/4) pSkinNameFallback = 'Elf_est'; 
-                else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) pSkinNameFallback = 'Elf_front'; 
-                else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) pSkinNameFallback = 'Elf_back'; 
-                else pSkinNameFallback = 'Elf_west';                                                      
-                
-                pImg = window.getAsset(pSkinNameFallback); 
-                is8DirP = true; 
-            } else if (player.heroClass === 'Mage') {
-                pImg = window.getAsset('Burned_top_view');
-            }
+            let fallbackNameP = '';
+            if (player.heroClass === 'Elf') fallbackNameP = 'Elf_south_view';
+            else if (player.heroClass === 'Mage') fallbackNameP = 'Burned_south_view';
+            else fallbackNameP = `${prefixP}_south_view`;
+            
+            pImg = window.getAsset(fallbackNameP);
         }
 
         if (is8DirP) {
             ctx.rotate(tilt); 
         } else {
-            if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
-            else ctx.rotate(player.faceAngle + tilt); 
+            ctx.rotate(player.faceAngle - (Math.PI / 2) + tilt); 
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
+            let displaySize = player.size * 3.75; 
             
             if (player.heroClass === 'Elf') {
                 displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
@@ -582,7 +553,6 @@ window.renderGameView = function() {
             
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
-            // --- ANIMATION DE L'ÉPÉE DU CHEVALIER EN ARC DE CERCLE ---
             if (prefixP === 'Knight' && attackCooldown > 0) {
                 let swordImg = window.getAsset('Attack_sword_knight');
                 if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
