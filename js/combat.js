@@ -20,7 +20,6 @@ window.handlePlayerAttack = function() {
         }
     } 
     else if (player.heroClass === 'Mage') {
-        // --- LE MAGE TIRE BEAUCOUP PLUS VITE ET SES PROJECTILES FILENT (22 de vitesse) ---
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 22, vy: Math.sin(angle) * 22, size: 8, hitTargets: [], angle: angle, type: 'fire_mage' }); 
         attackCooldown = 25; 
     } 
@@ -39,13 +38,14 @@ window.handlePlayerAttack = function() {
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         enemy.blockAnimTimer = 45; 
                     } else { 
-                        enemy.health -= 50; 
+                        let mult = playerStats.attackMultiplier || 1.0;
+                        enemy.health -= 50 * mult; 
                         
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
                             let bSize = enemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(enemy.type.toLowerCase())) bSize /= 2;
                             bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
@@ -100,9 +100,10 @@ window.updateProjectiles = function() {
                         isBlocked = true; enemy.blockAnimTimer = 45; 
                     }
                     if (!isBlocked) { 
-                        let dmg = 30; 
-                        if (player.heroClass === 'Elf') dmg = 60; 
-                        else if (p.type === 'fire_fusion') dmg = 40; 
+                        let mult = playerStats.attackMultiplier || 1.0;
+                        let dmg = 30 * mult; 
+                        if (player.heroClass === 'Elf') dmg = 60 * mult; 
+                        else if (p.type === 'fire_fusion') dmg = 40 * mult; 
                         
                         enemy.health -= dmg; 
                         
@@ -116,7 +117,7 @@ window.updateProjectiles = function() {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
                     let bSize = enemy.size * 1.5;
-                    if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                    if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(enemy.type.toLowerCase())) bSize /= 2;
                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
@@ -231,6 +232,11 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'coin') { 
                 playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); 
             }
+            else if (item.type === 'scroll') {
+                playerStats.attackMultiplier = (playerStats.attackMultiplier || 1.0) + 0.10; 
+                alert("YOUR WEAPON IS UPGRADED ! (+10% Attack)");
+            }
+            
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             currentItems.splice(i, 1); 
         }
