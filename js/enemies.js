@@ -3,6 +3,9 @@
 // ============================================================================
 
 window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
+    // --- SÉCURITÉ ANTI-CRASH ---
+    window.currentEnemies = window.currentEnemies || [];
+
     for (let i = 0; i < count; i++) {
         let ex = baseX; let ey = baseY;
         
@@ -12,7 +15,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
             let minSpawnY = wallMargin + window.arenaShrink;
             let maxSpawnY = canvas.height - wallMargin - window.arenaShrink - 40;
 
-            if (arenaWave >= 41) {
+            if (typeof arenaWave !== 'undefined' && arenaWave >= 41) {
                 let side = Math.floor(Math.random() * 4);
                 if (side === 0) { ex = minSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); }
                 else if (side === 1) { ex = maxSpawnX; ey = minSpawnY + Math.random() * (maxSpawnY - minSpawnY); } 
@@ -41,7 +44,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'minotaure') { size = 60; hp = 300; spd = 3.5; col = '#e67e22'; }
         else if (type === 'gargouille') { size = 60; hp = 300; spd = 5.0; col = '#34495e'; }
 
-        if (isArenaMode && arenaWave >= 25 && !['spider', 'wolf', 'dragon', 'deathgod', 'elysia', 'armor'].includes(type)) {
+        if (typeof isArenaMode !== 'undefined' && isArenaMode && typeof arenaWave !== 'undefined' && arenaWave >= 25 && !['spider', 'wolf', 'dragon', 'deathgod', 'elysia', 'armor'].includes(type)) {
             hp += (arenaWave - 24) * 30;
         }
 
@@ -63,9 +66,19 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 };
 
 window.updateEnemies = function() {
+    // --- SÉCURITÉ ANTI-CRASH (Ligne 88 sauvée !) ---
+    window.currentEnemies = window.currentEnemies || [];
+    window.necroSummons = window.necroSummons || [];
+    window.enemyProjectiles = window.enemyProjectiles || [];
+    window.currentItems = window.currentItems || [];
+    window.hazards = window.hazards || [];
+    window.currentObstacles = window.currentObstacles || [];
+    window.necroKills = window.necroKills || [];
+    window.bloodStains = window.bloodStains || [];
+
     let shrink = typeof window.arenaShrink !== 'undefined' ? window.arenaShrink : 0;
     
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin; 
@@ -77,14 +90,15 @@ window.updateEnemies = function() {
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
     let fusionAggro = null;
-    if (typeof window.necroSummons !== 'undefined') {
+    if (window.necroSummons.length > 0) {
         fusionAggro = window.necroSummons.find(s => s.type === 'fusion');
     }
     
     let targetObj = fusionAggro ? fusionAggro : player;
-    let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
+    let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
     if (fusionAggro) isElfInvuln = false; 
 
+    // C'EST CETTE LIGNE QUI PLANTAIT AVANT (Maintenant protégée par la sécurité)
     window.currentEnemies.forEach((enemy, idx) => {
         let eMaxX = bRight - shrink - enemy.size; 
         let eMaxY = bBot - shrink - enemy.size;
@@ -154,10 +168,7 @@ window.updateEnemies = function() {
             if (enemy.summonTimer <= 0) {
                 let mx = bLeft + Math.random() * (bRight - bLeft);
                 let my = bTop + Math.random() * (bBot - bTop);
-                if (typeof window.hazards !== 'undefined') {
-                    let fallSpeed = isPhase2 ? Math.max(15, 40 * hpRatio) : 50; 
-                    window.hazards.push({ x: mx, y: my, radius: 45, timer: fallSpeed, maxTimer: fallSpeed, damage: 30, isDragon: true });
-                }
+                window.hazards.push({ x: mx, y: my, radius: 45, timer: fallSpeed, maxTimer: fallSpeed, damage: 30, isDragon: true });
                 enemy.summonTimer = spawnRate; 
             }
             
@@ -294,7 +305,7 @@ window.updateEnemies = function() {
                 if (enemy.summonTimer <= 0) {
                     let mx = bLeft + Math.random()*(bRight - bLeft);
                     let my = bTop + Math.random()*(bBot - bTop);
-                    if (typeof window.hazards !== 'undefined') window.hazards.push({ x: mx, y: my, radius: 40, timer: 60, maxTimer: 60, damage: playerStats.maxHealth * 0.34, isElysia: true });
+                    window.hazards.push({ x: mx, y: my, radius: 40, timer: 60, maxTimer: 60, damage: playerStats.maxHealth * 0.34, isElysia: true });
                     enemy.summonTimer = 40 * hpRatio; 
                 }
             }
@@ -360,18 +371,16 @@ window.updateEnemies = function() {
         let isBoss = ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type);
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
-        if (typeof window.currentObstacles !== 'undefined') {
-            for (let obs of window.currentObstacles) {
-                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
-            }
+        for (let i = 0; i < window.currentObstacles.length; i++) {
+            let obs = window.currentObstacles[i];
+            if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
         }
         if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
-        if (typeof window.currentObstacles !== 'undefined') {
-            for (let obs of window.currentObstacles) {
-                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
-            }
+        for (let i = 0; i < window.currentObstacles.length; i++) {
+            let obs = window.currentObstacles[i];
+            if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
         }
         if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
 
@@ -419,95 +428,93 @@ window.updateEnemies = function() {
         }
     });
 
-    if (typeof window.necroSummons !== 'undefined') {
-        for (let i = 0; i < window.necroSummons.length; i++) {
-            let summon = window.necroSummons[i]; let repX = 0, repY = 0;
-            for (let j = 0; j < window.necroSummons.length; j++) {
-                if (i !== j) {
-                    let other = window.necroSummons[j];
-                    let diffX = summon.x - other.x; let diffY = summon.y - other.y;
-                    if (Math.abs(diffX) < 50 && Math.abs(diffY) < 50) {
-                        let distSq = diffX*diffX + diffY*diffY; let minDistSq = ((summon.size + other.size) * 0.4) ** 2;
-                        if (distSq < minDistSq && distSq > 0) {
-                            let repDist = Math.sqrt(distSq); repX += (diffX / repDist) * 2.0; repY += (diffY / repDist) * 2.0;
-                        }
+    for (let i = 0; i < window.necroSummons.length; i++) {
+        let summon = window.necroSummons[i]; let repX = 0, repY = 0;
+        for (let j = 0; j < window.necroSummons.length; j++) {
+            if (i !== j) {
+                let other = window.necroSummons[j];
+                let diffX = summon.x - other.x; let diffY = summon.y - other.y;
+                if (Math.abs(diffX) < 50 && Math.abs(diffY) < 50) {
+                    let distSq = diffX*diffX + diffY*diffY; let minDistSq = ((summon.size + other.size) * 0.4) ** 2;
+                    if (distSq < minDistSq && distSq > 0) {
+                        let repDist = Math.sqrt(distSq); repX += (diffX / repDist) * 2.0; repY += (diffY / repDist) * 2.0;
                     }
                 }
             }
-            summon.x += repX; summon.y += repY;
+        }
+        summon.x += repX; summon.y += repY;
+    }
+
+    for (let i = window.necroSummons.length - 1; i >= 0; i--) {
+        let summon = window.necroSummons[i];
+        if (summon.attackCooldown === undefined) summon.attackCooldown = 0;
+        if (summon.attackAnimTimer === undefined) summon.attackAnimTimer = 0;
+        if (summon.attackCooldown > 0) summon.attackCooldown--;
+        if (summon.attackAnimTimer > 0) summon.attackAnimTimer--;
+        
+        let nearestEnemy = null; let minDist = 9999;
+        window.currentEnemies.forEach(e => {
+            if (!e.invulnerable) {
+                let d = Math.hypot((e.x + e.size/2) - (summon.x + summon.size/2), (e.y + e.size/2) - (summon.y + summon.size/2));
+                if (d < minDist) { minDist = d; nearestEnemy = e; }
+            }
+        });
+
+        let isTargetingPlayer = false;
+        if (!nearestEnemy) {
+            nearestEnemy = player;
+            minDist = Math.hypot((player.x + player.size/2) - (summon.x + summon.size/2), (player.y + player.size/2) - (summon.y + summon.size/2));
+            isTargetingPlayer = true;
         }
 
-        for (let i = window.necroSummons.length - 1; i >= 0; i--) {
-            let summon = window.necroSummons[i];
-            if (summon.attackCooldown === undefined) summon.attackCooldown = 0;
-            if (summon.attackAnimTimer === undefined) summon.attackAnimTimer = 0;
-            if (summon.attackCooldown > 0) summon.attackCooldown--;
-            if (summon.attackAnimTimer > 0) summon.attackAnimTimer--;
-            
-            let nearestEnemy = null; let minDist = 9999;
-            window.currentEnemies.forEach(e => {
-                if (!e.invulnerable) {
-                    let d = Math.hypot((e.x + e.size/2) - (summon.x + summon.size/2), (e.y + e.size/2) - (summon.y + summon.size/2));
-                    if (d < minDist) { minDist = d; nearestEnemy = e; }
-                }
-            });
+        if (nearestEnemy) {
+            let dx = (nearestEnemy.x + nearestEnemy.size/2) - (summon.x + summon.size/2);
+            let dy = (nearestEnemy.y + nearestEnemy.size/2) - (summon.y + summon.size/2);
+            let angle = Math.atan2(dy, dx);
+            summon.faceAngle = angle;
 
-            let isTargetingPlayer = false;
-            if (!nearestEnemy) {
-                nearestEnemy = player;
-                minDist = Math.hypot((player.x + player.size/2) - (summon.x + summon.size/2), (player.y + player.size/2) - (summon.y + summon.size/2));
-                isTargetingPlayer = true;
+            let stopDistance = 30;
+            if (!isTargetingPlayer) {
+                stopDistance = summon.type === 'fusion' ? 150 : 30; 
+            } else {
+                stopDistance = 80; 
             }
 
-            if (nearestEnemy) {
-                let dx = (nearestEnemy.x + nearestEnemy.size/2) - (summon.x + summon.size/2);
-                let dy = (nearestEnemy.y + nearestEnemy.size/2) - (summon.y + summon.size/2);
-                let angle = Math.atan2(dy, dx);
-                summon.faceAngle = angle;
+            if (minDist > stopDistance) {
+                summon.x += Math.cos(angle) * summon.speed; summon.y += Math.sin(angle) * summon.speed;
+            }
 
-                let stopDistance = 30;
-                if (!isTargetingPlayer) {
-                    stopDistance = summon.type === 'fusion' ? 150 : 30; 
-                } else {
-                    stopDistance = 80; 
-                }
-
-                if (minDist > stopDistance) {
-                    summon.x += Math.cos(angle) * summon.speed; summon.y += Math.sin(angle) * summon.speed;
-                }
-
-                if (summon.attackCooldown <= 0 && !isTargetingPlayer) { 
-                    if (summon.type === 'fusion') {
-                        summon.damage = 40; 
-                        if (minDist < 350 && minDist > 100) { 
-                            window.projectiles.push({ x: summon.x + summon.size/2, y: summon.y + summon.size/2, vx: Math.cos(angle)*10, vy: Math.sin(angle)*10, size: 12, hitTargets: [], angle: angle, type: 'fire_fusion', pierce: true });
-                            summon.attackCooldown = 45; summon.attackAnimTimer = 20;
-                        } else if (minDist <= 100) { 
-                            let hitBox = { x: summon.x - 50, y: summon.y - 50, width: summon.size + 100, height: summon.size + 100 };
-                            window.currentEnemies.forEach(e => {
-                                if (!e.invulnerable && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, e)) {
-                                    e.health -= summon.damage; 
-                                    let hitNum = Math.floor(Math.random() * 3) + 1;
-                                    let bSize = e.size * 1.5;
-                                    if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(e.type.toLowerCase())) bSize /= 2;
-                                    window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
-                                }
-                            });
-                            summon.attackCooldown = 30; summon.attackAnimTimer = 20;
-                        }
-                    } else if (summon.type === 'soul') {
-                        if (minDist < 50) { 
-                            nearestEnemy.health -= summon.damage; summon.attackCooldown = 60; summon.attackAnimTimer = 20;
-                            let hitNum = Math.floor(Math.random() * 3) + 1;
-                            let bSize = nearestEnemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(nearestEnemy.type.toLowerCase())) bSize /= 2;
-                            window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
-                        }
+            if (summon.attackCooldown <= 0 && !isTargetingPlayer) { 
+                if (summon.type === 'fusion') {
+                    summon.damage = 40; 
+                    if (minDist < 350 && minDist > 100) { 
+                        window.projectiles.push({ x: summon.x + summon.size/2, y: summon.y + summon.size/2, vx: Math.cos(angle)*10, vy: Math.sin(angle)*10, size: 12, hitTargets: [], angle: angle, type: 'fire_fusion', pierce: true });
+                        summon.attackCooldown = 45; summon.attackAnimTimer = 20;
+                    } else if (minDist <= 100) { 
+                        let hitBox = { x: summon.x - 50, y: summon.y - 50, width: summon.size + 100, height: summon.size + 100 };
+                        window.currentEnemies.forEach(e => {
+                            if (!e.invulnerable && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, e)) {
+                                e.health -= summon.damage; 
+                                let hitNum = Math.floor(Math.random() * 3) + 1;
+                                let bSize = e.size * 1.5;
+                                if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(e.type.toLowerCase())) bSize /= 2;
+                                window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                            }
+                        });
+                        summon.attackCooldown = 30; summon.attackAnimTimer = 20;
+                    }
+                } else if (summon.type === 'soul') {
+                    if (minDist < 50) { 
+                        nearestEnemy.health -= summon.damage; summon.attackCooldown = 60; summon.attackAnimTimer = 20;
+                        let hitNum = Math.floor(Math.random() * 3) + 1;
+                        let bSize = nearestEnemy.size * 1.5;
+                        if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(nearestEnemy.type.toLowerCase())) bSize /= 2;
+                        window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
                     }
                 }
             }
-            if (summon.health <= 0) { window.necroSummons.splice(i, 1); }
         }
+        if (summon.health <= 0) { window.necroSummons.splice(i, 1); }
     }
 
     for (let i = window.currentEnemies.length - 1; i >= 0; i--) {
