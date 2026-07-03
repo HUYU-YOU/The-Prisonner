@@ -4,6 +4,100 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
+window.loadRoom = function(roomId, spawnFace) {
+    window.currentRoomId = roomId;
+    window.currentDoors = [];
+    window.currentEnemies = [];
+    window.currentItems = [];
+    window.currentCrates = [];
+    window.currentObstacles = []; 
+    if (typeof window.hazards !== 'undefined') window.hazards.length = 0;
+    if (typeof window.projectiles !== 'undefined') window.projectiles.length = 0;
+    if (typeof window.enemyProjectiles !== 'undefined') window.enemyProjectiles.length = 0;
+
+    let cw = canvas.width;
+    let ch = canvas.height;
+    let wm = wallMargin;
+
+    function addDoor(face, dest, locked = false, offset = 0) {
+        let door = { face: face, dest: dest, locked: locked, width: 80, height: 80, id: roomId + '_' + dest };
+        if (face === 'north') { door.x = cw/2 - 40 + offset; door.y = 0; door.spawnX = door.x; door.spawnY = door.y + 100; }
+        else if (face === 'south') { door.x = cw/2 - 40 + offset; door.y = ch - 80; door.spawnX = door.x; door.spawnY = door.y - 100; }
+        else if (face === 'west') { door.x = 0; door.y = ch/2 - 40 + offset; door.spawnX = door.x + 100; door.spawnY = door.y; }
+        else if (face === 'east') { door.x = cw - 80; door.y = ch/2 - 40 + offset; door.spawnX = door.x - 100; door.spawnY = door.y; }
+        window.currentDoors.push(door);
+    }
+
+    // --- NIVEAU 1 ---
+    if (roomId === 1) { addDoor('north', 2); }
+    else if (roomId === 2) { addDoor('south', 1); addDoor('north', 3, true); addDoor('east', 4); }
+    else if (roomId === 3) { addDoor('south', 2); addDoor('north', 8, true); }
+    else if (roomId === 4) { addDoor('west', 2); addDoor('east', 5); addDoor('south', 6); }
+    else if (roomId === 5) { addDoor('west', 4); if (!worldState.clearedRooms[5]) window.spawnEnemy('skeleton', 3); }
+    else if (roomId === 6) { addDoor('north', 4); if (!worldState.clearedRooms[6]) window.spawnEnemy('spider', 3); }
+    else if (roomId === 7) { addDoor('north', 8); }
+    else if (roomId === 8) { addDoor('south', 7); }
+
+    // --- NIVEAU 2 (101 à 114) ---
+    else if (roomId === 101) { 
+        addDoor('north', 114, true);  
+        addDoor('south', 104, false); 
+        addDoor('east', 103, false);  
+        addDoor('west', 102, true);   
+    }
+    else if (roomId === 102) { 
+        addDoor('east', 101, true);
+        addDoor('north', 105, false, 200); 
+        addDoor('west', 106, false);
+        window.currentObstacles.push({ x: cw/2 - 20, y: wm, width: 40, height: ch - wm*2, type: 'hole' });
+        if (!worldState.clearedRooms[102]) window.spawnEnemy('skeleton', 2, wm + 50, ch/2);
+    }
+    else if (roomId === 103) { 
+        addDoor('west', 101, false);
+        addDoor('north', 111, false);
+        window.currentObstacles.push({ x: cw - wm - 150, y: wm, width: 150, height: 150, type: 'hole' });
+        window.currentObstacles.push({ x: cw - wm - 150, y: ch - wm - 150, width: 150, height: 150, type: 'hole' });
+        if (!worldState.clearedRooms[103]) { window.spawnEnemy('skeleton', 1, cw - wm - 80, wm + 80); window.spawnEnemy('skeleton', 1, cw - wm - 80, ch - wm - 80); }
+    }
+    else if (roomId === 104) { 
+        addDoor('north', 101, false);
+        addDoor('west', 107, true); 
+        addDoor('east', 109, true); 
+    }
+    else if (roomId === 105) { 
+        addDoor('south', 102, false, 200);  
+        addDoor('south', 106, false, -200); 
+        if (!worldState.clearedRooms[105]) window.spawnEnemy('goblin', 3);
+    }
+    else if (roomId === 106) { 
+        addDoor('north', 105, false); 
+        addDoor('east', 102, false);  
+        if (!worldState.clearedRooms[106]) window.spawnEnemy('spider', 4);
+    }
+    else if (roomId === 107) { addDoor('east', 104, true); addDoor('south', 108, true); if (!worldState.clearedRooms[107]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 108) { addDoor('north', 107, true); if (!worldState.clearedRooms[108]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 109) { addDoor('west', 104, true); addDoor('south', 110, true); if (!worldState.clearedRooms[109]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 110) { addDoor('north', 109, true); if (!worldState.clearedRooms[110]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 111) { 
+        addDoor('south', 103, false);
+        addDoor('north', 112, false);
+        addDoor('west', 114, true); 
+    }
+    else if (roomId === 112) { 
+        addDoor('south', 111, false);
+        addDoor('north', 113, false);
+    }
+    else if (roomId === 113) { 
+        addDoor('south', 112, false);
+        if (!worldState.clearedRooms[113]) { window.spawnEnemy('troll', 1, cw/2 - 100, ch/2); window.spawnEnemy('troll', 1, cw/2 + 100, ch/2); }
+    }
+    else if (roomId === 114) { 
+        addDoor('south', 101, true);
+        addDoor('east', 111, true);
+        window.currentObstacles.push({ x: cw/2 - 100, y: ch/2 - 100, width: 200, height: 200, type: 'water' });
+    }
+};
+
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
@@ -30,7 +124,6 @@ window.update = function() {
         requestAnimationFrame(window.update); return; 
     }
     
-    // --- GESTION DU MODE ARÈNE ET RÉTRÉCISSEMENT ---
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
@@ -55,11 +148,6 @@ window.update = function() {
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
-                // =========================================================
-                // NOUVEAU SYSTÈME DE VAGUES (LIMITÉ À 20 ENTITÉS MAX)
-                // =========================================================
-                
-                // Vagues de Boss
                 if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
                 else if (arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('orc', 2); }
                 else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 1); }
@@ -68,57 +156,35 @@ window.update = function() {
                 else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 3); }
                 else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); window.spawnEnemy('minotaure', 2); window.spawnEnemy('gargouille', 1); }
                 else {
-                    // Calcul du nombre d'ennemis
                     let totalToSpawn = 3 + Math.floor(arenaWave * 1.2);
-                    if (arenaWave >= 15) {
-                        totalToSpawn = Math.min(totalToSpawn, 20); // PLAFONNÉ À 20 ENTITÉS MAX
-                    }
+                    if (arenaWave >= 15) { totalToSpawn = Math.min(totalToSpawn, 20); }
                     
                     let spawnCounts = {};
-                    
-                    // Répartition progressive des Monstres
                     for (let i = 0; i < totalToSpawn; i++) {
                         let type = '';
-                        let r = Math.random(); // Définit la catégorie (Corps à corps, Tank, Rapide)
-
-                        if (arenaWave < 10) {
-                            // Phase 1 : Gobelins et Squelettes
-                            type = r < 0.7 ? 'goblin' : 'skeleton';
-                        } 
+                        let r = Math.random(); 
+                        if (arenaWave < 10) { type = r < 0.7 ? 'goblin' : 'skeleton'; } 
                         else if (arenaWave < 15) {
-                            // Phase 2 : Gobelins, Squelettes, Araignées
-                            if (r < 0.6) type = 'goblin';
-                            else if (r < 0.9) type = 'skeleton';
-                            else type = 'spider';
+                            if (r < 0.6) type = 'goblin'; else if (r < 0.9) type = 'skeleton'; else type = 'spider';
                         } 
                         else if (arenaWave <= 27) {
-                            // Phase 3 : Transition vers Orcs, Golems et Loups
-                            let progress = (arenaWave - 15) / 12; // Va de 0 à 1
+                            let progress = (arenaWave - 15) / 12; 
                             if (r < 0.6) type = Math.random() < progress ? 'orc' : 'goblin';
                             else if (r < 0.9) type = Math.random() < progress ? 'golem' : 'skeleton';
                             else type = Math.random() < progress ? 'wolf' : 'spider';
                         } 
                         else if (arenaWave <= 40) {
-                            // Phase 4 : Transition vers Minotaures et Gargouilles (Plus aucun T1)
-                            let progress = (arenaWave - 27) / 13; // Va de 0 à 1
+                            let progress = (arenaWave - 27) / 13; 
                             if (r < 0.6) type = Math.random() < progress ? 'minotaure' : 'orc';
                             else if (r < 0.9) type = Math.random() < progress ? 'gargouille' : 'golem';
-                            else type = 'wolf'; // Les loups restent
+                            else type = 'wolf'; 
                         } 
                         else {
-                            // Phase 5 (41+) : Que l'Élite ! (Plus aucun T2)
-                            if (r < 0.6) type = 'minotaure';
-                            else if (r < 0.9) type = 'gargouille';
-                            else type = 'wolf';
+                            if (r < 0.6) type = 'minotaure'; else if (r < 0.9) type = 'gargouille'; else type = 'wolf';
                         }
-
                         spawnCounts[type] = (spawnCounts[type] || 0) + 1;
                     }
-
-                    // Apparition des ennemis calculés
-                    for (let mobType in spawnCounts) {
-                        window.spawnEnemy(mobType, spawnCounts[mobType]);
-                    }
+                    for (let mobType in spawnCounts) { window.spawnEnemy(mobType, spawnCounts[mobType]); }
                 }
                 arenaWave++;
             }
@@ -135,7 +201,6 @@ window.update = function() {
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     
-    // --- GESTION DES PORTES ET CHANGEMENT DE SALLE ---
     let roomChanged = false;
     let doorToPass = null;
     
@@ -199,7 +264,6 @@ window.update = function() {
         return;
     }
     
-    // --- CONTRÔLES ULTIME ---
     if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
         if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
         keys['space'] = false; keys['0'] = false; keys['control'] = false; 
@@ -240,7 +304,6 @@ window.update = function() {
     let manaBar = document.getElementById('mana-bar');
     if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
-    // --- DÉPLACEMENTS ---
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let dx_mov = 0; let dy_mov = 0;
@@ -256,6 +319,22 @@ window.update = function() {
     
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
+    
+    if (typeof window.currentObstacles !== 'undefined') {
+        for (let i = 0; i < window.currentObstacles.length; i++) {
+            let obs = window.currentObstacles[i];
+            if (window.checkCollision(player, obs)) {
+                if (obs.type === 'water') {
+                    alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
+                    player.y += 20; 
+                    break;
+                } else {
+                    player.x = oldPx; player.dashTimer = 0; break;
+                }
+            }
+        }
+    }
+    
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
@@ -263,6 +342,18 @@ window.update = function() {
     
     let oldPy = player.y; player.y += dy_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
+    
+    if (typeof window.currentObstacles !== 'undefined') {
+        for (let i = 0; i < window.currentObstacles.length; i++) {
+            let obs = window.currentObstacles[i];
+            if (window.checkCollision(player, obs)) {
+                if (obs.type !== 'water') {
+                    player.y = oldPy; player.dashTimer = 0; break;
+                }
+            }
+        }
+    }
+    
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
@@ -310,7 +401,8 @@ window.update = function() {
         if (window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
-                setTimeout(() => { alert("FÉLICITATIONS !\n\nLa suite de l'aventure arrive très bientôt..."); window.location.reload(); }, 100); 
+                alert("VOUS AVEZ DÉBLOQUÉ LE NIVEAU 2 !");
+                if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
                 return;
             }
         }
