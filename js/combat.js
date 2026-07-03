@@ -3,12 +3,18 @@
 // ============================================================================
 
 window.handlePlayerAttack = function() {
+    // --- SÉCURITÉ ANTI-CRASH ---
+    window.projectiles = window.projectiles || [];
+    window.currentEnemies = window.currentEnemies || [];
+    window.currentCrates = window.currentCrates || [];
+    window.bloodStains = window.bloodStains || [];
+
     let dx = mouse.x - (player.x + player.size / 2); 
     let dy = mouse.y - (player.y + player.size / 2);
     let angle = Math.atan2(dy, dx); 
     
     if (player.heroClass === 'Elf') {
-        if (isUltimateActive) {
+        if (typeof isUltimateActive !== 'undefined' && isUltimateActive) {
             elfStealthBroken = true; 
             let spread = 0.15;
             window.projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle - spread) * 12, vy: Math.sin(angle - spread) * 12, size: 5, hitTargets: [], angle: angle - spread, type: 'arrow_elf' });
@@ -33,7 +39,7 @@ window.handlePlayerAttack = function() {
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 60 - 60, y: player.y + player.size / 2 + Math.sin(angle) * 60 - 60, size: 120 };
         
         window.currentEnemies.forEach(enemy => { 
-            if (window.checkCollision(hitBox, enemy)) {
+            if (typeof window.checkCollision === 'function' && window.checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         enemy.blockAnimTimer = 45; 
@@ -56,13 +62,22 @@ window.handlePlayerAttack = function() {
         
         for (let i = 0; i < window.currentCrates.length; i++) {
             let obj = window.currentCrates[i]; 
-            if (!obj.isBroken && window.checkCollision(hitBox, obj)) { obj.health -= 50; }
+            if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, obj)) { obj.health -= 50; }
         }
     }
 };
 
 window.updateProjectiles = function() {
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
+    // --- SÉCURITÉ ANTI-CRASH ---
+    window.projectiles = window.projectiles || [];
+    window.enemyProjectiles = window.enemyProjectiles || [];
+    window.currentEnemies = window.currentEnemies || [];
+    window.currentCrates = window.currentCrates || [];
+    window.hazards = window.hazards || [];
+    window.necroSummons = window.necroSummons || [];
+    window.bloodStains = window.bloodStains || [];
+
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin; 
@@ -74,7 +89,7 @@ window.updateProjectiles = function() {
         p.x += p.vx; 
         p.y += p.vy;
         
-        if (currentRoomId === 8 && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
+        if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
             window.projectiles.splice(i, 1); continue; 
         }
         if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { 
@@ -86,14 +101,14 @@ window.updateProjectiles = function() {
 
         for (let c = 0; c < window.currentCrates.length; c++) {
             let obj = window.currentCrates[c];
-            if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; }
+            if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; }
         }
 
         for (let j = 0; j < window.currentEnemies.length; j++) {
             let enemy = window.currentEnemies[j];
             if (p.hitTargets && p.hitTargets.includes(enemy)) continue;
             
-            if (!projectileHit && window.checkCollision(arrowHitbox, enemy)) {
+            if (!projectileHit && typeof window.checkCollision === 'function' && window.checkCollision(arrowHitbox, enemy)) {
                 if (!enemy.invulnerable) {
                     let isBlocked = false;
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
@@ -121,7 +136,7 @@ window.updateProjectiles = function() {
                     window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
-                let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
+                let isPiercingElf = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf');
                 let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
                 
                 if (isPiercing) { 
@@ -134,7 +149,7 @@ window.updateProjectiles = function() {
         if (projectileHit) window.projectiles.splice(i, 1); 
     }
 
-    let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
+    let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
     let fusionAggro = null;
     if (typeof window.necroSummons !== 'undefined') { fusionAggro = window.necroSummons.find(s => s.type === 'fusion'); }
 
@@ -154,17 +169,17 @@ window.updateProjectiles = function() {
         if (ep.x < bLeft || ep.y < bTop || ep.x > bRight || ep.y > bBot) { 
             window.enemyProjectiles.splice(i, 1); continue; 
         }
-        if (currentRoomId === 8 && window.checkCollision(epHitbox, centerStairs)) { 
+        if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(epHitbox, centerStairs)) { 
             window.enemyProjectiles.splice(i, 1); continue; 
         }
 
-        if (fusionAggro && window.checkCollision(fusionAggro, epHitbox)) {
+        if (fusionAggro && typeof window.checkCollision === 'function' && window.checkCollision(fusionAggro, epHitbox)) {
             fusionAggro.health -= ep.damage || 15;
             window.enemyProjectiles.splice(i, 1);
             continue;
         }
 
-        if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
+        if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && typeof window.checkCollision === 'function' && window.checkCollision(player, epHitbox)) {
             let epDmg = ep.damage || 15;
             if (ep.type === 'rock_golem' || ep.type === 'rock_gargouille') epDmg = 25;
             
@@ -217,9 +232,13 @@ window.updateProjectiles = function() {
 };
 
 window.updateItemsAndCrates = function() {
+    // --- SÉCURITÉ ANTI-CRASH ---
+    window.currentItems = window.currentItems || [];
+    window.currentCrates = window.currentCrates || [];
+
     for (let i = window.currentItems.length - 1; i >= 0; i--) {
         let item = window.currentItems[i];
-        if (window.checkCollision(player, item)) {
+        if (typeof window.checkCollision === 'function' && window.checkCollision(player, item)) {
             worldState.collectedItems[item.id] = true; 
             
             if (item.type === 'key') playerStats.inventory.keys.gold++; 
