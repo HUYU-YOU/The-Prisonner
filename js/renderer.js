@@ -331,7 +331,8 @@ window.renderGameView = function() {
         ctx.shadowOffsetX = 4; 
         ctx.shadowOffsetY = 4;
         
-        if (enemy.type === 'troll' || enemy.type === 'orc') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
+        // --- CORRECTION : PLUS DE CONTOUR VERT SUR L'ORC ---
+        if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'dragon' || enemy.type === 'minotaure') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
         
@@ -422,9 +423,9 @@ window.renderGameView = function() {
             
             let drawSize = p.size * 15.0; 
             
-            // LIGNE POUR LE MAGE
+            // --- RAYON DU MAGE ENCORE PLUS FIN ET LONG ---
             if (p.type === 'fire_mage') {
-                ctx.drawImage(pImg, -drawSize / 8, -drawSize * 1.5, drawSize / 4, drawSize * 3);
+                ctx.drawImage(pImg, -drawSize / 12, -drawSize * 2, drawSize / 6, drawSize * 4);
             } else {
                 if (p.type === 'fire_necromancien') {
                     drawSize = drawSize / 2; 
@@ -438,7 +439,7 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- SKINS DES PROJECTILES DES ENNEMIS (VRAIE PHYSIQUE DE ROTATION) ---
+    // --- SKINS DES PROJECTILES DES ENNEMIS ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -456,23 +457,19 @@ window.renderGameView = function() {
         
         let epImg = window.getAsset(epImgName);
         
-        // Initialisation de la variable de rotation si elle n'existe pas encore
-        if (p.rollAngle === undefined) p.rollAngle = 0;
-        
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
             
-            // --- NOUVEAU SYSTÈME DE ROTATION PARFAITE ---
+            // --- NOUVEAU SYSTÈME DE ROTATION INFAILLIBLE ---
+            let spinDir = (p.vx >= 0) ? 1 : -1; // Récupère le sens pour tourner vers l'avant
+            
             if (p.type === 'armor_sword') {
-                p.rollAngle += 0.4;
-                ctx.rotate(p.rollAngle); 
+                ctx.rotate(Date.now() / 40); // L'épée tourne hyper vite
             } else if (p.type === 'rock_gargouille') {
-                p.rollAngle += (p.vx >= 0 ? 0.35 : -0.35); // Roule dans le sens du mouvement
-                ctx.rotate(p.rollAngle); 
+                ctx.rotate((Date.now() / 60) * spinDir); // Rapide
             } else if (p.type === 'rock_golem') {
-                p.rollAngle += (p.vx >= 0 ? 0.15 : -0.15); // Roule plus lentement
-                ctx.rotate(p.rollAngle); 
+                ctx.rotate((Date.now() / 120) * spinDir); // Plus lent
             } else {
-                ctx.rotate(pAngle + Math.PI / 2); 
+                ctx.rotate(pAngle + Math.PI / 2); // Classique (flèche, boule de feu, etc.)
             }
             
             ctx.shadowColor = p.color || '#fff'; 
@@ -481,11 +478,12 @@ window.renderGameView = function() {
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
             
         } else {
-            // --- SYSTÈME DE SECOURS (Si l'image ne charge pas, on dessine une forme qui tourne) ---
-            if (p.type === 'armor_sword') { p.rollAngle += 0.4; ctx.rotate(p.rollAngle); }
-            else if (p.type === 'rock_gargouille') { p.rollAngle += (p.vx >= 0 ? 0.35 : -0.35); ctx.rotate(p.rollAngle); }
-            else if (p.type === 'rock_golem') { p.rollAngle += (p.vx >= 0 ? 0.15 : -0.15); ctx.rotate(p.rollAngle); }
-            else { ctx.rotate(pAngle); }
+            // --- FALLBACK VISUEL POUR LE DÉBOGAGE ---
+            let spinDir = (p.vx >= 0) ? 1 : -1;
+            if (p.type === 'armor_sword') ctx.rotate(Date.now() / 40);
+            else if (p.type === 'rock_gargouille') ctx.rotate((Date.now() / 60) * spinDir);
+            else if (p.type === 'rock_golem') ctx.rotate((Date.now() / 120) * spinDir);
+            else ctx.rotate(pAngle);
 
             if (p.type === 'bone_skeleton') { 
                 ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
@@ -494,9 +492,11 @@ window.renderGameView = function() {
                 ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); 
             } 
             else if (p.type === 'rock_golem' || p.type === 'rock_gargouille') {
-                // S'il n'y a pas d'image, on dessine un carré pour te montrer que la rotation marche !
+                // Si l'image bugue, on dessine un bloc tournant pour prouver que la physique fonctionne !
                 ctx.fillStyle = p.color;
                 ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(-p.size, -p.size/4, p.size * 2, p.size/2); 
             }
             else { 
                 ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
