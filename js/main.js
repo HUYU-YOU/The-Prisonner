@@ -4,6 +4,134 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
+// --- LE GÉNÉRATEUR DE CARTES (Niveau 1 et Niveau 2) ---
+window.loadRoom = function(roomId, spawnFace) {
+    window.currentRoomId = roomId;
+    window.currentDoors = [];
+    window.currentEnemies = [];
+    window.currentItems = [];
+    window.currentCrates = [];
+    window.currentObstacles = []; 
+    if (typeof window.hazards !== 'undefined') window.hazards.length = 0;
+    if (typeof window.projectiles !== 'undefined') window.projectiles.length = 0;
+    if (typeof window.enemyProjectiles !== 'undefined') window.enemyProjectiles.length = 0;
+
+    let cw = canvas.width;
+    let ch = canvas.height;
+    let wm = wallMargin;
+
+    function addDoor(face, dest, locked = false, offset = 0) {
+        let door = { face: face, dest: dest, locked: locked, width: 80, height: 80, id: roomId + '_' + dest };
+        if (face === 'north') { door.x = cw/2 - 40 + offset; door.y = 0; door.spawnX = door.x; door.spawnY = door.y + 100; }
+        else if (face === 'south') { door.x = cw/2 - 40 + offset; door.y = ch - 80; door.spawnX = door.x; door.spawnY = door.y - 100; }
+        else if (face === 'west') { door.x = 0; door.y = ch/2 - 40 + offset; door.spawnX = door.x + 100; door.spawnY = door.y; }
+        else if (face === 'east') { door.x = cw - 80; door.y = ch/2 - 40 + offset; door.spawnX = door.x - 100; door.spawnY = door.y; }
+        window.currentDoors.push(door);
+    }
+
+    // =========================================
+    // NIVEAU 1 (Restauré et Complet !)
+    // =========================================
+    if (roomId === 1) { 
+        addDoor('north', 2); 
+        window.currentCrates.push({ x: 150, y: ch - 150, size: 50, health: 50, isBroken: false, type: 'barrel', id: 'c1_1' });
+        window.currentCrates.push({ x: 250, y: ch - 150, size: 50, health: 50, isBroken: false, type: 'box', id: 'c1_2' });
+        if (!worldState.openedChests || !worldState.openedChests['chest_lvl1']) {
+            window.currentCrates.push({ x: cw - 200, y: ch - 200, size: 60, health: 50, isBroken: false, type: 'chest', id: 'chest_lvl1' });
+            window.currentItems.push({ id: 'key_start', type: 'key', x: cw - 200, y: ch - 120, size: 15, collected: false });
+        }
+    }
+    else if (roomId === 2) { 
+        addDoor('south', 1); addDoor('north', 3, true); addDoor('east', 4); 
+        if (!worldState.clearedRooms[2]) { window.spawnEnemy('goblin', 2, cw/2, ch/2); }
+    }
+    else if (roomId === 3) { 
+        addDoor('south', 2); addDoor('north', 8, true); // Vers le Boss
+        if (!worldState.clearedRooms[3]) { window.spawnEnemy('skeleton', 3); window.currentItems.push({ id: 'k3', type: 'key', x: cw/2, y: ch/2, size: 15, collected: false }); }
+    }
+    else if (roomId === 4) { 
+        addDoor('west', 2); addDoor('east', 5); addDoor('south', 6); 
+        window.currentCrates.push({ x: cw/2, y: ch/2, size: 50, health: 50, isBroken: false, type: 'barrel', id: 'c4' });
+    }
+    else if (roomId === 5) { 
+        addDoor('west', 4); 
+        if (!worldState.clearedRooms[5]) { window.spawnEnemy('skeleton', 3); }
+    }
+    else if (roomId === 6) { 
+        addDoor('north', 4); addDoor('south', 7);
+        if (!worldState.clearedRooms[6]) { window.spawnEnemy('spider', 3); }
+    }
+    else if (roomId === 7) { 
+        addDoor('north', 6); 
+        if (!worldState.clearedRooms[7]) { window.spawnEnemy('goblin', 2); window.currentItems.push({ id: 'k7', type: 'key', x: cw/2, y: ch/2, size: 15, collected: false }); }
+    }
+    else if (roomId === 8) { 
+        addDoor('south', 3); 
+        if (!worldState.bossDefeated) { window.spawnEnemy('troll', 1, cw/2, ch/4); }
+    }
+
+    // =========================================
+    // NIVEAU 2 (Salles 101 à 114)
+    // =========================================
+    else if (roomId === 101) { 
+        addDoor('north', 114, true);  
+        addDoor('south', 104, false); 
+        addDoor('east', 103, false);  
+        addDoor('west', 102, true);   
+    }
+    else if (roomId === 102) { 
+        addDoor('east', 101, true);
+        addDoor('north', 105, false, 200); 
+        addDoor('west', 106, false);
+        window.currentObstacles.push({ x: cw/2 - 20, y: wm, width: 40, height: ch - wm*2, type: 'hole' });
+        if (!worldState.clearedRooms[102]) window.spawnEnemy('skeleton', 2, wm + 50, ch/2);
+    }
+    else if (roomId === 103) { 
+        addDoor('west', 101, false);
+        addDoor('north', 111, false);
+        window.currentObstacles.push({ x: cw - wm - 150, y: wm, width: 150, height: 150, type: 'hole' });
+        window.currentObstacles.push({ x: cw - wm - 150, y: ch - wm - 150, width: 150, height: 150, type: 'hole' });
+        if (!worldState.clearedRooms[103]) { window.spawnEnemy('skeleton', 1, cw - wm - 80, wm + 80); window.spawnEnemy('skeleton', 1, cw - wm - 80, ch - wm - 80); }
+    }
+    else if (roomId === 104) { 
+        addDoor('north', 101, false);
+        addDoor('west', 107, true); 
+        addDoor('east', 109, true); 
+    }
+    else if (roomId === 105) { 
+        addDoor('south', 102, false, 200);  
+        addDoor('south', 106, false, -200); 
+        if (!worldState.clearedRooms[105]) window.spawnEnemy('orc', 3); 
+    }
+    else if (roomId === 106) { 
+        addDoor('north', 105, false); 
+        addDoor('east', 102, false);  
+        if (!worldState.clearedRooms[106]) window.spawnEnemy('wolf', 4);
+    }
+    else if (roomId === 107) { addDoor('east', 104, true); addDoor('south', 108, true); if (!worldState.clearedRooms[107]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 108) { addDoor('north', 107, true); if (!worldState.clearedRooms[108]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 109) { addDoor('west', 104, true); addDoor('south', 110, true); if (!worldState.clearedRooms[109]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 110) { addDoor('north', 109, true); if (!worldState.clearedRooms[110]) window.spawnEnemy('minotaure', 1, cw/2, ch/2); }
+    else if (roomId === 111) { 
+        addDoor('south', 103, false);
+        addDoor('north', 112, false);
+        addDoor('west', 114, true); 
+    }
+    else if (roomId === 112) { 
+        addDoor('south', 111, false);
+        addDoor('north', 113, false);
+    }
+    else if (roomId === 113) { 
+        addDoor('south', 112, false);
+        if (!worldState.clearedRooms[113]) { window.spawnEnemy('troll', 1, cw/2 - 100, ch/2); window.spawnEnemy('troll', 1, cw/2 + 100, ch/2); }
+    }
+    else if (roomId === 114) { 
+        addDoor('south', 101, true);
+        addDoor('east', 111, true);
+        window.currentObstacles.push({ x: cw/2 - 100, y: ch/2 - 100, width: 200, height: 200, type: 'water' });
+    }
+};
+
 window.update = function() {
     try {
         window.currentEnemies = window.currentEnemies || [];
@@ -41,6 +169,11 @@ window.update = function() {
         if (gameState === "GAMEOVER") { 
             if (typeof window.renderGameView === 'function') window.renderGameView(); 
             requestAnimationFrame(window.update); return; 
+        }
+
+        // --- FORCER LE CHARGEMENT DE LA MAP SI ELLE EST VIDE ---
+        if (gameState === "PLAYING" && currentRoomId !== 999 && window.currentDoors.length === 0) {
+            window.loadRoom(currentRoomId, 'south');
         }
         
         if (currentRoomId === 999) {
