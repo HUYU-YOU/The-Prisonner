@@ -26,8 +26,6 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         }
         
         let size = 40, hp = 90, spd = 3.5, col = '#27ae60';
-        
-        // --- ANCIENS MOBS ---
         if (type === 'skeleton') { hp = 50; spd = 2; col = '#bdc3c7'; }
         else if (type === 'spider') { size = 30; hp = 1; spd = 7; col = '#8e44ad'; }
         else if (type === 'troll') { size = 80; hp = 1000; spd = 3.5; col = '#117a65'; }
@@ -36,12 +34,10 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'deathgod') { size = 70; hp = 1000; spd = 4.5; col = '#2c3e50'; }
         else if (type === 'elysia') { size = 70; hp = 1500; spd = 5.0; col = '#e84393'; }
         else if (type === 'armor') { size = 50; hp = 200; spd = 3.0; col = '#7f8c8d'; }
-        
-        // --- NOUVEAUX MOBS ---
         else if (type === 'golem') { size = 50; hp = 100; spd = 1.5; col = '#7f8c8d'; }
         else if (type === 'small_golem') { size = 30; hp = 40; spd = 2.5; col = '#bdc3c7'; }
         else if (type === 'orc') { size = 50; hp = 200; spd = 4.2; col = '#2ecc71'; }
-        else if (type === 'wolf') { size = 35; hp = 15; spd = 7.5; col = '#95a5a6'; } // One shot et très rapide
+        else if (type === 'wolf') { size = 35; hp = 15; spd = 7.5; col = '#95a5a6'; } 
         else if (type === 'minotaure') { size = 60; hp = 300; spd = 3.5; col = '#e67e22'; }
         else if (type === 'gargouille') { size = 60; hp = 300; spd = 5.0; col = '#34495e'; }
 
@@ -49,11 +45,10 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
             hp += (arenaWave - 24) * 30;
         }
 
-        // Gargouille Mouvement Fixe (Diagonale vers la gauche)
         let vx = 0, vy = 0;
         if (type === 'gargouille') {
-            vx = -3 - Math.random() * 2; // Va vers la gauche obligatoirement
-            vy = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2); // Rebond diagonal
+            vx = -3 - Math.random() * 2; 
+            vy = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2); 
         }
 
         currentEnemies.push({ 
@@ -126,7 +121,6 @@ window.updateEnemies = function() {
         let currentEnemySpeed = enemy.speed; 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
 
-        // --- I.A DES BOSS ET NOUVEAUX MOBS ---
         if (enemy.type === 'mage') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.maxHealth += 300; enemy.health += 300; enemy.speed = 4.0; 
@@ -200,7 +194,6 @@ window.updateEnemies = function() {
             }
         }
 
-        // Le Minotaure fait des petits dashs agressifs
         if (enemy.type === 'minotaure') {
             if (enemy.trollDashCooldown === undefined) enemy.trollDashCooldown = 240;
             enemy.trollDashCooldown--;
@@ -264,7 +257,49 @@ window.updateEnemies = function() {
             }
         }
 
-        // TIRS A DISTANCE (INCLUS GOLEM ET GARGOUILLE)
+        if (enemy.type === 'elysia') {
+            let hpRatio = Math.max(0.1, enemy.health / enemy.maxHealth); 
+            if (enemy.phase === 1) {
+                if (enemy.dashTimer === undefined) enemy.dashTimer = 150;
+                enemy.dashTimer--;
+                if(enemy.dashTimer <= 0) { enemy.isDashing = 20; enemy.dashTimer = 150 * hpRatio; }
+                if (enemy.isDashing > 0) { enemy.isDashing--; currentEnemySpeed *= 4; }
+                
+                if (enemy.shootCooldown <= 0) {
+                    for(let i=0; i<8; i++) {
+                        let angle = (Math.PI*2 / 8) * i;
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*6, vy: Math.sin(angle)*6, size: 6, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
+                    }
+                    enemy.shootCooldown = 90 * hpRatio; enemy.attackAnimTimer = 15;
+                }
+                
+                if (enemy.health <= enemy.maxHealth / 2) {
+                    enemy.phase = 2; enemy.x = canvas.width/2 - enemy.size/2; enemy.y = canvas.height/2 - enemy.size/2;
+                    enemy.invulnerable = true; enemy.speed = 0; enemy.phaseTimer = 300; enemy.summonTimer = 60;
+                }
+            } else if (enemy.phase === 2) {
+                currentEnemySpeed = 0;
+                enemy.phaseTimer--;
+                if (enemy.phaseTimer <= 0) { enemy.health -= (enemy.maxHealth * 0.05); enemy.phaseTimer = 300; } 
+                
+                if (enemy.shootCooldown <= 0) {
+                    for(let i=0; i<12; i++) {
+                        let angle = (Math.PI*2 / 12) * i + enemy.wobble*2;
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*4, vy: Math.sin(angle)*4, size: 8, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
+                    }
+                    enemy.shootCooldown = 60 * hpRatio; enemy.attackAnimTimer = 10;
+                }
+                
+                enemy.summonTimer--;
+                if (enemy.summonTimer <= 0) {
+                    let mx = bLeft + Math.random()*(bRight - bLeft);
+                    let my = bTop + Math.random()*(bBot - bTop);
+                    if (typeof hazards !== 'undefined') hazards.push({ x: mx, y: my, radius: 40, timer: 60, maxTimer: 60, damage: playerStats.maxHealth * 0.34, isElysia: true });
+                    enemy.summonTimer = 40 * hpRatio; 
+                }
+            }
+        }
+
         let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille'].includes(enemy.type);
         
         if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
@@ -274,7 +309,6 @@ window.updateEnemies = function() {
             else if (enemy.type === 'deathgod') { pType = 'fire_deathgod'; pColor = '#2c3e50'; pSpeed = 7; pSize = 12; pDmg = 15; }
             else if (enemy.type === 'elysia') { pType = 'fire_elysia'; pColor = '#e84393'; pSpeed = 7; pSize = 12; pDmg = 15; }
             else if (enemy.type === 'armor') { pType = 'armor_sword'; pColor = '#7f8c8d'; pSpeed = 8; pSize = 15; pDmg = 35; }
-            // Nouveaux Tirs
             else if (enemy.type === 'golem' || enemy.type === 'small_golem') { pType = 'rock_golem'; pColor = '#7f8c8d'; pSpeed = 5; pSize = 10; pDmg = 25; }
             else if (enemy.type === 'gargouille') { pType = 'rock_gargouille'; pColor = '#34495e'; pSpeed = 6; pSize = 12; pDmg = 25; }
 
@@ -292,16 +326,12 @@ window.updateEnemies = function() {
         let stopDist = (isRanged && fusionAggro) ? 250 : 0;
         let dx_mov = 0, dy_mov = 0; 
         
-        // MOUVEMENT NORMAL vs GARGOUILLE
         if (enemy.type === 'gargouille') {
             dx_mov = enemy.vx;
             dy_mov = enemy.vy;
             
-            // Rebond Y
             if (enemy.y <= minLimitY) { enemy.y = minLimitY; enemy.vy *= -1; enemy.vy += (Math.random() - 0.5); }
             if (enemy.y >= eMaxY) { enemy.y = eMaxY; enemy.vy *= -1; enemy.vy += (Math.random() - 0.5); }
-            
-            // Wrap X (Réapparait à droite quand elle sort à gauche)
             if (enemy.x < minLimitX - enemy.size * 2) {
                 enemy.x = eMaxX + enemy.size; 
                 enemy.y = minLimitY + Math.random() * (eMaxY - minLimitY);
@@ -313,7 +343,7 @@ window.updateEnemies = function() {
 
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
-            if (idx !== otherIdx && enemy.type !== 'gargouille') { // La gargouille vole au dessus de tout
+            if (idx !== otherIdx && enemy.type !== 'gargouille') { 
                 let diffX = enemy.x - otherEnemy.x; let diffY = enemy.y - otherEnemy.y;
                 if (Math.abs(diffX) < 60 && Math.abs(diffY) < 60) {
                     let distSq = diffX*diffX + diffY*diffY;
@@ -330,11 +360,21 @@ window.updateEnemies = function() {
         let isBoss = ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type);
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
-        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        if (typeof window.currentObstacles !== 'undefined') {
+            for (let obs of window.currentObstacles) {
+                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
+            }
+        }
+        if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        
         let oldEy = enemy.y; enemy.y += dy_mov; 
-        if (currentRoomId === 8 && !isBoss && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (typeof window.currentObstacles !== 'undefined') {
+            for (let obs of window.currentObstacles) {
+                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
+            }
+        }
+        if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
 
-        // Limites de collision standard (Sauf pour la gargouille qui se wrap)
         if (enemy.type !== 'gargouille') {
             if (enemy.x < minLimitX) enemy.x = minLimitX; 
             if (enemy.y < minLimitY) enemy.y = minLimitY; 
@@ -342,9 +382,8 @@ window.updateEnemies = function() {
             if (enemy.y > eMaxY) enemy.y = eMaxY;
         }
 
-        // --- COLLISIONS AVEC JOUEUR OU FUSION ---
         if (!enemy.invulnerable) {
-            if (fusionAggro && window.checkCollision(fusionAggro, enemy)) {
+            if (fusionAggro && typeof window.checkCollision === 'function' && window.checkCollision(fusionAggro, enemy)) {
                 if (enemy.attackAnimTimer <= 0) {
                     let dmg = 25;
                     if (enemy.type === 'wolf') dmg = 40;
@@ -356,7 +395,7 @@ window.updateEnemies = function() {
                     enemy.attackAnimTimer = 30;
                 }
             } 
-            else if (!fusionAggro && playerInvulnerableTimer <= 0 && window.checkCollision(player, enemy)) {
+            else if (!fusionAggro && playerInvulnerableTimer <= 0 && typeof window.checkCollision === 'function' && window.checkCollision(player, enemy)) {
                 let dmg = 25;
                 if (enemy.type === 'wolf') dmg = 40;
                 if (enemy.type === 'armor') dmg = playerStats.maxHealth * 0.32;
@@ -380,7 +419,6 @@ window.updateEnemies = function() {
         }
     });
 
-    // --- I.A FUSION ET ÂMES ---
     if (typeof necroSummons !== 'undefined') {
         for (let i = 0; i < necroSummons.length; i++) {
             let summon = necroSummons[i]; let repX = 0, repY = 0;
@@ -447,11 +485,11 @@ window.updateEnemies = function() {
                         } else if (minDist <= 100) { 
                             let hitBox = { x: summon.x - 50, y: summon.y - 50, width: summon.size + 100, height: summon.size + 100 };
                             currentEnemies.forEach(e => {
-                                if (!e.invulnerable && window.checkCollision(hitBox, e)) {
+                                if (!e.invulnerable && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
                                     let hitNum = Math.floor(Math.random() * 3) + 1;
                                     let bSize = e.size * 1.5;
-                                    if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(e.type.toLowerCase())) bSize /= 2;
+                                    if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(e.type.toLowerCase())) bSize /= 2;
                                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
                                 }
                             });
@@ -462,7 +500,7 @@ window.updateEnemies = function() {
                             nearestEnemy.health -= summon.damage; summon.attackCooldown = 60; summon.attackAnimTimer = 20;
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let bSize = nearestEnemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(nearestEnemy.type.toLowerCase())) bSize /= 2;
+                            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(nearestEnemy.type.toLowerCase())) bSize /= 2;
                             bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
                         }
                     }
@@ -472,7 +510,6 @@ window.updateEnemies = function() {
         }
     }
 
-    // --- MORT DES ENNEMIS ---
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
@@ -484,8 +521,23 @@ window.updateEnemies = function() {
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
+
+            if (e.type === 'minotaure' && currentRoomId >= 107 && currentRoomId <= 110) {
+                worldState.minotaursKilled = (worldState.minotaursKilled || 0) + 1;
+                if (worldState.minotaursKilled < 4) {
+                    currentItems.push({ id: 'key_mino_'+Date.now(), type: 'key', x: e.x, y: e.y, size: 15, collected: false });
+                } else {
+                    currentItems.push({ id: 'scroll_power', type: 'scroll', x: e.x, y: e.y, size: 15, collected: false });
+                }
+            }
             
-            // DIVISION DU GOLEM EN 2 SMALL_GOLEM !
+            if (e.type === 'troll' && currentRoomId === 113) {
+                let trollsLeft = currentEnemies.filter(en => en.type === 'troll' && en.health > 0 && en !== e).length;
+                if (trollsLeft === 0) { 
+                    currentItems.push({ id: 'key_trolls_'+Date.now(), type: 'key', x: e.x, y: e.y, size: 15, collected: false });
+                }
+            }
+            
             if (e.type === 'golem') {
                 if (typeof window.spawnEnemy === 'function') { window.spawnEnemy('small_golem', 2, e.x, e.y); }
             }
@@ -499,7 +551,7 @@ window.updateEnemies = function() {
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
             
             let killSize = e.size * 3.75; 
-            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem'].includes(e.type.toLowerCase())) killSize /= 2;
+            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(e.type.toLowerCase())) killSize /= 2;
             if (e.type === 'skeleton') killSize = (e.size * 3.75) / 3;
             
             bloodStains.push({ type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2, size: killSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
