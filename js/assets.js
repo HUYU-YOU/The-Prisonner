@@ -223,24 +223,24 @@ assetsManager.load('Fusion_southeast_view', 'assets/skins/fusions/fusion_southea
 assetsManager.load('Fusion_southwest_view', 'assets/skins/fusions/fusion_southwest_view.png');
 
 // --- GOLEM ---
-assetsManager.load('Golem_north_view', 'assets/skins/Golem/golem_north_view.png');
-assetsManager.load('Golem_south_view', 'assets/skins/Golem/golem_south_view.png');
-assetsManager.load('Golem_east_view', 'assets/skins/Golem/golem_east_view.png');
-assetsManager.load('Golem_west_view', 'assets/skins/Golem/golem_west_view.png');
-assetsManager.load('Golem_northeast_view', 'assets/skins/Golem/golem_northeast_view.png');
-assetsManager.load('Golem_northwest_view', 'assets/skins/Golem/golem_northwest_view.png');
-assetsManager.load('Golem_southeast_view', 'assets/skins/Golem/golem_southeast_view.png');
-assetsManager.load('Golem_southwest_view', 'assets/skins/Golem/golem_southwest_view.png');
+assetsManager.load('Golem_north_view', 'assets/skins/Golem/Golem_north_view.png');
+assetsManager.load('Golem_south_view', 'assets/skins/Golem/Golem_south_view.png');
+assetsManager.load('Golem_east_view', 'assets/skins/Golem/Golem_east_view.png');
+assetsManager.load('Golem_west_view', 'assets/skins/Golem/Golem_west_view.png');
+assetsManager.load('Golem_northeast_view', 'assets/skins/Golem/Golem_northeast_view.png');
+assetsManager.load('Golem_northwest_view', 'assets/skins/Golem/Golem_northwest_view.png');
+assetsManager.load('Golem_southeast_view', 'assets/skins/Golem/Golem_southeast_view.png');
+assetsManager.load('Golem_southwest_view', 'assets/skins/Golem/Golem_southwest_view.png');
 
 // --- SMALL GOLEM (Utilise les mêmes images que le Golem) ---
-assetsManager.load('Small_golem_north_view', 'assets/skins/Golem/golem_north_view.png');
-assetsManager.load('Small_golem_south_view', 'assets/skins/Golem/golem_south_view.png');
-assetsManager.load('Small_golem_east_view', 'assets/skins/Golem/golem_east_view.png');
-assetsManager.load('Small_golem_west_view', 'assets/skins/Golem/golem_west_view.png');
-assetsManager.load('Small_golem_northeast_view', 'assets/skins/Golem/golem_northeast_view.png');
-assetsManager.load('Small_golem_northwest_view', 'assets/skins/Golem/golem_northwest_view.png');
-assetsManager.load('Small_golem_southeast_view', 'assets/skins/Golem/golem_southeast_view.png');
-assetsManager.load('Small_golem_southwest_view', 'assets/skins/Golem/golem_southwest_view.png');
+assetsManager.load('Small_golem_north_view', 'assets/skins/smallgolem/smallgolem_north_view.png');
+assetsManager.load('Small_golem_south_view', 'assets/skins/smallgolem/smallgolem_south_view.png');
+assetsManager.load('Small_golem_east_view', 'assets/skins/smallgolem/smallgolem_east_view.png');
+assetsManager.load('Small_golem_west_view', 'assets/skins/smallgolem/smallgolem_west_view.png');
+assetsManager.load('Small_golem_northeast_view', 'assets/skins/smallgolem/smallgolem_northeast_view.png');
+assetsManager.load('Small_golem_northwest_view', 'assets/skins/smallgolem/smallgolem_northwest_view.png');
+assetsManager.load('Small_golem_southeast_view', 'assets/skins/smallgolem/smallgolem_southeast_view.png');
+assetsManager.load('Small_golem_southwest_view', 'assets/skins/smallgolem/smallgolem_southwest_view.png');
 
 // --- ORC ---
 assetsManager.load('Orc_north_view', 'assets/skins/orc/orc_north_view.png');
