@@ -43,6 +43,21 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
     try {
+        // ====================================================================
+        // LE BOUCLIER ANTI-CRASH : INITIALISATION FORCÉE DE TOUTES LES LISTES
+        // ====================================================================
+        window.currentEnemies = window.currentEnemies || [];
+        window.currentItems = window.currentItems || [];
+        window.currentCrates = window.currentCrates || [];
+        window.currentDoors = window.currentDoors || [];
+        window.projectiles = window.projectiles || [];
+        window.enemyProjectiles = window.enemyProjectiles || [];
+        window.particles = window.particles || [];
+        window.bloodStains = window.bloodStains || [];
+        window.hazards = window.hazards || [];
+        window.necroSummons = window.necroSummons || [];
+        window.currentObstacles = window.currentObstacles || [];
+
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
         ctx.save(); 
@@ -74,23 +89,21 @@ window.renderGameView = function() {
             } 
         }
 
-        if (typeof window.currentObstacles !== 'undefined') {
-            window.currentObstacles.forEach(obs => {
-                if (obs.type === 'hole') {
-                    ctx.fillStyle = '#050505'; 
-                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                    ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
-                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
-                } else if (obs.type === 'water') {
-                    ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
-                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                    ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-                    ctx.fillText("NIVEAU 3", obs.x + obs.width/2, obs.y + obs.height/2);
-                }
-            });
-        }
+        window.currentObstacles.forEach(obs => {
+            if (obs.type === 'hole') {
+                ctx.fillStyle = '#050505'; 
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
+                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+            } else if (obs.type === 'water') {
+                ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText("NIVEAU 3", obs.x + obs.width/2, obs.y + obs.height/2);
+            }
+        });
 
-        let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
+        let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
         if (isVertCorridor) {
             ctx.fillStyle = '#0a0a0a'; 
             ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
@@ -133,7 +146,8 @@ window.renderGameView = function() {
 
         if (currentRoomId === 999) { 
             ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
-            ctx.strokeRect(wallMargin + window.arenaShrink, wallMargin + window.arenaShrink, canvas.width - (wallMargin + window.arenaShrink) * 2, canvas.height - (wallMargin + window.arenaShrink) * 2);
+            let shrink = window.arenaShrink || 0;
+            ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
         }
 
         if (currentRoomId === 8) {
@@ -162,21 +176,19 @@ window.renderGameView = function() {
             }
         }
 
-        if (typeof window.currentCrates !== 'undefined') {
-            window.currentCrates.forEach(crate => {
-                let imgName = ''; 
-                if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; 
-                else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; 
-                else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
-                
-                let img = assetsManager.images[imgName]; ctx.save(); ctx.translate(crate.x + crate.size/2, crate.y + crate.size/2);
-                if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') { ctx.rotate(Math.sin(Date.now() / 20) * 0.1); }
-                
-                if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); } 
-                else { ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); }
-                ctx.restore();
-            });
-        }
+        window.currentCrates.forEach(crate => {
+            let imgName = ''; 
+            if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; 
+            else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; 
+            else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
+            
+            let img = assetsManager.images[imgName]; ctx.save(); ctx.translate(crate.x + crate.size/2, crate.y + crate.size/2);
+            if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') { ctx.rotate(Math.sin(Date.now() / 20) * 0.1); }
+            
+            if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); } 
+            else { ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); }
+            ctx.restore();
+        });
 
         window.currentDoors.forEach(door => {
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
@@ -240,50 +252,46 @@ window.renderGameView = function() {
             }
         });
 
-        if (typeof window.hazards !== 'undefined') {
-            window.hazards.forEach(h => { 
-                ctx.save();
-                let isElysia = h.isElysia || false;
-                let assetName = isElysia ? 'Attack_meteorites_elysia' : 'Attack_meteorites_dragon';
-                let metImg = window.getAsset(assetName);
-                
-                let fallH = (h.timer / h.maxTimer) * 150; 
-                
-                if (metImg && metImg.complete && metImg.naturalWidth > 0) {
-                    ctx.shadowColor = isElysia ? '#e84393' : '#e74c3c'; 
-                    ctx.shadowBlur = 30; 
-                    ctx.drawImage(metImg, h.x - h.radius*1.5, h.y - fallH - h.radius*1.5, h.radius*3, h.radius*3);
-                }
-                ctx.restore();
-            });
-        }
+        window.hazards.forEach(h => { 
+            ctx.save();
+            let isElysia = h.isElysia || false;
+            let assetName = isElysia ? 'Attack_meteorites_elysia' : 'Attack_meteorites_dragon';
+            let metImg = window.getAsset(assetName);
+            
+            let fallH = (h.timer / h.maxTimer) * 150; 
+            
+            if (metImg && metImg.complete && metImg.naturalWidth > 0) {
+                ctx.shadowColor = isElysia ? '#e84393' : '#e74c3c'; 
+                ctx.shadowBlur = 30; 
+                ctx.drawImage(metImg, h.x - h.radius*1.5, h.y - fallH - h.radius*1.5, h.radius*3, h.radius*3);
+            }
+            ctx.restore();
+        });
 
-        if (typeof window.necroSummons !== 'undefined') {
-            window.necroSummons.forEach(s => {
-                ctx.save(); 
-                ctx.translate(s.x + s.size/2, s.y + s.size/2);
-                
-                let dir = window.getDirectionName(s.faceAngle || 0);
-                let prefix = s.type === 'fusion' ? 'Fusion' : 'Soul';
-                let action = (s.attackAnimTimer > 0) ? 'attack' : 'view';
-                
-                let sImg = window.getAsset(`${prefix}_${dir}_${action}`) || window.getAsset(`${prefix}_${dir}_view`);
-                let scalePulse = 1 + Math.sin(Date.now() / 200) * 0.05;
-                ctx.scale(scalePulse, scalePulse);
-                
-                ctx.shadowColor = s.type === 'fusion' ? '#f1c40f' : '#8e44ad'; 
-                ctx.shadowBlur = 15;
-                
-                if (sImg && sImg.complete && sImg.naturalWidth > 0) {
-                    let displaySize = s.size * 3.75; 
-                    ctx.drawImage(sImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
-                } else {
-                    ctx.fillStyle = s.type === 'fusion' ? '#f1c40f' : '#8e44ad';
-                    ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill();
-                }
-                ctx.restore(); 
-            });
-        }
+        window.necroSummons.forEach(s => {
+            ctx.save(); 
+            ctx.translate(s.x + s.size/2, s.y + s.size/2);
+            
+            let dir = window.getDirectionName(s.faceAngle || 0);
+            let prefix = s.type === 'fusion' ? 'Fusion' : 'Soul';
+            let action = (s.attackAnimTimer > 0) ? 'attack' : 'view';
+            
+            let sImg = window.getAsset(`${prefix}_${dir}_${action}`) || window.getAsset(`${prefix}_${dir}_view`);
+            let scalePulse = 1 + Math.sin(Date.now() / 200) * 0.05;
+            ctx.scale(scalePulse, scalePulse);
+            
+            ctx.shadowColor = s.type === 'fusion' ? '#f1c40f' : '#8e44ad'; 
+            ctx.shadowBlur = 15;
+            
+            if (sImg && sImg.complete && sImg.naturalWidth > 0) {
+                let displaySize = s.size * 3.75; 
+                ctx.drawImage(sImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
+            } else {
+                ctx.fillStyle = s.type === 'fusion' ? '#f1c40f' : '#8e44ad';
+                ctx.beginPath(); ctx.arc(0, 0, s.size/2, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore(); 
+        });
 
         window.currentEnemies.forEach(enemy => {
             ctx.save(); 
@@ -633,7 +641,7 @@ window.renderGameView = function() {
             ctx.globalAlpha = 1.0; 
         }
         
-        if (playerStats.inventory.coins !== undefined) {
+        if (typeof playerStats !== 'undefined' && playerStats.inventory && playerStats.inventory.coins !== undefined) {
             let coinImg = window.getAsset('gold_coin');
             if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
                 ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
@@ -687,19 +695,16 @@ window.renderGameView = function() {
         }
         ctx.restore(); 
         
-    // =========================================================================
-    // L'ÉCRAN D'ERREUR ROUGE (CRASH REPORTER)
-    // =========================================================================
     } catch (e) {
-        console.error("ERREUR CRITIQUE DE RENDU :", e);
-        if (ctx) {
-            ctx.fillStyle = '#c0392b'; // Fond rouge sang
+        console.error("CRASH DU JEU :", e);
+        if (typeof ctx !== 'undefined' && ctx) {
+            ctx.fillStyle = '#b33939'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 24px monospace';
             ctx.fillText("⚠️ CRASH GRAPHIQUE ⚠️", 20, 40);
             ctx.font = '16px monospace';
-            ctx.fillText("Envoie un screenshot de cette erreur :", 20, 80);
+            ctx.fillText("T'es dans la M_E_R_D_E (Mais envoie quand même un screen) :", 20, 80);
             ctx.fillStyle = '#f1c40f';
             ctx.fillText(e.message, 20, 110);
             ctx.fillStyle = '#ffffff';
