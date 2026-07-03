@@ -338,11 +338,10 @@ window.renderGameView = function() {
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
             
-            // --- GESTION DES TAILLES DIVISÉES PAR 2 ET DU LOUP ---
             if (['troll', 'dragon', 'goblin', 'skeleton', 'small_golem', 'orc', 'golem', 'gargouille'].includes(eTypeLow)) {
                 displaySize = enemy.size * 1.875; 
             } else if (eTypeLow === 'wolf') {
-                displaySize = (enemy.size * 1.875) * 1.25; // Loup : Réduit par 2 puis augmenté de 25%
+                displaySize = (enemy.size * 1.875) * 1.25; 
             }
             
             if (['mage', 'spider', 'wolf'].includes(eTypeLow) && !is8Dir) { 
@@ -358,10 +357,9 @@ window.renderGameView = function() {
         ctx.shadowColor = 'transparent'; 
         ctx.shadowBlur = 0;
         
-        // --- EFFET DE BRÛLURE (ANIMÉ) ---
         if (enemy.isBurning) { 
             ctx.save(); 
-            ctx.globalAlpha = 0.7; // Opacité ajustée à 70%
+            ctx.globalAlpha = 0.7; 
             
             let burnFrame = Math.floor(Date.now() / 200) % 2 === 0 ? 'burned_ennemy_view1' : 'burned_ennemy_view2';
             let burnOverlay = window.getAsset(burnFrame);
@@ -424,7 +422,7 @@ window.renderGameView = function() {
             
             let drawSize = p.size * 15.0; 
             
-            // --- ATTAQUE DU MAGE EN LIGNE (LASER) ---
+            // LIGNE POUR LE MAGE
             if (p.type === 'fire_mage') {
                 ctx.drawImage(pImg, -drawSize / 8, -drawSize * 1.5, drawSize / 4, drawSize * 3);
             } else {
@@ -440,7 +438,7 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- SKINS DES PROJECTILES DES ENNEMIS ---
+    // --- SKINS DES PROJECTILES DES ENNEMIS (VRAIE PHYSIQUE DE ROTATION) ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -458,14 +456,21 @@ window.renderGameView = function() {
         
         let epImg = window.getAsset(epImgName);
         
+        // Initialisation de la variable de rotation si elle n'existe pas encore
+        if (p.rollAngle === undefined) p.rollAngle = 0;
+        
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
-            // --- ROTATIONS DES ROCHERS ET BOOMERANG ---
+            
+            // --- NOUVEAU SYSTÈME DE ROTATION PARFAITE ---
             if (p.type === 'armor_sword') {
-                ctx.rotate(Date.now() / 40); 
-            } else if (p.type === 'rock_golem') {
-                ctx.rotate(Date.now() / 150); 
+                p.rollAngle += 0.4;
+                ctx.rotate(p.rollAngle); 
             } else if (p.type === 'rock_gargouille') {
-                ctx.rotate(Date.now() / 60); 
+                p.rollAngle += (p.vx >= 0 ? 0.35 : -0.35); // Roule dans le sens du mouvement
+                ctx.rotate(p.rollAngle); 
+            } else if (p.type === 'rock_golem') {
+                p.rollAngle += (p.vx >= 0 ? 0.15 : -0.15); // Roule plus lentement
+                ctx.rotate(p.rollAngle); 
             } else {
                 ctx.rotate(pAngle + Math.PI / 2); 
             }
@@ -474,10 +479,28 @@ window.renderGameView = function() {
             ctx.shadowBlur = 40; 
             let drawSize = p.size * 12.0; 
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
+            
         } else {
-            if (p.type === 'bone_skeleton') { ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); } 
-            else if (p.type === 'bat_web') { ctx.rotate(pAngle); ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); } 
-            else { ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); }
+            // --- SYSTÈME DE SECOURS (Si l'image ne charge pas, on dessine une forme qui tourne) ---
+            if (p.type === 'armor_sword') { p.rollAngle += 0.4; ctx.rotate(p.rollAngle); }
+            else if (p.type === 'rock_gargouille') { p.rollAngle += (p.vx >= 0 ? 0.35 : -0.35); ctx.rotate(p.rollAngle); }
+            else if (p.type === 'rock_golem') { p.rollAngle += (p.vx >= 0 ? 0.15 : -0.15); ctx.rotate(p.rollAngle); }
+            else { ctx.rotate(pAngle); }
+
+            if (p.type === 'bone_skeleton') { 
+                ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
+            } 
+            else if (p.type === 'bat_web') { 
+                ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); 
+            } 
+            else if (p.type === 'rock_golem' || p.type === 'rock_gargouille') {
+                // S'il n'y a pas d'image, on dessine un carré pour te montrer que la rotation marche !
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
+            }
+            else { 
+                ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
+            }
         }
         ctx.restore();
     });
