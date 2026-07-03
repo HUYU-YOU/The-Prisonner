@@ -296,6 +296,8 @@ assetsManager.load('bloods_kill_view3', 'assets/effects/bloods_kill_view3.png');
 assetsManager.load('skeleton_kill_view1', 'assets/effects/skeleton_kill_view1.png');
 assetsManager.load('skeleton_kill_view2', 'assets/effects/skeleton_kill_view2.png');
 assetsManager.load('skeleton_kill_view3', 'assets/effects/skeleton_kill_view3.png');
+assetsManager.load('burned_ennemy_view1', 'assets/effects/burned_ennemy_view1.png');
+assetsManager.load('burned_ennemy_view2', 'assets/effects/burned_ennemy_view2.png');
 
 // --- PROJECTILES ET ATTAQUES MAGIQUES ---
 assetsManager.load('Attack_fire_mage', 'assets/skins/Attack/Attack_fire_mage.jpeg'); 
