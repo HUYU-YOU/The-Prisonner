@@ -350,7 +350,7 @@ window.update = function() {
             ctx.font = 'bold 24px monospace';
             ctx.fillText("⚠️ CRASH DU JEU DÉTECTÉ ⚠️", 20, 40);
             ctx.font = '16px monospace';
-            ctx.fillText("Prends un screen de ce message :", 20, 80);
+            ctx.fillText("T'es dans la M_E_R_D_E :", 20, 80);
             ctx.fillStyle = '#f1c40f';
             ctx.fillText(e.message, 20, 110);
             ctx.fillStyle = '#ffffff';
