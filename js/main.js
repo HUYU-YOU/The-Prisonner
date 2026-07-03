@@ -30,6 +30,7 @@ window.update = function() {
         requestAnimationFrame(window.update); return; 
     }
     
+    // --- GESTION DU MODE ARÈNE ET RÉTRÉCISSEMENT ---
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
         
@@ -54,21 +55,70 @@ window.update = function() {
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
-                // --- NOUVEAU SYSTÈME DE VAGUES AVEC LES NOUVEAUX MONSTRES ---
-                if (arenaWave === 10) { window.spawnEnemy('troll', 1); window.spawnEnemy('orc', 2); }
-                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 1); }
+                // =========================================================
+                // NOUVEAU SYSTÈME DE VAGUES (LIMITÉ À 20 ENTITÉS MAX)
+                // =========================================================
+                
+                // Vagues de Boss
+                if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
+                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('orc', 2); }
                 else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 1); }
                 else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 2); }
-                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); }
-                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 2); }
-                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); }
+                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); window.spawnEnemy('gargouille', 2); }
+                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 3); }
+                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); window.spawnEnemy('minotaure', 2); window.spawnEnemy('gargouille', 1); }
                 else {
-                    let countOrc = 2 + Math.floor(arenaWave * 1.0);
-                    window.spawnEnemy('orc', countOrc); // L'Orc remplace le gobelin
-                    if (arenaWave >= 3) window.spawnEnemy('golem', Math.floor(arenaWave / 3) + 1); // Remplace le squelette
-                    if (arenaWave >= 8) window.spawnEnemy('wolf', 2); // Remplace l'araignée
-                    if (arenaWave >= 15 && arenaWave % 3 === 0) window.spawnEnemy('minotaure', 1);
-                    if (arenaWave >= 20 && arenaWave % 4 === 0) window.spawnEnemy('gargouille', 1);
+                    // Calcul du nombre d'ennemis
+                    let totalToSpawn = 3 + Math.floor(arenaWave * 1.2);
+                    if (arenaWave >= 15) {
+                        totalToSpawn = Math.min(totalToSpawn, 20); // PLAFONNÉ À 20 ENTITÉS MAX
+                    }
+                    
+                    let spawnCounts = {};
+                    
+                    // Répartition progressive des Monstres
+                    for (let i = 0; i < totalToSpawn; i++) {
+                        let type = '';
+                        let r = Math.random(); // Définit la catégorie (Corps à corps, Tank, Rapide)
+
+                        if (arenaWave < 10) {
+                            // Phase 1 : Gobelins et Squelettes
+                            type = r < 0.7 ? 'goblin' : 'skeleton';
+                        } 
+                        else if (arenaWave < 15) {
+                            // Phase 2 : Gobelins, Squelettes, Araignées
+                            if (r < 0.6) type = 'goblin';
+                            else if (r < 0.9) type = 'skeleton';
+                            else type = 'spider';
+                        } 
+                        else if (arenaWave <= 27) {
+                            // Phase 3 : Transition vers Orcs, Golems et Loups
+                            let progress = (arenaWave - 15) / 12; // Va de 0 à 1
+                            if (r < 0.6) type = Math.random() < progress ? 'orc' : 'goblin';
+                            else if (r < 0.9) type = Math.random() < progress ? 'golem' : 'skeleton';
+                            else type = Math.random() < progress ? 'wolf' : 'spider';
+                        } 
+                        else if (arenaWave <= 40) {
+                            // Phase 4 : Transition vers Minotaures et Gargouilles (Plus aucun T1)
+                            let progress = (arenaWave - 27) / 13; // Va de 0 à 1
+                            if (r < 0.6) type = Math.random() < progress ? 'minotaure' : 'orc';
+                            else if (r < 0.9) type = Math.random() < progress ? 'gargouille' : 'golem';
+                            else type = 'wolf'; // Les loups restent
+                        } 
+                        else {
+                            // Phase 5 (41+) : Que l'Élite ! (Plus aucun T2)
+                            if (r < 0.6) type = 'minotaure';
+                            else if (r < 0.9) type = 'gargouille';
+                            else type = 'wolf';
+                        }
+
+                        spawnCounts[type] = (spawnCounts[type] || 0) + 1;
+                    }
+
+                    // Apparition des ennemis calculés
+                    for (let mobType in spawnCounts) {
+                        window.spawnEnemy(mobType, spawnCounts[mobType]);
+                    }
                 }
                 arenaWave++;
             }
@@ -76,7 +126,7 @@ window.update = function() {
             if (currentEnemies.length === 0) {
                 arenaState = "WAITING";
                 arenaTimer = 300; 
-                if (typeof hazards !== 'undefined') hazards.length = 0;
+                if (typeof hazards !== 'undefined' && Array.isArray(hazards)) hazards.splice(0, hazards.length);
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
         }
@@ -85,6 +135,7 @@ window.update = function() {
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     
+    // --- GESTION DES PORTES ET CHANGEMENT DE SALLE ---
     let roomChanged = false;
     let doorToPass = null;
     
@@ -148,6 +199,7 @@ window.update = function() {
         return;
     }
     
+    // --- CONTRÔLES ULTIME ---
     if ((keys['space'] || keys['0'] || keys['control']) && playerStats.mana >= 100) {
         if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
         keys['space'] = false; keys['0'] = false; keys['control'] = false; 
@@ -188,6 +240,7 @@ window.update = function() {
     let manaBar = document.getElementById('mana-bar');
     if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
+    // --- DÉPLACEMENTS ---
     let currentSpeedPlayer = playerSlowTimer > 0 ? player.speed / 2 : player.speed;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let dx_mov = 0; let dy_mov = 0;
