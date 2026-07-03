@@ -4,7 +4,9 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-// --- LE GÉNÉRATEUR DE CARTES (Niveau 1 et Niveau 2) ---
+// ============================================================================
+// GÉNÉRATEUR DE CARTES (NIVEAU 1 ET NIVEAU 2)
+// ============================================================================
 window.loadRoom = function(roomId, spawnFace) {
     window.currentRoomId = roomId;
     window.currentDoors = [];
@@ -46,7 +48,7 @@ window.loadRoom = function(roomId, spawnFace) {
         if (!worldState.clearedRooms[2]) { window.spawnEnemy('goblin', 2, cw/2, ch/2); }
     }
     else if (roomId === 3) { 
-        addDoor('south', 2); addDoor('north', 8, true); // Vers le Boss
+        addDoor('south', 2); addDoor('north', 8, true); 
         if (!worldState.clearedRooms[3]) { window.spawnEnemy('skeleton', 3); window.currentItems.push({ id: 'k3', type: 'key', x: cw/2, y: ch/2, size: 15, collected: false }); }
     }
     else if (roomId === 4) { 
@@ -132,6 +134,9 @@ window.loadRoom = function(roomId, spawnFace) {
     }
 };
 
+// ============================================================================
+// BOUCLE PRINCIPALE (UPDATE)
+// ============================================================================
 window.update = function() {
     try {
         window.currentEnemies = window.currentEnemies || [];
@@ -171,9 +176,11 @@ window.update = function() {
             requestAnimationFrame(window.update); return; 
         }
 
-        // --- FORCER LE CHARGEMENT DE LA MAP SI ELLE EST VIDE ---
+        // --- FORCER LE CHARGEMENT DE LA MAP SI ELLE EST VIDE ! ---
         if (gameState === "PLAYING" && currentRoomId !== 999 && window.currentDoors.length === 0) {
-            window.loadRoom(currentRoomId, 'south');
+            if (typeof window.loadRoom === 'function') {
+                window.loadRoom(currentRoomId, 'south');
+            }
         }
         
         if (currentRoomId === 999) {
