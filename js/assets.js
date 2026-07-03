@@ -273,14 +273,14 @@ assetsManager.load('Gargouille_southeast_view', 'assets/skins/gargouille/gargoui
 assetsManager.load('Gargouille_southwest_view', 'assets/skins/gargouille/gargouille_southwest_view.png');
 
 // --- MINOTAURE ---
-assetsManager.load('Minotaure_north_view', 'assets/skins/orc/minotaure_north_view.png');
-assetsManager.load('Minotaure_south_view', 'assets/skins/orc/minotaure_south_view.png');
-assetsManager.load('Minotaure_east_view', 'assets/skins/orc/minotaure_east_view.png');
-assetsManager.load('Minotaure_west_view', 'assets/skins/orc/minotaure_west_view.png');
-assetsManager.load('Minotaure_northeast_view', 'assets/skins/orc/minotaure_northeast_view.png');
-assetsManager.load('Minotaure_northwest_view', 'assets/skins/orc/minotaure_northwest_view.png');
-assetsManager.load('Minotaure_southeast_view', 'assets/skins/orc/minotaure_southeast_view.png');
-assetsManager.load('Minotaure_southwest_view', 'assets/skins/orc/minotaure_southwest_view.png');
+assetsManager.load('Minotaure_north_view', 'assets/skins/minotaure/minotaure_north_view.png');
+assetsManager.load('Minotaure_south_view', 'assets/skins/minotaure/minotaure_south_view.png');
+assetsManager.load('Minotaure_east_view', 'assets/skins/minotaure/minotaure_east_view.png');
+assetsManager.load('Minotaure_west_view', 'assets/skins/minotaure/minotaure_west_view.png');
+assetsManager.load('Minotaure_northeast_view', 'assets/skins/minotaure/minotaure_northeast_view.png');
+assetsManager.load('Minotaure_northwest_view', 'assets/skins/minotaure/minotaure_northwest_view.png');
+assetsManager.load('Minotaure_southeast_view', 'assets/skins/minotaure/minotaure_southeast_view.png');
+assetsManager.load('Minotaure_southwest_view', 'assets/skins/minotaure/minotaure_southwest_view.png');
 
 
 
