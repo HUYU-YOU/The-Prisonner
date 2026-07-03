@@ -29,10 +29,7 @@ assetsManager.load('card_knight', 'assets/card/Knight.png');
 assetsManager.load('card_elf', 'assets/card/Elf.png');
 assetsManager.load('card_burned', 'assets/card/Burned.png');
 
-assetsManager.load('left_door', 'assets/decors/left_door.png');
-assetsManager.load('right_door', 'assets/decors/right_door.png');
-assetsManager.load('back_door', 'assets/decors/back_door.png');   
-assetsManager.load('front_door', 'assets/decors/front_door.png'); 
+// --- DOOR ---
 assetsManager.load('left_door_close', 'assets/decors/left_door_close.png');
 assetsManager.load('left_door_open', 'assets/decors/left_door_open.png');
 assetsManager.load('left_door_key', 'assets/decors/left_door_key.png'); 
@@ -49,7 +46,6 @@ assetsManager.load('stairs_down', 'assets/decors/stairs_down.png');
 
 
 // --- SKINS BURNED ---
-assetsManager.load('Burned_top_view', 'assets/skins/Attack/Burned_top_view.jpeg');
 assetsManager.load('Attack_fire_mage', 'assets/skins/Attack/Attack_fire_mage.jpeg');
 assetsManager.load('Ulti_fire_mage', 'assets/skins/Attack/Ulti_fire_mage.jpeg');
 
@@ -314,6 +310,7 @@ assetsManager.load('Attack_sword_armor', 'assets/skins/Attack/Attack_sword_armor
 assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
 assetsManager.load('Attack_sword_knight', 'assets/skins/Attack/Attack_sword_knight.jpeg');
 assetsManager.load('Attack_mage_corompue', 'assets/skins/Attack/Attack_mage_corompue.jpeg');
+
 // --- NOUVELLES ATTAQUES (Projectiles) ---
 assetsManager.load('Attack_rock_golem', 'assets/skins/Attack/Attack_rock_golem.jpeg');
 assetsManager.load('Attack_rock_gargouille', 'assets/skins/Attack/Attack_rock_gargouille.jpeg');
