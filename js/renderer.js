@@ -56,6 +56,11 @@ window.renderGameView = function() {
     }
     
     let imageSol = assetsManager.images['sol_base'];
+    if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
+    else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
+    else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
+    else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
@@ -67,6 +72,22 @@ window.renderGameView = function() {
         for(let i = 0; i < canvas.width; i += 60) { 
             for(let j = 0; j < canvas.height; j += 60) { ctx.strokeRect(i, j, 60, 60); }
         } 
+    }
+
+    if (typeof window.currentObstacles !== 'undefined') {
+        window.currentObstacles.forEach(obs => {
+            if (obs.type === 'hole') {
+                ctx.fillStyle = '#050505'; 
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
+                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+            } else if (obs.type === 'water') {
+                ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText("NIVEAU 3", obs.x + obs.width/2, obs.y + obs.height/2);
+            }
+        });
     }
 
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6);
@@ -190,32 +211,30 @@ window.renderGameView = function() {
             
             ctx.scale(scaleX, 1); 
             
-            if (assetName && assetName.includes('key')) {
+            if (item.type === 'scroll') {
+                ctx.fillStyle = '#f5f6fa'; ctx.fillRect(-10, -15, 20, 30); 
+                ctx.fillStyle = '#c0392b'; ctx.fillRect(-10, -5, 20, 10);  
+            }
+            else if (assetName && assetName.includes('key')) {
                 ctx.shadowColor = 'rgba(255, 255, 100, 0.9)'; ctx.shadowBlur = 20; 
             } else {
                 ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; 
             }
 
-            let itemImg = window.getAsset(assetName);
-            
-            if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
-                let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight;
-                let displaySize = item.size * 2.5; 
-                
-                if (assetName === 'gold_coin') { 
-                    displaySize = item.size * 3.5; 
-                } else if (assetName && assetName.includes('key')) { 
-                    displaySize = item.size * 1.25; 
+            if (item.type !== 'scroll') {
+                let itemImg = window.getAsset(assetName);
+                if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
+                    let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight;
+                    let displaySize = item.size * 2.5; 
+                    if (assetName === 'gold_coin') displaySize = item.size * 3.5; 
+                    else if (assetName && assetName.includes('key')) displaySize = item.size * 1.25; 
+                    
+                    ctx.drawImage(itemImg, -displaySize/2, -(displaySize / imgRatio)/2, displaySize, displaySize / imgRatio);
+                } else {
+                    if (item.type === 'coin') { ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, item.size, 0, Math.PI*2); ctx.fill(); } 
+                    else if (item.type.includes('potion')) { ctx.fillStyle = item.type === 'potion_green' ? '#2ecc71' : '#e74c3c'; ctx.beginPath(); ctx.arc(0, 6, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(-5, -4, 10, 12); } 
+                    else { ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(6, -3, 18, 6); }
                 }
-                
-                let drawWidth = displaySize;
-                let drawHeight = displaySize / imgRatio;
-                
-                ctx.drawImage(itemImg, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
-            } else {
-                if (item.type === 'coin') { ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, item.size, 0, Math.PI*2); ctx.fill(); } 
-                else if (item.type.includes('potion')) { ctx.fillStyle = item.type === 'potion_green' ? '#2ecc71' : '#e74c3c'; ctx.beginPath(); ctx.arc(0, 6, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(-5, -4, 10, 12); } 
-                else { ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(6, -3, 18, 6); }
             }
             ctx.restore();
         }
@@ -331,7 +350,7 @@ window.renderGameView = function() {
         ctx.shadowOffsetX = 4; 
         ctx.shadowOffsetY = 4;
         
-        // --- CORRECTION : PLUS DE CONTOUR VERT SUR L'ORC ---
+        // C'ÉTAIT ICI ! J'ai retiré 'orc' pour qu'il n'y ait plus de contour vert !
         if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'dragon' || enemy.type === 'minotaure') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
@@ -423,7 +442,7 @@ window.renderGameView = function() {
             
             let drawSize = p.size * 15.0; 
             
-            // --- RAYON DU MAGE ENCORE PLUS FIN ET LONG ---
+            // --- ENCORE PLUS FIN ET PLUS LONG POUR LE LASER DU MAGE ---
             if (p.type === 'fire_mage') {
                 ctx.drawImage(pImg, -drawSize / 12, -drawSize * 2, drawSize / 6, drawSize * 4);
             } else {
@@ -439,7 +458,7 @@ window.renderGameView = function() {
         ctx.restore();
     });
     
-    // --- SKINS DES PROJECTILES DES ENNEMIS ---
+    // --- SKINS DES PROJECTILES DES ENNEMIS (MÉCANIQUE DE ROTATION) ---
     enemyProjectiles.forEach(p => { 
         ctx.save(); 
         ctx.translate(p.x, p.y); 
@@ -456,20 +475,22 @@ window.renderGameView = function() {
         else if (p.type === 'rock_gargouille') epImgName = 'Attack_rock_gargouille';
         
         let epImg = window.getAsset(epImgName);
+        if (p.rollAngle === undefined) p.rollAngle = 0;
         
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
-            
-            // --- NOUVEAU SYSTÈME DE ROTATION INFAILLIBLE ---
-            let spinDir = (p.vx >= 0) ? 1 : -1; // Récupère le sens pour tourner vers l'avant
+            let spinDir = (p.vx >= 0) ? 1 : -1; 
             
             if (p.type === 'armor_sword') {
-                ctx.rotate(Date.now() / 40); // L'épée tourne hyper vite
+                p.rollAngle += 0.4;
+                ctx.rotate(p.rollAngle); 
             } else if (p.type === 'rock_gargouille') {
-                ctx.rotate((Date.now() / 60) * spinDir); // Rapide
+                p.rollAngle += 0.35 * spinDir;
+                ctx.rotate(p.rollAngle); 
             } else if (p.type === 'rock_golem') {
-                ctx.rotate((Date.now() / 120) * spinDir); // Plus lent
+                p.rollAngle += 0.15 * spinDir;
+                ctx.rotate(p.rollAngle); 
             } else {
-                ctx.rotate(pAngle + Math.PI / 2); // Classique (flèche, boule de feu, etc.)
+                ctx.rotate(pAngle + Math.PI / 2); 
             }
             
             ctx.shadowColor = p.color || '#fff'; 
@@ -478,12 +499,11 @@ window.renderGameView = function() {
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
             
         } else {
-            // --- FALLBACK VISUEL POUR LE DÉBOGAGE ---
             let spinDir = (p.vx >= 0) ? 1 : -1;
-            if (p.type === 'armor_sword') ctx.rotate(Date.now() / 40);
-            else if (p.type === 'rock_gargouille') ctx.rotate((Date.now() / 60) * spinDir);
-            else if (p.type === 'rock_golem') ctx.rotate((Date.now() / 120) * spinDir);
-            else ctx.rotate(pAngle);
+            if (p.type === 'armor_sword') { p.rollAngle += 0.4; ctx.rotate(p.rollAngle); }
+            else if (p.type === 'rock_gargouille') { p.rollAngle += 0.35 * spinDir; ctx.rotate(p.rollAngle); }
+            else if (p.type === 'rock_golem') { p.rollAngle += 0.15 * spinDir; ctx.rotate(p.rollAngle); }
+            else { ctx.rotate(pAngle); }
 
             if (p.type === 'bone_skeleton') { 
                 ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
@@ -492,7 +512,6 @@ window.renderGameView = function() {
                 ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); 
             } 
             else if (p.type === 'rock_golem' || p.type === 'rock_gargouille') {
-                // Si l'image bugue, on dessine un bloc tournant pour prouver que la physique fonctionne !
                 ctx.fillStyle = p.color;
                 ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
                 ctx.fillStyle = '#2c3e50';
@@ -643,33 +662,4 @@ window.renderGameView = function() {
         ctx.beginPath(); 
         ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); 
         ctx.fill(); 
-        if (p.glow) ctx.restore(); 
-    });
-    ctx.globalAlpha = 1.0; 
-    
-    ctx.save();
-    let gradient = ctx.createRadialGradient(
-        player.x + player.size/2, player.y + player.size/2, 100, 
-        player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
-    );
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');        
-    gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height); 
-    ctx.restore();
-    
-    if (currentRoomId === 999) {
-        ctx.fillStyle = '#ecf0f1'; 
-        ctx.font = 'bold 28px Arial'; 
-        ctx.textAlign = 'center';
-        let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
-        if (arenaState === "WAITING" && arenaTimer > 0) {
-            ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
-        } else if (displayWave > 0) {
-            ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
-        }
-        ctx.textAlign = 'left';
-    }
-    ctx.restore(); 
-};
+        if (p.glow) ctx.restore();
