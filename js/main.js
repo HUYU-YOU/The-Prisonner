@@ -6,7 +6,6 @@ document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
     try {
-        // --- SÉCURITÉ ABSOLUE : Déclaration forcée des variables manquantes ---
         window.currentEnemies = window.currentEnemies || [];
         window.currentItems = window.currentItems || [];
         window.currentCrates = window.currentCrates || [];
@@ -328,13 +327,10 @@ window.update = function() {
         if (typeof window.renderGameView === 'function') window.renderGameView(); 
         requestAnimationFrame(window.update);
 
-    // =========================================================================
-    // L'ÉCRAN D'ERREUR (S'affiche en rouge au lieu d'un écran noir)
-    // =========================================================================
     } catch (e) {
         console.error("ERREUR CRITIQUE DANS UPDATE :", e);
         if (ctx) {
-            ctx.fillStyle = '#b33939'; // Fond rouge foncé
+            ctx.fillStyle = '#b33939'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 24px monospace';
@@ -349,7 +345,6 @@ window.update = function() {
                 ctx.fillText(stackLines[i], 20, 140 + i * 20);
             }
         }
-        // Le jeu s'arrête ici exprès pour que tu puisses lire l'erreur
     }
 };
 window.update();
