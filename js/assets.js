@@ -16,6 +16,10 @@ const assetsManager = {
 };
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
+assetsManager.load('floor2', 'assets/tiles/floor2.png');
+assetsManager.load('floor3', 'assets/tiles/floor3.png');
+assetsManager.load('floor4', 'assets/tiles/floor4.png');
+assetsManager.load('floor5', 'assets/tiles/floor5.png');
 assetsManager.load('left_wall', 'assets/tiles/left_wall.png');
 assetsManager.load('right_wall', 'assets/tiles/right_wall.png');
 assetsManager.load('back_wall', 'assets/tiles/back_wall.png');   
