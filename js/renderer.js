@@ -274,6 +274,7 @@ window.renderGameView = function() {
         let dir = window.getDirectionName(angleToTarget);
         
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
+        let eTypeLow = enemy.type.toLowerCase();
         
         if (prefix === 'Small_golem') prefix = 'Golem';
 
@@ -309,10 +310,8 @@ window.renderGameView = function() {
             img = window.getAsset(skinName); 
         }
         
-        // --- NOUVEAU SYSTÈME DE SECOURS (Beaucoup plus propre) ---
         if (!img || !img.complete || img.naturalWidth === 0) { 
             is8Dir = false; 
-            // Si l'image manque, on charge automatiquement la vue de Face (_south_view) et on la fera tourner !
             img = window.getAsset(`${prefix}_south_view`); 
         }
 
@@ -338,11 +337,15 @@ window.renderGameView = function() {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
-            if (['troll', 'dragon', 'goblin', 'skeleton', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) {
+            
+            // --- GESTION DES TAILLES DIVISÉES PAR 2 ET DU LOUP ---
+            if (['troll', 'dragon', 'goblin', 'skeleton', 'small_golem', 'orc', 'golem', 'gargouille'].includes(eTypeLow)) {
                 displaySize = enemy.size * 1.875; 
+            } else if (eTypeLow === 'wolf') {
+                displaySize = (enemy.size * 1.875) * 1.25; // Loup : Réduit par 2 puis augmenté de 25%
             }
             
-            if ((enemy.type === 'mage' || enemy.type === 'spider' || enemy.type === 'wolf') && !is8Dir) { 
+            if (['mage', 'spider', 'wolf'].includes(eTypeLow) && !is8Dir) { 
                 ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
             } else { 
@@ -355,19 +358,15 @@ window.renderGameView = function() {
         ctx.shadowColor = 'transparent'; 
         ctx.shadowBlur = 0;
         
-        // ====================================================================
-        // --- NOUVELLE ANIMATION DES BRÛLURES AVEC LES SKINS D'EFFETS ---
-        // ====================================================================
+        // --- EFFET DE BRÛLURE (ANIMÉ) ---
         if (enemy.isBurning) { 
             ctx.save(); 
-            ctx.globalAlpha = 0.7; // 70% d'opacité pour que ça ressorte bien
+            ctx.globalAlpha = 0.7; // Opacité ajustée à 70%
             
-            // On alterne entre les images 1 et 2 toutes les 200 millisecondes
             let burnFrame = Math.floor(Date.now() / 200) % 2 === 0 ? 'burned_ennemy_view1' : 'burned_ennemy_view2';
             let burnOverlay = window.getAsset(burnFrame);
 
             if (burnOverlay && burnOverlay.complete && burnOverlay.naturalWidth > 0) {
-                // On met l'effet de brûlure légèrement plus grand que l'ennemi
                 let overlaySize = enemy.size * 1.8; 
                 ctx.drawImage(burnOverlay, -overlaySize / 2, -overlaySize / 2, overlaySize, overlaySize);
             } else {
@@ -425,8 +424,9 @@ window.renderGameView = function() {
             
             let drawSize = p.size * 15.0; 
             
+            // --- ATTAQUE DU MAGE EN LIGNE (LASER) ---
             if (p.type === 'fire_mage') {
-                ctx.drawImage(pImg, -drawSize / 4, -drawSize, drawSize / 2, drawSize * 2);
+                ctx.drawImage(pImg, -drawSize / 8, -drawSize * 1.5, drawSize / 4, drawSize * 3);
             } else {
                 if (p.type === 'fire_necromancien') {
                     drawSize = drawSize / 2; 
@@ -459,6 +459,7 @@ window.renderGameView = function() {
         let epImg = window.getAsset(epImgName);
         
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
+            // --- ROTATIONS DES ROCHERS ET BOOMERANG ---
             if (p.type === 'armor_sword') {
                 ctx.rotate(Date.now() / 40); 
             } else if (p.type === 'rock_golem') {
