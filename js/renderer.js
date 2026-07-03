@@ -275,7 +275,6 @@ window.renderGameView = function() {
         
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
         
-        // --- ADAPTATION DES NOMS DE SKINS ---
         if (prefix === 'Small_golem') prefix = 'Golem';
 
         let action = 'view';
@@ -352,7 +351,6 @@ window.renderGameView = function() {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
-            // --- REDUCTION DE LA TAILLE DE CERTAINS ENNEMIS (-50%) ---
             if (['troll', 'dragon', 'goblin', 'skeleton', 'wolf', 'small_golem'].includes(enemy.type.toLowerCase())) {
                 displaySize = enemy.size * 1.875; 
             }
@@ -421,11 +419,16 @@ window.renderGameView = function() {
             ctx.shadowBlur = 30; 
             
             let drawSize = p.size * 15.0; 
-            if (p.type === 'fire_mage' || p.type === 'fire_necromancien') {
-                drawSize = drawSize / 2; // Projectiles Nécro/Mage diminués
-            }
             
-            ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
+            // --- TRANSFORMATION EN LIGNE POUR LE MAGE ET REDUCTION NECRO ---
+            if (p.type === 'fire_mage') {
+                ctx.drawImage(pImg, -drawSize / 4, -drawSize, drawSize / 2, drawSize * 2);
+            } else {
+                if (p.type === 'fire_necromancien') {
+                    drawSize = drawSize / 2; 
+                }
+                ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
+            }
         } else {
             ctx.rotate(p.angle); 
             ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); 
@@ -446,18 +449,23 @@ window.renderGameView = function() {
         else if (p.type === 'fire_deathgod') epImgName = 'Attack_fire_deathgod';
         else if (p.type === 'fire_elysia') epImgName = 'Attack_fire_elysia';
         else if (p.type === 'armor_sword') epImgName = 'Attack_sword_armor';
-        // --- NOUVEAUX PROJECTILES ---
         else if (p.type === 'rock_golem') epImgName = 'Attack_rock_golem';
         else if (p.type === 'rock_gargouille') epImgName = 'Attack_rock_gargouille';
         
         let epImg = window.getAsset(epImgName);
         
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
+            // --- ANIMATIONS ROTATIVES POUR BOOMERANG ET ROCHERS ---
             if (p.type === 'armor_sword') {
-                ctx.rotate(Date.now() / 100); 
+                ctx.rotate(Date.now() / 40); 
+            } else if (p.type === 'rock_golem') {
+                ctx.rotate(Date.now() / 150); 
+            } else if (p.type === 'rock_gargouille') {
+                ctx.rotate(Date.now() / 60); 
             } else {
                 ctx.rotate(pAngle + Math.PI / 2); 
             }
+            
             ctx.shadowColor = p.color || '#fff'; 
             ctx.shadowBlur = 40; 
             let drawSize = p.size * 12.0; 
@@ -541,9 +549,8 @@ window.renderGameView = function() {
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-            let displaySize = player.size * 3.75; // JOUEUR +50% TAILLE
+            let displaySize = player.size * 3.75; 
             
-            // --- REDUCTION DE LA TAILLE DE L'ELFE PAR 2 ICI ---
             if (player.heroClass === 'Elf') {
                 displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
             } else if (player.heroClass === 'Mage' && !is8DirP) {
@@ -552,13 +559,16 @@ window.renderGameView = function() {
             
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
+            // --- ANIMATION DE L'ÉPÉE DU CHEVALIER EN ARC DE CERCLE ---
             if (prefixP === 'Knight' && attackCooldown > 0) {
                 let swordImg = window.getAsset('Attack_sword_knight');
                 if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
                     ctx.save();
                     let progress = (40 - attackCooldown) / 40;
+                    let swingAngle = -Math.PI / 4 + progress * (Math.PI / 2);
+                    
                     ctx.translate(25, 0); 
-                    ctx.rotate(Math.PI / 2); 
+                    ctx.rotate(swingAngle); 
                     ctx.globalAlpha = 1 - progress; 
                     ctx.shadowColor = '#ecf0f1'; 
                     ctx.shadowBlur = 15; 
