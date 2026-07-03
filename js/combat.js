@@ -20,8 +20,9 @@ window.handlePlayerAttack = function() {
         }
     } 
     else if (player.heroClass === 'Mage') {
-        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 8, hitTargets: [], angle: angle, type: 'fire_mage' }); 
-        attackCooldown = 35;
+        // --- LE MAGE TIRE BEAUCOUP PLUS VITE ET SES PROJECTILES FILENT (22 de vitesse) ---
+        projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 22, vy: Math.sin(angle) * 22, size: 8, hitTargets: [], angle: angle, type: 'fire_mage' }); 
+        attackCooldown = 25; 
     } 
     else if (player.heroClass === 'Necromancer') {
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, size: 6, hitTargets: [], angle: angle, type: 'fire_necromancien' }); 
@@ -163,7 +164,6 @@ window.updateProjectiles = function() {
         }
 
         if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
-            // NOUVEAUX DÉGÂTS PIERRES (GOLEM ET GARGOUILLE) = 25
             let epDmg = ep.damage || 15;
             if (ep.type === 'rock_golem' || ep.type === 'rock_gargouille') epDmg = 25;
             
