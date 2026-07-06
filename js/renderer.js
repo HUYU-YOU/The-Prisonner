@@ -8,11 +8,10 @@ window.triggerShake = function(intensity, duration) {
 };
 
 window.spawnParticles = function(x, y, color, count, isGlow = false) {
-    window.particles = window.particles || [];
     for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
-        window.particles.push({ 
+        particles.push({ 
             x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
             life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
         });
@@ -77,6 +76,7 @@ window.renderGameView = function() {
         } 
     }
 
+    // AFFICHER LES TROUS ET L'EAU DU NIVEAU 2
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
@@ -455,7 +455,7 @@ window.renderGameView = function() {
                 
                 let drawSize = p.size * 15.0; 
                 
-                // --- VRAIE GROSSE BOULE DE FEU (PLUS DE LASER) ---
+                // --- BOULE DE FEU GEANTE ARRONDIE ---
                 if (p.type === 'fire_mage') {
                     let fbSize = p.size * 5.0; 
                     ctx.drawImage(pImg, -fbSize/2, -fbSize/2, fbSize, fbSize);
