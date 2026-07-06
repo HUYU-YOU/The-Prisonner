@@ -8,10 +8,11 @@ window.triggerShake = function(intensity, duration) {
 };
 
 window.spawnParticles = function(x, y, color, count, isGlow = false) {
+    window.particles = window.particles || [];
     for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
-        particles.push({ 
+        window.particles.push({ 
             x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
             life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
         });
@@ -56,10 +57,12 @@ window.renderGameView = function() {
     }
     
     let imageSol = assetsManager.images['sol_base'];
-    if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
-    else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
-    else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
-    else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+    if (typeof currentRoomId !== 'undefined') {
+        if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
+        else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
+        else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
+        else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+    }
 
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -90,7 +93,7 @@ window.renderGameView = function() {
         });
     }
 
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+    let isVertCorridor = (typeof currentRoomId !== 'undefined' && (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113));
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
         ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
@@ -133,13 +136,13 @@ window.renderGameView = function() {
     }
     ctx.globalAlpha = 1.0;
 
-    if (currentRoomId === 999) { 
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === 999) { 
         ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
         let shrink = typeof arenaShrink !== 'undefined' ? arenaShrink : 0;
         ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
     }
 
-    if (currentRoomId === 8) {
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === 8) {
         let sImg = assetsManager.images['stairs_down']; let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
         ctx.save();
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
@@ -156,7 +159,7 @@ window.renderGameView = function() {
         ctx.restore();
     }
 
-    if (currentRoomId === 1) {
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === 1) {
         let benchX = 400; let benchY = canvas.height - wallMargin - 60; let imgBench = assetsManager.images['bench'];
         if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) { ctx.drawImage(imgBench, benchX, benchY, 200, 80); } 
         if (typeof bookshelf !== 'undefined') {
@@ -187,7 +190,7 @@ window.renderGameView = function() {
             
             if (isOpen) { stateStr = '_open'; } 
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
-            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+            if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
             
             if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
             else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
@@ -452,9 +455,9 @@ window.renderGameView = function() {
                 
                 let drawSize = p.size * 15.0; 
                 
-                // --- CORRECTION : VRAIE GROSSE BOULE DE FEU (PLUS DE LASER) ---
+                // --- VRAIE GROSSE BOULE DE FEU (PLUS DE LASER) ---
                 if (p.type === 'fire_mage') {
-                    let fbSize = p.size * 9.0; // 12 * 9 = 108 pixels (bien ronde)
+                    let fbSize = p.size * 5.0; 
                     ctx.drawImage(pImg, -fbSize/2, -fbSize/2, fbSize, fbSize);
                 } else {
                     if (p.type === 'fire_necromancien') { drawSize = drawSize / 2; }
@@ -526,7 +529,7 @@ window.renderGameView = function() {
     if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
     
     if (drawPlayer) {
-        let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
+        let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5; 
         else if (isElfInvuln) ctx.globalAlpha = 0.4; 
         else ctx.globalAlpha = 1.0;
@@ -579,7 +582,8 @@ window.renderGameView = function() {
         if (is8DirP) {
             ctx.rotate(tilt); 
         } else {
-            ctx.rotate(player.faceAngle - (Math.PI / 2) + tilt); 
+            if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
+            else ctx.rotate(player.faceAngle + tilt); 
         }
 
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
