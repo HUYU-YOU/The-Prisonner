@@ -3,17 +3,17 @@
 // ============================================================================
 
 window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
-    // --- SÉCURITÉ ANTI-CRASH ---
     window.currentEnemies = window.currentEnemies || [];
 
     for (let i = 0; i < count; i++) {
         let ex = baseX; let ey = baseY;
         
         if (ex === null || ey === null) {
-            let minSpawnX = wallMargin + window.arenaShrink;
-            let maxSpawnX = canvas.width - wallMargin - window.arenaShrink - 40;
-            let minSpawnY = wallMargin + window.arenaShrink;
-            let maxSpawnY = canvas.height - wallMargin - window.arenaShrink - 40;
+            let shrink = window.arenaShrink || 0;
+            let minSpawnX = wallMargin + shrink;
+            let maxSpawnX = canvas.width - wallMargin - shrink - 40;
+            let minSpawnY = wallMargin + shrink;
+            let maxSpawnY = canvas.height - wallMargin - shrink - 40;
 
             if (typeof arenaWave !== 'undefined' && arenaWave >= 41) {
                 let side = Math.floor(Math.random() * 4);
@@ -66,7 +66,6 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 };
 
 window.updateEnemies = function() {
-    // --- SÉCURITÉ ANTI-CRASH (Ligne 88 sauvée !) ---
     window.currentEnemies = window.currentEnemies || [];
     window.necroSummons = window.necroSummons || [];
     window.enemyProjectiles = window.enemyProjectiles || [];
@@ -78,7 +77,7 @@ window.updateEnemies = function() {
 
     let shrink = typeof window.arenaShrink !== 'undefined' ? window.arenaShrink : 0;
     
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+    let isVertCorridor = (window.currentRoomId === 5 || window.currentRoomId === 6 || window.currentRoomId === 111 || window.currentRoomId === 112 || window.currentRoomId === 113);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin; 
@@ -98,7 +97,6 @@ window.updateEnemies = function() {
     let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
     if (fusionAggro) isElfInvuln = false; 
 
-    // C'EST CETTE LIGNE QUI PLANTAIT AVANT (Maintenant protégée par la sécurité)
     window.currentEnemies.forEach((enemy, idx) => {
         let eMaxX = bRight - shrink - enemy.size; 
         let eMaxY = bBot - shrink - enemy.size;
@@ -168,6 +166,7 @@ window.updateEnemies = function() {
             if (enemy.summonTimer <= 0) {
                 let mx = bLeft + Math.random() * (bRight - bLeft);
                 let my = bTop + Math.random() * (bBot - bTop);
+                let fallSpeed = isPhase2 ? Math.max(15, 40 * hpRatio) : 50; 
                 window.hazards.push({ x: mx, y: my, radius: 45, timer: fallSpeed, maxTimer: fallSpeed, damage: 30, isDragon: true });
                 enemy.summonTimer = spawnRate; 
             }
@@ -375,14 +374,14 @@ window.updateEnemies = function() {
             let obs = window.currentObstacles[i];
             if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
         }
-        if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        if (window.currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
         for (let i = 0; i < window.currentObstacles.length; i++) {
             let obs = window.currentObstacles[i];
             if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
         }
-        if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (window.currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
 
         if (enemy.type !== 'gargouille') {
             if (enemy.x < minLimitX) enemy.x = minLimitX; 
@@ -415,7 +414,7 @@ window.updateEnemies = function() {
                 enemy.attackAnimTimer = 30;
                 
                 let randHit = Math.floor(Math.random() * 3) + 1;
-                let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                let maxLife = (window.currentRoomId === 999) ? 1200 : 3600;
                 let bSize = player.size * 1.5;
                 if (player.heroClass === 'Elf') bSize /= 2;
                 
@@ -523,13 +522,13 @@ window.updateEnemies = function() {
             
             if (player.heroClass === 'Necromancer') { window.necroKills.push(e.type); }
 
-            if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
+            if (['troll', 'deathgod', 'elysia'].includes(e.type) && window.currentRoomId === 8 && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
                 if (typeof window.hazards !== 'undefined') window.hazards.length = 0; 
                 window.currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
 
-            if (e.type === 'minotaure' && currentRoomId >= 107 && currentRoomId <= 110) {
+            if (e.type === 'minotaure' && window.currentRoomId >= 107 && window.currentRoomId <= 110) {
                 worldState.minotaursKilled = (worldState.minotaursKilled || 0) + 1;
                 if (worldState.minotaursKilled < 4) {
                     window.currentItems.push({ id: 'key_mino_'+Date.now(), type: 'key', x: e.x, y: e.y, size: 15, collected: false });
@@ -538,7 +537,7 @@ window.updateEnemies = function() {
                 }
             }
             
-            if (e.type === 'troll' && currentRoomId === 113) {
+            if (e.type === 'troll' && window.currentRoomId === 113) {
                 let trollsLeft = window.currentEnemies.filter(en => en.type === 'troll' && en.health > 0 && en !== e).length;
                 if (trollsLeft === 0) { 
                     window.currentItems.push({ id: 'key_trolls_'+Date.now(), type: 'key', x: e.x, y: e.y, size: 15, collected: false });
@@ -555,7 +554,7 @@ window.updateEnemies = function() {
             
             let killNum = Math.floor(Math.random() * 3) + 1;
             let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
-            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+            let maxLife = (window.currentRoomId === 999) ? 1200 : 3600;
             
             let killSize = e.size * 3.75; 
             if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(e.type.toLowerCase())) killSize /= 2;
@@ -566,8 +565,8 @@ window.updateEnemies = function() {
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
             
             window.currentEnemies.splice(i, 1);
-            if (window.currentEnemies.length === 0 && currentRoomId !== 999) {
-                worldState.clearedRooms[currentRoomId] = true;
+            if (window.currentEnemies.length === 0 && window.currentRoomId !== 999) {
+                worldState.clearedRooms[window.currentRoomId] = true;
                 if (typeof window.hazards !== 'undefined') window.hazards.length = 0; 
             }
             if (typeof window.updateHUD === 'function') window.updateHUD();
