@@ -11,7 +11,7 @@ window.spawnParticles = function(x, y, color, count, isGlow = false) {
     for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
-        window.particles.push({ 
+        particles.push({ 
             x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
             life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
         });
@@ -42,50 +42,39 @@ window.getAsset = function(name) {
 
 window.renderGameView = function() {
     if (!ctx) return;
-    try {
-        window.currentEnemies = window.currentEnemies || [];
-        window.currentItems = window.currentItems || [];
-        window.currentCrates = window.currentCrates || [];
-        window.currentDoors = window.currentDoors || [];
-        window.projectiles = window.projectiles || [];
-        window.enemyProjectiles = window.enemyProjectiles || [];
-        window.particles = window.particles || [];
-        window.bloodStains = window.bloodStains || [];
-        window.hazards = window.hazards || [];
-        window.necroSummons = window.necroSummons || [];
-        window.currentObstacles = window.currentObstacles || [];
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    ctx.save(); 
+    
+    if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
+        let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
+        let dy = (Math.random() - 0.5) * shakeIntensity * 2;
+        ctx.translate(dx, dy); 
+        shakeTimer--; 
+        shakeIntensity *= 0.9; 
+    }
+    
+    let imageSol = assetsManager.images['sol_base'];
+    if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
+    else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
+    else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
+    else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
 
-        ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        ctx.save(); 
-        
-        if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
-            let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
-            let dy = (Math.random() - 0.5) * shakeIntensity * 2;
-            ctx.translate(dx, dy); 
-            shakeTimer--; 
-            shakeIntensity *= 0.9; 
-        }
-        
-        let imageSol = assetsManager.images['sol_base'];
-        if (window.currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
-        else if (window.currentRoomId >= 107 && window.currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
-        else if (window.currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
-        else if (window.currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+    ctx.fillStyle = '#2c251f'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) { 
+        ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); 
+        ctx.fillRect(0, 0, canvas.width, canvas.height); 
+    } else { 
+        ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 1; 
+        for(let i = 0; i < canvas.width; i += 60) { 
+            for(let j = 0; j < canvas.height; j += 60) { ctx.strokeRect(i, j, 60, 60); }
+        } 
+    }
 
-        ctx.fillStyle = '#2c251f'; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) { 
-            ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); 
-            ctx.fillRect(0, 0, canvas.width, canvas.height); 
-        } else { 
-            ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 1; 
-            for(let i = 0; i < canvas.width; i += 60) { 
-                for(let j = 0; j < canvas.height; j += 60) { ctx.strokeRect(i, j, 60, 60); }
-            } 
-        }
-
+    if (typeof window.currentObstacles !== 'undefined') {
         window.currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
                 ctx.fillStyle = '#050505'; 
@@ -99,24 +88,26 @@ window.renderGameView = function() {
                 ctx.fillText("NIVEAU 3", obs.x + obs.width/2, obs.y + obs.height/2);
             }
         });
+    }
 
-        let isVertCorridor = (window.currentRoomId === 5 || window.currentRoomId === 6 || window.currentRoomId === 111 || window.currentRoomId === 112 || window.currentRoomId === 113);
-        if (isVertCorridor) {
-            ctx.fillStyle = '#0a0a0a'; 
-            ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
-            ctx.fillRect(canvas.width - 350 + wallMargin, 0, 350, canvas.height); 
-            
-            ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 6;
-            ctx.beginPath(); ctx.moveTo(350 - wallMargin, 0); ctx.lineTo(350 - wallMargin, canvas.height); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(canvas.width - 350 + wallMargin, 0); ctx.lineTo(canvas.width - 350 + wallMargin, canvas.height); ctx.stroke();
-        }
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+    if (isVertCorridor) {
+        ctx.fillStyle = '#0a0a0a'; 
+        ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
+        ctx.fillRect(canvas.width - 350 + wallMargin, 0, 350, canvas.height); 
         
-        let wallL = assetsManager.images['left_wall']; if (wallL && wallL.complete) ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
-        let wallR = assetsManager.images['right_wall']; if (wallR && wallR.complete) ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
-        let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
-        let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
-        
-        window.bloodStains.forEach(blood => { 
+        ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(350 - wallMargin, 0); ctx.lineTo(350 - wallMargin, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(canvas.width - 350 + wallMargin, 0); ctx.lineTo(canvas.width - 350 + wallMargin, canvas.height); ctx.stroke();
+    }
+    
+    let wallL = assetsManager.images['left_wall']; if (wallL && wallL.complete) ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
+    let wallR = assetsManager.images['right_wall']; if (wallR && wallR.complete) ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
+    let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
+    let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
+    
+    if (typeof bloodStains !== 'undefined') {
+        bloodStains.forEach(blood => { 
             ctx.save();
             let alpha = 1.0;
             let fadeTime = 300;
@@ -139,41 +130,43 @@ window.renderGameView = function() {
             }
             ctx.restore();
         });
-        ctx.globalAlpha = 1.0;
+    }
+    ctx.globalAlpha = 1.0;
 
-        if (window.currentRoomId === 999) { 
-            ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
-            let shrink = window.arenaShrink || 0;
-            ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
+    if (currentRoomId === 999) { 
+        ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
+        let shrink = typeof arenaShrink !== 'undefined' ? arenaShrink : 0;
+        ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
+    }
+
+    if (currentRoomId === 8) {
+        let sImg = assetsManager.images['stairs_down']; let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
+        ctx.save();
+        if (sImg && sImg.complete && sImg.naturalWidth > 0) {
+            ctx.drawImage(sImg, sx, sy, sw, sh); 
+            if (!worldState.bossDefeated) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
+        } else {
+            ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.strokeRect(sx, sy, sw, sh);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            if (!worldState.bossDefeated) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
+            else { ctx.fillStyle = '#f1c40f'; ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5); }
+            ctx.textAlign = 'left';
         }
+        if (worldState.bossDefeated) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
+        ctx.restore();
+    }
 
-        if (window.currentRoomId === 8) {
-            let sImg = assetsManager.images['stairs_down']; let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
-            ctx.save();
-            if (sImg && sImg.complete && sImg.naturalWidth > 0) {
-                ctx.drawImage(sImg, sx, sy, sw, sh); 
-                if (!worldState.bossDefeated) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
-            } else {
-                ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.strokeRect(sx, sy, sw, sh);
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-                if (!worldState.bossDefeated) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
-                else { ctx.fillStyle = '#f1c40f'; ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5); }
-                ctx.textAlign = 'left';
-            }
-            if (worldState.bossDefeated) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
-            ctx.restore();
+    if (currentRoomId === 1) {
+        let benchX = 400; let benchY = canvas.height - wallMargin - 60; let imgBench = assetsManager.images['bench'];
+        if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) { ctx.drawImage(imgBench, benchX, benchY, 200, 80); } 
+        if (typeof bookshelf !== 'undefined') {
+            let imgBiblio = assetsManager.images['bibliotheque'];
+            if (imgBiblio && imgBiblio.complete && imgBiblio.naturalWidth > 0) { ctx.drawImage(imgBiblio, bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height); } 
         }
+    }
 
-        if (window.currentRoomId === 1) {
-            let benchX = 400; let benchY = canvas.height - wallMargin - 60; let imgBench = assetsManager.images['bench'];
-            if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) { ctx.drawImage(imgBench, benchX, benchY, 200, 80); } 
-            if (typeof bookshelf !== 'undefined') {
-                let imgBiblio = assetsManager.images['bibliotheque'];
-                if (imgBiblio && imgBiblio.complete && imgBiblio.naturalWidth > 0) { ctx.drawImage(imgBiblio, bookshelf.x, bookshelf.y, bookshelf.width, bookshelf.height); } 
-            }
-        }
-
-        window.currentCrates.forEach(crate => {
+    if (typeof currentCrates !== 'undefined') {
+        currentCrates.forEach(crate => {
             let imgName = ''; 
             if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; 
             else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; 
@@ -186,13 +179,15 @@ window.renderGameView = function() {
             else { ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); }
             ctx.restore();
         });
+    }
 
-        window.currentDoors.forEach(door => {
+    if (typeof currentDoors !== 'undefined') {
+        currentDoors.forEach(door => {
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
             
             if (isOpen) { stateStr = '_open'; } 
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
-            if (window.currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
             
             if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
             else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
@@ -202,8 +197,10 @@ window.renderGameView = function() {
             if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } 
             else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
         });
+    }
 
-        window.currentItems.forEach(item => {
+    if (typeof currentItems !== 'undefined') {
+        currentItems.forEach(item => {
             if (!item.collected) {
                 let floatY = Math.sin(Date.now() / 200) * 3; 
                 ctx.save(); ctx.translate(item.x, item.y + floatY); 
@@ -248,8 +245,10 @@ window.renderGameView = function() {
                 ctx.restore();
             }
         });
+    }
 
-        window.hazards.forEach(h => { 
+    if (typeof hazards !== 'undefined') {
+        hazards.forEach(h => { 
             ctx.save();
             let isElysia = h.isElysia || false;
             let assetName = isElysia ? 'Attack_meteorites_elysia' : 'Attack_meteorites_dragon';
@@ -264,8 +263,10 @@ window.renderGameView = function() {
             }
             ctx.restore();
         });
+    }
 
-        window.necroSummons.forEach(s => {
+    if (typeof necroSummons !== 'undefined') {
+        necroSummons.forEach(s => {
             ctx.save(); 
             ctx.translate(s.x + s.size/2, s.y + s.size/2);
             
@@ -289,8 +290,10 @@ window.renderGameView = function() {
             }
             ctx.restore(); 
         });
+    }
 
-        window.currentEnemies.forEach(enemy => {
+    if (typeof currentEnemies !== 'undefined') {
+        currentEnemies.forEach(enemy => {
             ctx.save(); 
             ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
             
@@ -409,7 +412,7 @@ window.renderGameView = function() {
             } 
         });
 
-        let boss = window.currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(e.type));
+        let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(e.type));
         if (boss) {
             let bossName = "BOSS";
             if (boss.type === 'troll') bossName = "TROLL CORROMPU";
@@ -428,8 +431,10 @@ window.renderGameView = function() {
             ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
             ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
         }
+    }
 
-        window.projectiles.forEach(p => { 
+    if (typeof projectiles !== 'undefined') {
+        projectiles.forEach(p => { 
             ctx.save(); 
             ctx.translate(p.x, p.y); 
             
@@ -459,8 +464,10 @@ window.renderGameView = function() {
             }
             ctx.restore();
         });
-        
-        window.enemyProjectiles.forEach(p => { 
+    }
+    
+    if (typeof enemyProjectiles !== 'undefined') {
+        enemyProjectiles.forEach(p => { 
             ctx.save(); 
             ctx.translate(p.x, p.y); 
             let pAngle = Math.atan2(p.vy, p.vx); 
@@ -524,134 +531,136 @@ window.renderGameView = function() {
             }
             ctx.restore();
         });
+    }
 
-        let drawPlayer = true;
-        if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
+    let drawPlayer = true;
+    if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
+    
+    if (drawPlayer) {
+        let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
+        if (player.dashTimer > 0) ctx.globalAlpha = 0.5; 
+        else if (isElfInvuln) ctx.globalAlpha = 0.4; 
+        else ctx.globalAlpha = 1.0;
         
-        if (drawPlayer) {
-            let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
-            if (player.dashTimer > 0) ctx.globalAlpha = 0.5; 
-            else if (isElfInvuln) ctx.globalAlpha = 0.4; 
-            else ctx.globalAlpha = 1.0;
-            
-            let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
-            let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
-            let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
-            
-            if (player.dashTimer > 0) tilt = Math.PI / 8; 
-            
-            ctx.save(); 
-            ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
+        let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
+        let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
+        let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
+        
+        if (player.dashTimer > 0) tilt = Math.PI / 8; 
+        
+        ctx.save(); 
+        ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
 
-            let dirP = window.getDirectionName(player.faceAngle);
-            let prefixP = player.heroClass ? player.heroClass : 'Knight';
+        let dirP = window.getDirectionName(player.faceAngle);
+        let prefixP = player.heroClass ? player.heroClass : 'Knight';
+        
+        if (prefixP === 'Mage') {
+            prefixP = 'Burned'; 
+        } else {
+            prefixP = prefixP.charAt(0).toUpperCase() + prefixP.slice(1).toLowerCase();
+        }
+        
+        let actionP = 'view';
+        if ((typeof isAttacking !== 'undefined' && isAttacking) || (typeof attackCooldown !== 'undefined' && attackCooldown > 0)) {
+            actionP = 'attack';
+            let midTime = prefixP === 'Knight' ? 20 : 15;
+            if (typeof attackCooldown !== 'undefined' && attackCooldown > midTime) actionP = 'attack1';
+            else actionP = 'attack2';
+        }
+        
+        let skinNameP = `${prefixP}_${dirP}_${actionP}`;
+        let pImg = window.getAsset(skinNameP);
+        let is8DirP = true;
+
+        if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
+            let pSkinName = `${prefixP}_${dirP}_view`;
+            pImg = window.getAsset(pSkinName);
+        }
+
+        if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
+            is8DirP = false;
+            let fallbackNameP = '';
+            if (player.heroClass === 'Elf') fallbackNameP = 'Elf_south_view';
+            else if (player.heroClass === 'Mage') fallbackNameP = 'Burned_south_view';
+            else fallbackNameP = `${prefixP}_south_view`;
             
-            if (prefixP === 'Mage') {
-                prefixP = 'Burned'; 
-            } else {
-                prefixP = prefixP.charAt(0).toUpperCase() + prefixP.slice(1).toLowerCase();
+            pImg = window.getAsset(fallbackNameP);
+        }
+
+        if (is8DirP) {
+            ctx.rotate(tilt); 
+        } else {
+            ctx.rotate(player.faceAngle - (Math.PI / 2) + tilt); 
+        }
+
+        if (pImg && pImg.complete && pImg.naturalWidth > 0) {
+            let displaySize = player.size * 3.75; 
+            
+            if (player.heroClass === 'Elf') {
+                displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
+            } else if (player.heroClass === 'Mage' && !is8DirP) {
+                displaySize = player.size * 5.25;
             }
             
-            let actionP = 'view';
-            if ((typeof isAttacking !== 'undefined' && isAttacking) || (typeof attackCooldown !== 'undefined' && attackCooldown > 0)) {
-                actionP = 'attack';
-                let midTime = prefixP === 'Knight' ? 20 : 15;
-                if (typeof attackCooldown !== 'undefined' && attackCooldown > midTime) actionP = 'attack1';
-                else actionP = 'attack2';
-            }
+            ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
-            let skinNameP = `${prefixP}_${dirP}_${actionP}`;
-            let pImg = window.getAsset(skinNameP);
-            let is8DirP = true;
-
-            if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-                let pSkinName = `${prefixP}_${dirP}_view`;
-                pImg = window.getAsset(pSkinName);
-            }
-
-            if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-                is8DirP = false;
-                let fallbackNameP = '';
-                if (player.heroClass === 'Elf') fallbackNameP = 'Elf_south_view';
-                else if (player.heroClass === 'Mage') fallbackNameP = 'Burned_south_view';
-                else fallbackNameP = `${prefixP}_south_view`;
-                
-                pImg = window.getAsset(fallbackNameP);
-            }
-
-            if (is8DirP) {
-                ctx.rotate(tilt); 
-            } else {
-                ctx.rotate(player.faceAngle - (Math.PI / 2) + tilt); 
-            }
-
-            if (pImg && pImg.complete && pImg.naturalWidth > 0) {
-                let displaySize = player.size * 3.75; 
-                
-                if (player.heroClass === 'Elf') {
-                    displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
-                } else if (player.heroClass === 'Mage' && !is8DirP) {
-                    displaySize = player.size * 5.25;
-                }
-                
-                ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
-                
-                if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
-                    let swordImg = window.getAsset('Attack_sword_knight');
-                    if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
-                        ctx.save();
-                        let progress = (40 - attackCooldown) / 40;
-                        let swingAngle = -Math.PI / 4 + progress * (Math.PI / 2);
-                        
-                        ctx.translate(25, 0); 
-                        ctx.rotate(swingAngle); 
-                        ctx.globalAlpha = 1 - progress; 
-                        ctx.shadowColor = '#ecf0f1'; 
-                        ctx.shadowBlur = 15; 
-                        ctx.drawImage(swordImg, -45, -45, 90, 90);
-                        ctx.restore();
-                    }
-                }
-            } else {
-                if (prefixP === 'Knight') {
-                    ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); 
-                    ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
-                    
+            if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
+                let swordImg = window.getAsset('Attack_sword_knight');
+                if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
                     ctx.save();
-                    if (typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
-                        let progress = (40 - attackCooldown) / 40;
-                        let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3);
-                        ctx.rotate(swipeAngle);
-                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
-                        ctx.beginPath(); ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); ctx.stroke();
-                    } else {
-                        ctx.translate(5, 12); 
-                    }
-                    ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -3, 6, 6); 
-                    ctx.fillStyle = '#ecf0f1'; ctx.fillRect(6, -2, 28, 4); 
+                    let progress = (40 - attackCooldown) / 40;
+                    let swingAngle = -Math.PI / 4 + progress * (Math.PI / 2);
+                    
+                    ctx.translate(25, 0); 
+                    ctx.rotate(swingAngle); 
+                    ctx.globalAlpha = 1 - progress; 
+                    ctx.shadowColor = '#ecf0f1'; 
+                    ctx.shadowBlur = 15; 
+                    ctx.drawImage(swordImg, -45, -45, 90, 90);
                     ctx.restore();
-                } else {
-                    ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
                 }
             }
-            ctx.restore(); 
-            ctx.globalAlpha = 1.0; 
-        }
-        
-        if (typeof playerStats !== 'undefined' && playerStats.inventory && playerStats.inventory.coins !== undefined) {
-            let coinImg = window.getAsset('gold_coin');
-            if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
-                ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
+        } else {
+            if (prefixP === 'Knight') {
+                ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
+                
+                ctx.save();
+                if (typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
+                    let progress = (40 - attackCooldown) / 40;
+                    let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3);
+                    ctx.rotate(swipeAngle);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(0, 0, 40, -Math.PI / 2, swipeAngle); ctx.stroke();
+                } else {
+                    ctx.translate(5, 12); 
+                }
+                ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, -3, 6, 6); 
+                ctx.fillStyle = '#ecf0f1'; ctx.fillRect(6, -2, 28, 4); 
+                ctx.restore();
             } else {
-                ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
             }
-            ctx.fillStyle = '#fff'; 
-            ctx.font = 'bold 24px Arial'; 
-            ctx.textAlign = 'left';
-            ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
         }
-        
-        window.particles.forEach(p => { 
+        ctx.restore(); 
+        ctx.globalAlpha = 1.0; 
+    }
+    
+    if (typeof playerStats !== 'undefined' && playerStats.inventory && playerStats.inventory.coins !== undefined) {
+        let coinImg = window.getAsset('gold_coin');
+        if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+            ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30);
+        } else {
+            ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.arc(wallMargin + 30, 35, 16, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.fillStyle = '#fff'; 
+        ctx.font = 'bold 24px Arial'; 
+        ctx.textAlign = 'left';
+        ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
+    }
+    
+    if (typeof particles !== 'undefined') {
+        particles.forEach(p => { 
             ctx.globalAlpha = Math.max(0, p.life); 
             if (p.glow) { 
                 ctx.save(); 
@@ -664,51 +673,32 @@ window.renderGameView = function() {
             ctx.fill(); 
             if (p.glow) ctx.restore(); 
         });
-        ctx.globalAlpha = 1.0; 
-        
-        ctx.save();
-        let gradient = ctx.createRadialGradient(
-            player.x + player.size/2, player.y + player.size/2, 100, 
-            player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
-        );
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');        
-        gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height); 
-        ctx.restore();
-        
-        if (window.currentRoomId === 999) {
-            ctx.fillStyle = '#ecf0f1'; 
-            ctx.font = 'bold 28px Arial'; 
-            ctx.textAlign = 'center';
-            let displayWave = arenaState === "WAITING" ? arenaWave : arenaWave - 1;
-            if (arenaState === "WAITING" && typeof arenaTimer !== 'undefined' && arenaTimer > 0) {
-                ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
-            } else if (displayWave > 0) {
-                ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
-            }
-            ctx.textAlign = 'left';
-        }
-        ctx.restore(); 
-        
-    } catch (e) {
-        console.error("CRASH DU JEU :", e);
-        if (typeof ctx !== 'undefined' && ctx) {
-            ctx.fillStyle = '#c0392b'; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 24px monospace';
-            ctx.fillText("⚠️ CRASH GRAPHIQUE ⚠️", 20, 40);
-            ctx.font = '16px monospace';
-            ctx.fillText("T'es dans la M_E_R_D_E (Mais envoie quand même un screen) :", 20, 80);
-            ctx.fillStyle = '#f1c40f';
-            ctx.fillText(e.message, 20, 110);
-            ctx.fillStyle = '#ffffff';
-            let stackLines = e.stack ? e.stack.split('\n') : [];
-            for (let i = 0; i < Math.min(stackLines.length, 15); i++) {
-                ctx.fillText(stackLines[i], 20, 140 + i * 20);
-            }
-        }
     }
+    ctx.globalAlpha = 1.0; 
+    
+    ctx.save();
+    let gradient = ctx.createRadialGradient(
+        player.x + player.size/2, player.y + player.size/2, 100, 
+        player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
+    );
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');        
+    gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height); 
+    ctx.restore();
+    
+    if (currentRoomId === 999) {
+        ctx.fillStyle = '#ecf0f1'; 
+        ctx.font = 'bold 28px Arial'; 
+        ctx.textAlign = 'center';
+        let displayWave = typeof arenaState !== 'undefined' && arenaState === "WAITING" ? arenaWave : arenaWave - 1;
+        if (typeof arenaState !== 'undefined' && arenaState === "WAITING" && typeof arenaTimer !== 'undefined' && arenaTimer > 0) {
+            ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
+        } else if (displayWave > 0) {
+            ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
+        }
+        ctx.textAlign = 'left';
+    }
+    ctx.restore(); 
 };
