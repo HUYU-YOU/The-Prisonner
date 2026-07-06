@@ -34,7 +34,6 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'deathgod') { size = 70; hp = 1000; spd = 4.5; col = '#2c3e50'; }
         else if (type === 'elysia') { size = 70; hp = 1500; spd = 5.0; col = '#e84393'; }
         else if (type === 'armor') { size = 50; hp = 200; spd = 3.0; col = '#7f8c8d'; }
-        // Nouveaux Mobs
         else if (type === 'golem') { size = 50; hp = 100; spd = 1.5; col = '#7f8c8d'; }
         else if (type === 'small_golem') { size = 30; hp = 40; spd = 2.5; col = '#bdc3c7'; }
         else if (type === 'orc') { size = 50; hp = 200; spd = 4.2; col = '#2ecc71'; }
@@ -45,7 +44,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         if (typeof isArenaMode !== 'undefined' && isArenaMode && typeof arenaWave !== 'undefined' && arenaWave >= 25 && !['spider', 'wolf', 'dragon', 'deathgod', 'elysia', 'armor'].includes(type)) {
             hp += (arenaWave - 24) * 30;
         }
-        
+
         let vx = 0, vy = 0;
         if (type === 'gargouille') {
             vx = -3 - Math.random() * 2; 
@@ -298,6 +297,7 @@ window.updateEnemies = function() {
         }
 
         let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille'].includes(enemy.type);
+        
         if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
             if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4; pSize = 9; pDmg = 5; }
@@ -325,18 +325,22 @@ window.updateEnemies = function() {
         if (enemy.type === 'gargouille') {
             dx_mov = enemy.vx;
             dy_mov = enemy.vy;
+            
+            let eMaxY = bBot - shrink - enemy.size;
             if (enemy.y <= minLimitY) { enemy.y = minLimitY; enemy.vy *= -1; enemy.vy += (Math.random() - 0.5); }
-            if (enemy.y >= bBot - shrink - enemy.size) { enemy.y = bBot - shrink - enemy.size; enemy.vy *= -1; enemy.vy += (Math.random() - 0.5); }
+            if (enemy.y >= eMaxY) { enemy.y = eMaxY; enemy.vy *= -1; enemy.vy += (Math.random() - 0.5); }
             if (enemy.x < minLimitX - enemy.size * 2) {
                 enemy.x = bRight - shrink + enemy.size; 
-                enemy.y = minLimitY + Math.random() * ((bBot - shrink - enemy.size) - minLimitY);
+                enemy.y = minLimitY + Math.random() * (eMaxY - minLimitY);
             }
         } 
-        else if (dist > stopDist && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
+        else if (dist > stopDist && dist < 9999) { 
+            dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; 
+        }
 
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
-            if (idx !== otherIdx && enemy.type !== 'gargouille') {
+            if (idx !== otherIdx && enemy.type !== 'gargouille') { 
                 let diffX = enemy.x - otherEnemy.x; let diffY = enemy.y - otherEnemy.y;
                 if (Math.abs(diffX) < 60 && Math.abs(diffY) < 60) {
                     let distSq = diffX*diffX + diffY*diffY;
@@ -358,7 +362,7 @@ window.updateEnemies = function() {
                 if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
             }
         }
-        if (currentRoomId === 8 && !isBoss && typeof checkCollision === 'function' && checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
         if (typeof currentObstacles !== 'undefined') {
@@ -366,11 +370,10 @@ window.updateEnemies = function() {
                 if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
             }
         }
-        if (currentRoomId === 8 && !isBoss && typeof checkCollision === 'function' && checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (currentRoomId === 8 && !isBoss && typeof window.checkCollision === 'function' && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
 
         let eMaxX = bRight - shrink - enemy.size; 
         let eMaxY = bBot - shrink - enemy.size;
-        
         if (enemy.type !== 'gargouille') {
             if (enemy.x < minLimitX) enemy.x = minLimitX; 
             if (enemy.y < minLimitY) enemy.y = minLimitY; 
@@ -379,9 +382,10 @@ window.updateEnemies = function() {
         }
 
         if (!enemy.invulnerable) {
-            if (fusionAggro && typeof checkCollision === 'function' && checkCollision(fusionAggro, enemy)) {
+            if (fusionAggro && typeof window.checkCollision === 'function' && window.checkCollision(fusionAggro, enemy)) {
                 if (enemy.attackAnimTimer <= 0) {
-                    let dmg = 20;
+                    let dmg = 25;
+                    if (enemy.type === 'wolf') dmg = 40;
                     if (enemy.type === 'armor') dmg = fusionAggro.maxHealth * 0.32;
                     else if (enemy.type === 'elysia') dmg = fusionAggro.maxHealth * 0.34;
                     else if (enemy.type === 'deathgod') dmg = fusionAggro.maxHealth * 0.25;
@@ -390,8 +394,9 @@ window.updateEnemies = function() {
                     enemy.attackAnimTimer = 30;
                 }
             } 
-            else if (!fusionAggro && playerInvulnerableTimer <= 0 && typeof checkCollision === 'function' && checkCollision(player, enemy)) {
-                let dmg = 20;
+            else if (!fusionAggro && playerInvulnerableTimer <= 0 && typeof window.checkCollision === 'function' && window.checkCollision(player, enemy)) {
+                let dmg = 25;
+                if (enemy.type === 'wolf') dmg = 40;
                 if (enemy.type === 'armor') dmg = playerStats.maxHealth * 0.32;
                 else if (enemy.type === 'elysia') dmg = playerStats.maxHealth * 0.34;
                 else if (enemy.type === 'deathgod') dmg = playerStats.maxHealth * 0.25;
@@ -407,8 +412,8 @@ window.updateEnemies = function() {
                 bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 
                 playerInvulnerableTimer = 60; 
-                if (typeof updateHUD === 'function') updateHUD(); 
-                if (playerStats.health <= 0 && typeof handlePlayerDeath === 'function') handlePlayerDeath();
+                if (typeof window.updateHUD === 'function') window.updateHUD(); 
+                if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
             }
         }
     });
@@ -479,7 +484,7 @@ window.updateEnemies = function() {
                         } else if (minDist <= 100) { 
                             let hitBox = { x: summon.x - 50, y: summon.y - 50, width: summon.size + 100, height: summon.size + 100 };
                             currentEnemies.forEach(e => {
-                                if (!e.invulnerable && typeof checkCollision === 'function' && checkCollision(hitBox, e)) {
+                                if (!e.invulnerable && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
                                     let hitNum = Math.floor(Math.random() * 3) + 1;
                                     let bSize = e.size * 1.5;
@@ -516,7 +521,6 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
             }
 
-            // Drops NIVEAU 2
             if (e.type === 'minotaure' && currentRoomId >= 107 && currentRoomId <= 110) {
                 worldState.minotaursKilled = (worldState.minotaursKilled || 0) + 1;
                 if (worldState.minotaursKilled < 4) {
@@ -525,11 +529,16 @@ window.updateEnemies = function() {
                     currentItems.push({ id: 'scroll_power', type: 'scroll', x: e.x, y: e.y, size: 15, collected: false });
                 }
             }
+            
             if (e.type === 'troll' && currentRoomId === 113) {
                 let trollsLeft = currentEnemies.filter(en => en.type === 'troll' && en.health > 0 && en !== e).length;
                 if (trollsLeft === 0) { 
                     currentItems.push({ id: 'key_trolls_'+Date.now(), type: 'key', x: e.x, y: e.y, size: 15, collected: false });
                 }
+            }
+            
+            if (e.type === 'golem') {
+                if (typeof window.spawnEnemy === 'function') { window.spawnEnemy('small_golem', 2, e.x, e.y); }
             }
             
             if (Math.random() < 0.3 && !['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'armor'].includes(e.type)) { 
@@ -553,7 +562,7 @@ window.updateEnemies = function() {
                 worldState.clearedRooms[currentRoomId] = true;
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
             }
-            if (typeof updateHUD === 'function') updateHUD();
+            if (typeof window.updateHUD === 'function') window.updateHUD();
         }
     }
 };
