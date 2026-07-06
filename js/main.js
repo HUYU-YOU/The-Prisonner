@@ -201,13 +201,13 @@ window.update = function() {
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     
-    if (typeof window.currentObstacles !== 'undefined') {
-        for (let i = 0; i < window.currentObstacles.length; i++) {
-            let obs = window.currentObstacles[i];
+    // --- COLLISIONS OBSTACLES X ---
+    if (typeof currentObstacles !== 'undefined') {
+        for (let obs of currentObstacles) {
             if (window.checkCollision(player, obs)) {
                 if (obs.type === 'water') {
-                    player.y += 20; 
-                    break;
+                    alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
+                    player.y += 20; break;
                 } else {
                     player.x = oldPx; player.dashTimer = 0; break;
                 }
@@ -223,9 +223,9 @@ window.update = function() {
     let oldPy = player.y; player.y += dy_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
     
-    if (typeof window.currentObstacles !== 'undefined') {
-        for (let i = 0; i < window.currentObstacles.length; i++) {
-            let obs = window.currentObstacles[i];
+    // --- COLLISIONS OBSTACLES Y ---
+    if (typeof currentObstacles !== 'undefined') {
+        for (let obs of currentObstacles) {
             if (window.checkCollision(player, obs)) {
                 if (obs.type !== 'water') {
                     player.y = oldPy; player.dashTimer = 0; break;
@@ -276,16 +276,21 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // --- LE CORRECTIF EST ICI ! TRANSITION NIVEAU 1 VERS NIVEAU 2 ---
+    // =========================================================================
+    // LA TÉLÉPORTATION DU NIVEAU 2 INFAILLIBLE
+    // =========================================================================
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
-        let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
-        if (window.checkCollision && window.checkCollision(player, triggerStairs)) {
+        // Distance mathématique entre le joueur et l'escalier (ignorant les box)
+        let distToStairs = Math.hypot((player.x + player.size/2) - (canvas.width/2), (player.y + player.size/2) - (canvas.height/2));
+        
+        // S'il est dessus (à moins de 85 pixels du centre absolu de l'escalier)
+        if (distToStairs < 85) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
                 
-                // On téléporte le joueur EN BAS de la salle 101 !
                 player.x = canvas.width / 2 - player.size / 2;
                 player.y = canvas.height - wallMargin - 120;
+                player.dashTimer = 0; 
                 
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
                 if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
