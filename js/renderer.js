@@ -293,8 +293,6 @@ window.renderGameView = function() {
         let dir = window.getDirectionName(angleToTarget);
         
         let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
-        let eTypeLow = enemy.type.toLowerCase();
-
         let action = 'view';
         let skinName = '';
 
@@ -330,21 +328,21 @@ window.renderGameView = function() {
         if (!img || !img.complete || img.naturalWidth === 0) { 
             is8Dir = false; 
             let fallbackName = ''; 
+            let lowPrefix = prefix.toLowerCase();
             
-            if (eTypeLow === 'goblin') { 
+            if (lowPrefix === 'goblin') { 
                 if (enemy.blockAnimTimer > 0) fallbackName = 'goblin_top_block'; 
                 else if (enemy.attackAnimTimer > 0) fallbackName = 'goblin_top_attack'; 
                 else fallbackName = 'goblin_top_view'; 
             } 
-            else if (eTypeLow === 'skeleton') { 
+            else if (lowPrefix === 'skeleton') { 
                 if (enemy.attackAnimTimer > 0) fallbackName = 'Skeleton_top_attack'; 
                 else fallbackName = 'Skeleton_top_view'; 
             } 
-            else if (eTypeLow === 'spider') fallbackName = 'spider_top_view'; 
-            else if (eTypeLow === 'troll') fallbackName = 'troll_top_view'; 
-            else if (eTypeLow === 'mage') fallbackName = 'Burned_top_view'; 
-            else if (eTypeLow === 'dragon') fallbackName = 'drake_top_view';
-            else fallbackName = `${prefix}_south_view`;
+            else if (lowPrefix === 'spider') fallbackName = 'spider_top_view'; 
+            else if (lowPrefix === 'troll') fallbackName = 'troll_top_view'; 
+            else if (lowPrefix === 'mage') fallbackName = 'Burned_top_view'; 
+            else if (lowPrefix === 'dragon') fallbackName = 'drake_top_view';
             
             img = window.getAsset(fallbackName); 
         }
@@ -365,20 +363,17 @@ window.renderGameView = function() {
         ctx.shadowOffsetX = 4; 
         ctx.shadowOffsetY = 4;
         
-        if (enemy.type === 'troll' || enemy.type === 'orc') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
+        if (enemy.type === 'troll') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
         else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
-        else if (enemy.type === 'dragon' || enemy.type === 'minotaure') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
+        else if (enemy.type === 'dragon') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
         
         if (img && img.complete && img.naturalWidth > 0) {
             let displaySize = enemy.size * 3.75; 
-            
-            if (['troll', 'dragon', 'goblin', 'skeleton', 'small_golem', 'orc', 'golem', 'gargouille'].includes(eTypeLow)) {
+            if (['troll', 'dragon', 'goblin', 'skeleton'].includes(enemy.type.toLowerCase())) {
                 displaySize = enemy.size * 1.875; 
-            } else if (eTypeLow === 'wolf') {
-                displaySize = (enemy.size * 1.875) * 1.25; 
             }
             
-            if ((enemy.type === 'mage' || enemy.type === 'spider' || enemy.type === 'wolf') && !is8Dir) { 
+            if ((enemy.type === 'mage' || enemy.type === 'spider') && !is8Dir) { 
                 ctx.save(); ctx.beginPath(); ctx.arc(0, 0, displaySize/2.2, 0, Math.PI*2); ctx.clip(); 
                 ctx.drawImage(img, -displaySize/2, -displaySize/2, displaySize, displaySize); ctx.restore(); 
             } else { 
@@ -392,18 +387,7 @@ window.renderGameView = function() {
         ctx.shadowBlur = 0;
         
         if (enemy.isBurning) { 
-            ctx.save();
-            ctx.globalAlpha = 0.7;
-            let burnFrame = Math.floor(Date.now() / 200) % 2 === 0 ? 'burned_ennemy_view1' : 'burned_ennemy_view2';
-            let burnOverlay = window.getAsset(burnFrame);
-            if (burnOverlay && burnOverlay.complete && burnOverlay.naturalWidth > 0) {
-                let overlaySize = enemy.size * 1.8; 
-                ctx.drawImage(burnOverlay, -overlaySize / 2, -overlaySize / 2, overlaySize, overlaySize);
-            } else {
-                ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; 
-                ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); 
-            }
-            ctx.restore();
+            ctx.fillStyle = 'rgba(230, 126, 34, 0.5)'; ctx.beginPath(); ctx.arc(0, 0, enemy.size/2 + Math.random()*5, 0, Math.PI*2); ctx.fill(); 
         }
         
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) { 
@@ -411,13 +395,13 @@ window.renderGameView = function() {
         }
         ctx.restore(); 
         
-        if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(enemy.type)) { 
+        if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type)) { 
             ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
             ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
         } 
     });
 
-    let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(e.type));
+    let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
     if (boss) {
         let bossName = "BOSS";
         if (boss.type === 'troll') bossName = "TROLL CORROMPU";
@@ -425,8 +409,6 @@ window.renderGameView = function() {
         else if (boss.type === 'dragon') bossName = "DRAGON MAUDIT";
         else if (boss.type === 'deathgod') bossName = "DEATH GOD";
         else if (boss.type === 'elysia') bossName = "ELYSIA";
-        else if (boss.type === 'minotaure') bossName = "MINOTAURE";
-        else if (boss.type === 'gargouille') bossName = "GARGOUILLE";
         
         let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
         let barWidth = 600; 
@@ -453,9 +435,10 @@ window.renderGameView = function() {
             
             let drawSize = p.size * 15.0; 
             
-            // RAYON DU MAGE PLUS FIN
+            // --- CORRECTION : BOULE DE FEU DU MAGE PLUS GROSSE ET PLUS DE LASER ---
             if (p.type === 'fire_mage') {
-                ctx.drawImage(pImg, -drawSize / 12, -drawSize * 2, drawSize / 6, drawSize * 4);
+                drawSize = drawSize * 0.6; // Scale down for perfect visual roundness (hitbox is increased in combat.js)
+                ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
             } else {
                 if (p.type === 'fire_necromancien') { drawSize = drawSize / 2; }
                 ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
@@ -479,42 +462,23 @@ window.renderGameView = function() {
         else if (p.type === 'fire_deathgod') epImgName = 'Attack_fire_deathgod';
         else if (p.type === 'fire_elysia') epImgName = 'Attack_fire_elysia';
         else if (p.type === 'armor_sword') epImgName = 'Attack_sword_armor';
-        else if (p.type === 'rock_golem') epImgName = 'Attack_rock_golem';
-        else if (p.type === 'rock_gargouille') epImgName = 'Attack_rock_gargouille';
         
         let epImg = window.getAsset(epImgName);
-        if (p.rollAngle === undefined) p.rollAngle = 0;
         
         if (epImg && epImg.complete && epImg.naturalWidth > 0) {
-            let spinDir = (p.vx >= 0) ? 1 : -1; 
-            if (p.type === 'armor_sword') { p.rollAngle += 0.4; ctx.rotate(p.rollAngle); }
-            else if (p.type === 'rock_gargouille') { p.rollAngle += 0.35 * spinDir; ctx.rotate(p.rollAngle); }
-            else if (p.type === 'rock_golem') { p.rollAngle += 0.15 * spinDir; ctx.rotate(p.rollAngle); }
-            else { ctx.rotate(pAngle + Math.PI / 2); }
-            
+            if (p.type === 'armor_sword') {
+                ctx.rotate(Date.now() / 100); 
+            } else {
+                ctx.rotate(pAngle + Math.PI / 2); 
+            }
             ctx.shadowColor = p.color || '#fff'; 
             ctx.shadowBlur = 40; 
             let drawSize = p.size * 12.0; 
             ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
         } else {
-            let spinDir = (p.vx >= 0) ? 1 : -1;
-            if (p.type === 'armor_sword') { p.rollAngle += 0.4; ctx.rotate(p.rollAngle); }
-            else if (p.type === 'rock_gargouille') { p.rollAngle += 0.35 * spinDir; ctx.rotate(p.rollAngle); }
-            else if (p.type === 'rock_golem') { p.rollAngle += 0.15 * spinDir; ctx.rotate(p.rollAngle); }
-            else { ctx.rotate(pAngle); }
-
-            if (p.type === 'bone_skeleton') { 
-                ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); 
-            } 
-            else if (p.type === 'bat_web') { 
-                ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); 
-            } 
-            else if (p.type === 'rock_golem' || p.type === 'rock_gargouille') {
-                ctx.fillStyle = p.color; ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2); ctx.fillStyle = '#2c3e50'; ctx.fillRect(-p.size, -p.size/4, p.size * 2, p.size/2); 
-            }
-            else { 
-                ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); 
-            }
+            if (p.type === 'bone_skeleton') { ctx.rotate(pAngle); ctx.fillStyle = '#ecf0f1'; let l = p.size * 1.5; let w = p.size * 0.3; let r = p.size * 0.6; ctx.fillRect(-l, -w, l * 2, w * 2); ctx.beginPath(); ctx.arc(-l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(-l, w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, -w*1.2, r, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(l, w*1.2, r, 0, Math.PI*2); ctx.fill(); } 
+            else if (p.type === 'bat_web') { ctx.rotate(pAngle); ctx.fillStyle = 'rgba(142, 68, 173, 0.8)'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -8); ctx.lineTo(-4, -4); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 4); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); } 
+            else { ctx.rotate(pAngle); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); }
         }
         ctx.restore();
     });
