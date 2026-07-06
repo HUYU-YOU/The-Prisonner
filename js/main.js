@@ -55,17 +55,44 @@ window.update = function() {
                 }
 
                 if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
-                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
-                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
-                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); }
-                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); }
-                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); }
-                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); }
+                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('orc', 2); }
+                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 1); }
+                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 2); }
+                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); window.spawnEnemy('gargouille', 2); }
+                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 3); }
+                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); window.spawnEnemy('minotaure', 2); window.spawnEnemy('gargouille', 1); }
                 else {
-                    let countGoblin = 3 + Math.floor(arenaWave * 1.2);
-                    window.spawnEnemy('goblin', countGoblin);
-                    if (arenaWave >= 3) window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
-                    if (arenaWave >= 15) window.spawnEnemy('spider', 2);
+                    let totalToSpawn = 3 + Math.floor(arenaWave * 1.2);
+                    if (arenaWave >= 15) { totalToSpawn = Math.min(totalToSpawn, 20); }
+                    
+                    let spawnCounts = {};
+                    for (let i = 0; i < totalToSpawn; i++) {
+                        let type = '';
+                        let r = Math.random(); 
+
+                        if (arenaWave < 10) { type = r < 0.7 ? 'goblin' : 'skeleton'; } 
+                        else if (arenaWave < 15) {
+                            if (r < 0.6) type = 'goblin'; else if (r < 0.9) type = 'skeleton'; else type = 'spider';
+                        } 
+                        else if (arenaWave <= 27) {
+                            let progress = (arenaWave - 15) / 12; 
+                            if (r < 0.6) type = Math.random() < progress ? 'orc' : 'goblin';
+                            else if (r < 0.9) type = Math.random() < progress ? 'golem' : 'skeleton';
+                            else type = Math.random() < progress ? 'wolf' : 'spider';
+                        } 
+                        else if (arenaWave <= 40) {
+                            let progress = (arenaWave - 27) / 13; 
+                            if (r < 0.6) type = Math.random() < progress ? 'minotaure' : 'orc';
+                            else if (r < 0.9) type = Math.random() < progress ? 'gargouille' : 'golem';
+                            else type = 'wolf'; 
+                        } 
+                        else {
+                            if (r < 0.6) type = 'minotaure'; else if (r < 0.9) type = 'gargouille'; else type = 'wolf';
+                        }
+                        spawnCounts[type] = (spawnCounts[type] || 0) + 1;
+                    }
+
+                    for (let mobType in spawnCounts) { window.spawnEnemy(mobType, spawnCounts[mobType]); }
                 }
                 arenaWave++;
             }
@@ -85,30 +112,32 @@ window.update = function() {
     let roomChanged = false;
     let doorToPass = null;
     
-    for (let i = 0; i < currentDoors.length; i++) {
-        let door = currentDoors[i];
-        
-        if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
-            continue;
-        }
-        
-        if (!doorToPass && window.checkCollision(player, door)) {
-            if (door.locked) {
-                if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; 
-                    door.locked = false; 
-                    worldState.unlockedDoors[door.id] = true;
-                    if (typeof window.updateHUD === 'function') window.updateHUD();
-                    if (door.dest !== null) doorToPass = door;
-                } else {
-                    if (door.face === 'north') player.y = door.y + door.height;
-                    else if (door.face === 'south') player.y = door.y - player.size;
-                    else if (door.face === 'east') player.x = door.x - player.size;
-                    else if (door.face === 'west') player.x = door.x + door.width;
+    if (typeof currentDoors !== 'undefined') {
+        for (let i = 0; i < currentDoors.length; i++) {
+            let door = currentDoors[i];
+            
+            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
+                if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
+                continue;
+            }
+            
+            if (!doorToPass && window.checkCollision(player, door)) {
+                if (door.locked) {
+                    if (playerStats.inventory.keys.gold > 0) {
+                        playerStats.inventory.keys.gold--; 
+                        door.locked = false; 
+                        worldState.unlockedDoors[door.id] = true;
+                        if (typeof window.updateHUD === 'function') window.updateHUD();
+                        if (door.dest !== null) doorToPass = door;
+                    } else {
+                        if (door.face === 'north') player.y = door.y + door.height;
+                        else if (door.face === 'south') player.y = door.y - player.size;
+                        else if (door.face === 'east') player.x = door.x - player.size;
+                        else if (door.face === 'west') player.x = door.x + door.width;
+                    }
+                } else if (door.dest !== null) {
+                    doorToPass = door;
                 }
-            } else if (door.dest !== null) {
-                doorToPass = door;
             }
         }
     }
@@ -280,21 +309,22 @@ window.update = function() {
     // LA TÉLÉPORTATION DU NIVEAU 2 INFAILLIBLE
     // =========================================================================
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
-        // Distance mathématique entre le joueur et l'escalier (ignorant les box)
-        let distToStairs = Math.hypot((player.x + player.size/2) - (canvas.width/2), (player.y + player.size/2) - (canvas.height/2));
-        
-        // S'il est dessus (à moins de 85 pixels du centre absolu de l'escalier)
-        if (distToStairs < 85) {
+        let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
+        if (window.checkCollision && window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
                 
+                // On prépare la salle
+                if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
+                
+                // On téléporte le joueur EN BAS de la salle 101
                 player.x = canvas.width / 2 - player.size / 2;
                 player.y = canvas.height - wallMargin - 120;
                 player.dashTimer = 0; 
                 
-                if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
-                
+                // LA LIGNE MAGIQUE QUI EMPÊCHE LE FREEZE : On relance la boucle
+                requestAnimationFrame(window.update);
                 return;
             }
         }
