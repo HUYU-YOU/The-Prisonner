@@ -43,9 +43,6 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
     try {
-        // ====================================================================
-        // LE BOUCLIER ANTI-CRASH : INITIALISATION FORCÉE DE TOUTES LES LISTES
-        // ====================================================================
         window.currentEnemies = window.currentEnemies || [];
         window.currentItems = window.currentItems || [];
         window.currentCrates = window.currentCrates || [];
@@ -71,10 +68,10 @@ window.renderGameView = function() {
         }
         
         let imageSol = assetsManager.images['sol_base'];
-        if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
-        else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
-        else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
-        else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+        if (window.currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
+        else if (window.currentRoomId >= 107 && window.currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
+        else if (window.currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
+        else if (window.currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
 
         ctx.fillStyle = '#2c251f'; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -103,7 +100,7 @@ window.renderGameView = function() {
             }
         });
 
-        let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+        let isVertCorridor = (window.currentRoomId === 5 || window.currentRoomId === 6 || window.currentRoomId === 111 || window.currentRoomId === 112 || window.currentRoomId === 113);
         if (isVertCorridor) {
             ctx.fillStyle = '#0a0a0a'; 
             ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
@@ -144,13 +141,13 @@ window.renderGameView = function() {
         });
         ctx.globalAlpha = 1.0;
 
-        if (currentRoomId === 999) { 
+        if (window.currentRoomId === 999) { 
             ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
             let shrink = window.arenaShrink || 0;
             ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
         }
 
-        if (currentRoomId === 8) {
+        if (window.currentRoomId === 8) {
             let sImg = assetsManager.images['stairs_down']; let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
             ctx.save();
             if (sImg && sImg.complete && sImg.naturalWidth > 0) {
@@ -167,7 +164,7 @@ window.renderGameView = function() {
             ctx.restore();
         }
 
-        if (currentRoomId === 1) {
+        if (window.currentRoomId === 1) {
             let benchX = 400; let benchY = canvas.height - wallMargin - 60; let imgBench = assetsManager.images['bench'];
             if (imgBench && imgBench.complete && imgBench.naturalWidth > 0) { ctx.drawImage(imgBench, benchX, benchY, 200, 80); } 
             if (typeof bookshelf !== 'undefined') {
@@ -195,7 +192,7 @@ window.renderGameView = function() {
             
             if (isOpen) { stateStr = '_open'; } 
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
-            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+            if (window.currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
             
             if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
             else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
@@ -681,7 +678,7 @@ window.renderGameView = function() {
         ctx.fillRect(0, 0, canvas.width, canvas.height); 
         ctx.restore();
         
-        if (currentRoomId === 999) {
+        if (window.currentRoomId === 999) {
             ctx.fillStyle = '#ecf0f1'; 
             ctx.font = 'bold 28px Arial'; 
             ctx.textAlign = 'center';
@@ -698,7 +695,7 @@ window.renderGameView = function() {
     } catch (e) {
         console.error("CRASH DU JEU :", e);
         if (typeof ctx !== 'undefined' && ctx) {
-            ctx.fillStyle = '#b33939'; 
+            ctx.fillStyle = '#c0392b'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 24px monospace';
