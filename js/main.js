@@ -201,13 +201,13 @@ window.update = function() {
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     
-    // --- COLLISIONS OBSTACLES X (NIVEAU 2) ---
-    if (typeof currentObstacles !== 'undefined') {
-        for (let obs of currentObstacles) {
+    if (typeof window.currentObstacles !== 'undefined') {
+        for (let i = 0; i < window.currentObstacles.length; i++) {
+            let obs = window.currentObstacles[i];
             if (window.checkCollision(player, obs)) {
                 if (obs.type === 'water') {
-                    alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
-                    player.y += 20; break;
+                    player.y += 20; 
+                    break;
                 } else {
                     player.x = oldPx; player.dashTimer = 0; break;
                 }
@@ -223,9 +223,9 @@ window.update = function() {
     let oldPy = player.y; player.y += dy_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
     
-    // --- COLLISIONS OBSTACLES Y (NIVEAU 2) ---
-    if (typeof currentObstacles !== 'undefined') {
-        for (let obs of currentObstacles) {
+    if (typeof window.currentObstacles !== 'undefined') {
+        for (let i = 0; i < window.currentObstacles.length; i++) {
+            let obs = window.currentObstacles[i];
             if (window.checkCollision(player, obs)) {
                 if (obs.type !== 'water') {
                     player.y = oldPy; player.dashTimer = 0; break;
@@ -276,18 +276,25 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // --- TRANSITION BOSS NIVEAU 1 VERS NIVEAU 2 ---
+    // --- LE CORRECTIF EST ICI ! TRANSITION NIVEAU 1 VERS NIVEAU 2 ---
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
-        let triggerStairs = { x: canvas.width/2 - 45, y: canvas.height/2 - 45, width: 90, height: 90 };
-        if (window.checkCollision(player, triggerStairs)) {
+        let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
+        if (window.checkCollision && window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
-                alert("VOUS AVEZ DÉBLOQUÉ LE NIVEAU 2 !");
+                
+                // On téléporte le joueur EN BAS de la salle 101 !
+                player.x = canvas.width / 2 - player.size / 2;
+                player.y = canvas.height - wallMargin - 120;
+                
+                if (typeof window.saveRoomState === 'function') window.saveRoomState();
                 if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
+                
                 return;
             }
         }
     }
+    
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
