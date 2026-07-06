@@ -1,5 +1,5 @@
 // ============================================================================
-// js/renderer.js - MOTEUR DE RENDU VISUEL ET EFFET
+// js/renderer.js - MOTEUR DE RENDU VISUEL ET EFFETS
 // ============================================================================
 
 window.triggerShake = function(intensity, duration) { 
