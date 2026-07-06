@@ -3,7 +3,6 @@
 // ============================================================================
 
 window.handlePlayerAttack = function() {
-    // --- SÉCURITÉ ANTI-CRASH ---
     window.projectiles = window.projectiles || [];
     window.currentEnemies = window.currentEnemies || [];
     window.currentCrates = window.currentCrates || [];
@@ -49,7 +48,7 @@ window.handlePlayerAttack = function() {
                         
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
-                            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                            let maxLife = (window.currentRoomId === 999) ? 1200 : 3600;
                             let bSize = enemy.size * 1.5;
                             if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(enemy.type.toLowerCase())) bSize /= 2;
                             window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
@@ -68,7 +67,6 @@ window.handlePlayerAttack = function() {
 };
 
 window.updateProjectiles = function() {
-    // --- SÉCURITÉ ANTI-CRASH ---
     window.projectiles = window.projectiles || [];
     window.enemyProjectiles = window.enemyProjectiles || [];
     window.currentEnemies = window.currentEnemies || [];
@@ -77,7 +75,7 @@ window.updateProjectiles = function() {
     window.necroSummons = window.necroSummons || [];
     window.bloodStains = window.bloodStains || [];
 
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+    let isVertCorridor = (window.currentRoomId === 5 || window.currentRoomId === 6 || window.currentRoomId === 111 || window.currentRoomId === 112 || window.currentRoomId === 113);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin; 
@@ -89,7 +87,7 @@ window.updateProjectiles = function() {
         p.x += p.vx; 
         p.y += p.vy;
         
-        if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
+        if (window.currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
             window.projectiles.splice(i, 1); continue; 
         }
         if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { 
@@ -130,7 +128,7 @@ window.updateProjectiles = function() {
                 
                 if (enemy.type !== 'skeleton') {
                     let hitNum = Math.floor(Math.random() * 3) + 1;
-                    let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                    let maxLife = (window.currentRoomId === 999) ? 1200 : 3600;
                     let bSize = enemy.size * 1.5;
                     if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(enemy.type.toLowerCase())) bSize /= 2;
                     window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
@@ -169,7 +167,7 @@ window.updateProjectiles = function() {
         if (ep.x < bLeft || ep.y < bTop || ep.x > bRight || ep.y > bBot) { 
             window.enemyProjectiles.splice(i, 1); continue; 
         }
-        if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(epHitbox, centerStairs)) { 
+        if (window.currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(epHitbox, centerStairs)) { 
             window.enemyProjectiles.splice(i, 1); continue; 
         }
 
@@ -188,7 +186,7 @@ window.updateProjectiles = function() {
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
             let hitNum = Math.floor(Math.random() * 3) + 1;
-            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+            let maxLife = (window.currentRoomId === 999) ? 1200 : 3600;
             let bSize = player.size * 1.5;
             if (player.heroClass === 'Elf') bSize /= 2;
             window.bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
@@ -232,7 +230,6 @@ window.updateProjectiles = function() {
 };
 
 window.updateItemsAndCrates = function() {
-    // --- SÉCURITÉ ANTI-CRASH ---
     window.currentItems = window.currentItems || [];
     window.currentCrates = window.currentCrates || [];
 
