@@ -56,19 +56,20 @@ window.renderGameView = function() {
     }
     
     let imageSol = assetsManager.images['sol_base'];
+    let isNewFloor = false;
     if (typeof currentRoomId !== 'undefined') {
-        if (currentRoomId === 114 && assetsManager.images['floor2']) { imageSol = assetsManager.images['floor2']; }
-        else if (currentRoomId >= 107 && currentRoomId <= 110 && assetsManager.images['floor3']) { imageSol = assetsManager.images['floor3']; }
-        else if (currentRoomId === 103 && assetsManager.images['floor4']) { imageSol = assetsManager.images['floor4']; }
-        else if (currentRoomId === 102 && assetsManager.images['floor5']) { imageSol = assetsManager.images['floor5']; }
+        if (currentRoomId === 114 && assetsManager.images['floor2']) { imageSol = assetsManager.images['floor2']; isNewFloor = true; }
+        else if (currentRoomId >= 107 && currentRoomId <= 110 && assetsManager.images['floor3']) { imageSol = assetsManager.images['floor3']; isNewFloor = true; }
+        else if (currentRoomId === 103 && assetsManager.images['floor4']) { imageSol = assetsManager.images['floor4']; isNewFloor = true; }
+        else if (currentRoomId === 102 && assetsManager.images['floor5']) { imageSol = assetsManager.images['floor5']; isNewFloor = true; }
     }
 
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) { 
-        if (typeof currentRoomId !== 'undefined' && currentRoomId >= 100 && currentRoomId !== 999) {
-            ctx.drawImage(imageSol, 0, 0, canvas.width, canvas.height); 
+        if (isNewFloor) {
+            ctx.drawImage(imageSol, 0, 0, canvas.width, canvas.height);
         } else {
             ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); 
             ctx.fillRect(0, 0, canvas.width, canvas.height); 
@@ -83,10 +84,14 @@ window.renderGameView = function() {
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                ctx.fillStyle = '#050505'; 
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
-                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+                // CORRECTION : On ne dessine PLUS le carré noir sur le niveau 2, 
+                // Ça permet de voir l'image "floor5.png" avec le trou super détaillé !
+                if (typeof currentRoomId !== 'undefined' && currentRoomId < 100) {
+                    ctx.fillStyle = '#050505'; 
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
+                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+                }
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -420,7 +425,6 @@ window.renderGameView = function() {
             } 
         });
 
-        // CORRECTION : Minotaure et Gargouille retirés de la barre de Boss en haut !
         let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
         if (boss) {
             let bossName = "BOSS";
