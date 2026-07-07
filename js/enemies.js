@@ -47,8 +47,8 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 
         let vx = 0, vy = 0;
         if (type === 'gargouille') {
-            vx = -4 - Math.random() * 2; 
-            vy = (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 2); 
+            vx = -3 - Math.random() * 2; 
+            vy = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2); 
         }
 
         currentEnemies.push({ 
@@ -311,7 +311,6 @@ window.updateEnemies = function() {
                 if (enemy.type === 'mage' && enemy.phase === 2) {
                     enemy.burstCount = 2; enemy.shootCooldown = 40; 
                 } else if (enemy.type === 'gargouille') {
-                    // CORRECTION : La gargouille tire bien plus vite !
                     enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer) * pSpeed, vy: Math.sin(angleToPlayer) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
                     enemy.shootCooldown = 50; 
                 } else {
@@ -327,17 +326,16 @@ window.updateEnemies = function() {
         
         let eMaxX = bRight - shrink - enemy.size; 
         let eMaxY = bBot - shrink - enemy.size;
-        
-        // CORRECTION : Rebonds propres pour la gargouille
+
         if (enemy.type === 'gargouille') {
             dx_mov = enemy.vx;
             dy_mov = enemy.vy;
-            if (enemy.x + dx_mov <= minLimitX || enemy.x + dx_mov >= eMaxX) { enemy.vx *= -1; dx_mov = enemy.vx; }
-            if (enemy.y + dy_mov <= minLimitY || enemy.y + dy_mov >= eMaxY) { enemy.vy *= -1; dy_mov = enemy.vy; }
+            if (enemy.x + dx_mov < minLimitX) { enemy.vx *= -1; dx_mov = enemy.vx; }
+            if (enemy.x + dx_mov > eMaxX) { enemy.vx *= -1; dx_mov = enemy.vx; }
+            if (enemy.y + dy_mov < minLimitY) { enemy.vy *= -1; dy_mov = enemy.vy; }
+            if (enemy.y + dy_mov > eMaxY) { enemy.vy *= -1; dy_mov = enemy.vy; }
         } 
-        else if (dist > stopDist && dist < 9999) { 
-            dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; 
-        }
+        else if (dist > stopDist && dist < 9999) { dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; }
 
         let repulseX = 0, repulseY = 0;
         currentEnemies.forEach((otherEnemy, otherIdx) => {
@@ -355,32 +353,33 @@ window.updateEnemies = function() {
         });
         dx_mov += repulseX; dy_mov += repulseY;
 
+        let isBoss = ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(enemy.type);
+
         let oldEx = enemy.x; enemy.x += dx_mov; 
         if (typeof currentObstacles !== 'undefined') {
             for (let obs of currentObstacles) {
-                if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
+                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
             }
         }
-        
-        // CORRECTION : Tous les monstres sans exception rebondissent contre l'escalier !
-        if (currentRoomId === 8 && typeof checkCollision === 'function' && checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
         if (typeof currentObstacles !== 'undefined') {
             for (let obs of currentObstacles) {
-                if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
+                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
             }
         }
-        if (currentRoomId === 8 && typeof checkCollision === 'function' && checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
 
-        // Limites strictes pour TOUT LE MONDE
-        if (enemy.x < minLimitX) enemy.x = minLimitX; 
-        if (enemy.y < minLimitY) enemy.y = minLimitY; 
-        if (enemy.x > eMaxX) enemy.x = eMaxX; 
-        if (enemy.y > eMaxY) enemy.y = eMaxY;
+        if (enemy.type !== 'gargouille') {
+            if (enemy.x < minLimitX) enemy.x = minLimitX; 
+            if (enemy.y < minLimitY) enemy.y = minLimitY; 
+            if (enemy.x > eMaxX) enemy.x = eMaxX; 
+            if (enemy.y > eMaxY) enemy.y = eMaxY;
+        }
 
         if (!enemy.invulnerable) {
-            if (fusionAggro && typeof checkCollision === 'function' && checkCollision(fusionAggro, enemy)) {
+            if (fusionAggro && window.checkCollision(fusionAggro, enemy)) {
                 if (enemy.attackAnimTimer <= 0) {
                     let dmg = 20;
                     if (enemy.type === 'armor') dmg = fusionAggro.maxHealth * 0.32;
@@ -391,7 +390,7 @@ window.updateEnemies = function() {
                     enemy.attackAnimTimer = 30;
                 }
             } 
-            else if (!fusionAggro && playerInvulnerableTimer <= 0 && typeof checkCollision === 'function' && checkCollision(player, enemy)) {
+            else if (!fusionAggro && playerInvulnerableTimer <= 0 && window.checkCollision(player, enemy)) {
                 let dmg = 20;
                 if (enemy.type === 'armor') dmg = playerStats.maxHealth * 0.32;
                 else if (enemy.type === 'elysia') dmg = playerStats.maxHealth * 0.34;
@@ -480,7 +479,7 @@ window.updateEnemies = function() {
                         } else if (minDist <= 100) { 
                             let hitBox = { x: summon.x - 50, y: summon.y - 50, width: summon.size + 100, height: summon.size + 100 };
                             currentEnemies.forEach(e => {
-                                if (!e.invulnerable && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, e)) {
+                                if (!e.invulnerable && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
                                     let hitNum = Math.floor(Math.random() * 3) + 1;
                                     let bSize = e.size * 1.5;
@@ -533,11 +532,10 @@ window.updateEnemies = function() {
                 }
             }
             
-            // CORRECTION : Les deux Golems spawnent avec un écartement !
             if (e.type === 'golem') {
-                if (typeof window.spawnEnemy === 'function') { 
-                    window.spawnEnemy('small_golem', 1, e.x - 30, e.y); 
-                    window.spawnEnemy('small_golem', 1, e.x + 30, e.y); 
+                if (typeof spawnEnemy === 'function') { 
+                    spawnEnemy('small_golem', 1, e.x - 30, e.y); 
+                    spawnEnemy('small_golem', 1, e.x + 30, e.y); 
                 }
             }
             
