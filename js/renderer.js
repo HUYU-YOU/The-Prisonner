@@ -47,7 +47,7 @@ window.renderGameView = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
-    if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
+    if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
         ctx.translate(dx, dy); 
@@ -55,25 +55,21 @@ window.renderGameView = function() {
         shakeIntensity *= 0.9; 
     }
     
-    // CORRECTION : Les nouveaux sols sont affichés parfaitement sans "gros zoom" !
     let imageSol = assetsManager.images['sol_base'];
-    let isNewFloor = false;
     if (typeof currentRoomId !== 'undefined') {
-        if (currentRoomId === 114 && assetsManager.images['floor2']) { imageSol = assetsManager.images['floor2']; isNewFloor = true; }
-        else if (currentRoomId >= 107 && currentRoomId <= 110 && assetsManager.images['floor3']) { imageSol = assetsManager.images['floor3']; isNewFloor = true; }
-        else if (currentRoomId === 103 && assetsManager.images['floor4']) { imageSol = assetsManager.images['floor4']; isNewFloor = true; }
-        else if (currentRoomId === 102 && assetsManager.images['floor5']) { imageSol = assetsManager.images['floor5']; isNewFloor = true; }
+        if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
+        else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
+        else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
+        else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
     }
 
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) { 
-        if (isNewFloor) {
-            // Étire l'image proprement sur la zone
-            ctx.drawImage(imageSol, 0, 0, canvas.width, canvas.height);
+        if (typeof currentRoomId !== 'undefined' && currentRoomId >= 100 && currentRoomId !== 999) {
+            ctx.drawImage(imageSol, 0, 0, canvas.width, canvas.height); 
         } else {
-            // Mosaïque pour la texture de base du sol
             ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); 
             ctx.fillRect(0, 0, canvas.width, canvas.height); 
         }
@@ -424,7 +420,6 @@ window.renderGameView = function() {
             } 
         });
 
-        // CORRECTION : Plus de Minotaure et de Gargouille dans la barre de Boss !
         let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
         if (boss) {
             let bossName = "BOSS";
