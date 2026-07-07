@@ -5,19 +5,19 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
-    if (typeof arenaShrink === 'undefined') arenaShrink = 0;
-    if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
+    if (typeof arenaShrink === 'undefined') window.arenaShrink = 0;
+    if (typeof waveStartDelay === 'undefined') window.waveStartDelay = 0;
 
     if (gameState === "MENU") {
         if (keys['space']) {
-            if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
-            spaceHoldTimer++;
-            if (spaceHoldTimer >= 300) { 
-                spaceHoldTimer = 0; 
+            if (typeof spaceHoldTimer === 'undefined') window.spaceHoldTimer = 0;
+            window.spaceHoldTimer++;
+            if (window.spaceHoldTimer >= 300) { 
+                window.spaceHoldTimer = 0; 
                 keys['space'] = false; 
                 if (typeof window.startArenaMode === 'function') window.startArenaMode('Necromancer'); 
             }
-        } else { spaceHoldTimer = 0; }
+        } else { window.spaceHoldTimer = 0; }
         requestAnimationFrame(window.update); return;
     }
     
@@ -30,58 +30,63 @@ window.update = function() {
         requestAnimationFrame(window.update); return; 
     }
     
+    // --- MODE ARÈNE (RÉPARÉ ET OPTIMISÉ) ---
     if (currentRoomId === 999) {
-        if (waveStartDelay > 0) waveStartDelay--;
+        window.arenaState = window.arenaState || "WAITING";
+        window.arenaWave = window.arenaWave || 1;
+        
+        if (window.waveStartDelay > 0) window.waveStartDelay--;
         
         let hasTroll = typeof currentEnemies !== 'undefined' && currentEnemies.some(e => e.type === 'troll');
         
-        if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { 
-            arenaShrink += 0.3; 
-        } else if (!hasTroll && arenaShrink > 0) {
-            arenaShrink -= 0.5; 
-            if (arenaShrink < 0) arenaShrink = 0;
+        if (hasTroll && window.arenaState === "PLAYING" && window.arenaShrink < 150) { 
+            window.arenaShrink += 0.3; 
+        } else if (!hasTroll && window.arenaShrink > 0) {
+            window.arenaShrink -= 0.5; 
+            if (window.arenaShrink < 0) window.arenaShrink = 0;
         }
 
-        if (arenaState === "WAITING") {
-            if (typeof arenaTimer === 'undefined') arenaTimer = 0;
-            arenaTimer--;
+        if (window.arenaState === "WAITING") {
+            if (typeof window.arenaTimer === 'undefined') window.arenaTimer = 0;
+            window.arenaTimer--;
             
-            if (arenaTimer <= 0) {
-                arenaState = "PLAYING";
+            if (window.arenaTimer <= 0) {
+                window.arenaState = "PLAYING";
                 
-                if (arenaWave > 0 && arenaWave % 5 === 0) {
-                    currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
+                if (window.arenaWave > 0 && window.arenaWave % 5 === 0) {
+                    currentItems.push({ id: 'pot_g_'+window.arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
                 }
 
-                if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
-                else if (arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('orc', 2); }
-                else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 1); }
-                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 2); }
-                else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); window.spawnEnemy('gargouille', 2); }
-                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 3); }
-                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); window.spawnEnemy('minotaure', 2); window.spawnEnemy('gargouille', 1); }
+                if (window.arenaWave === 10) { window.spawnEnemy('troll', 1); }
+                else if (window.arenaWave === 20) { window.spawnEnemy('mage', 1); window.spawnEnemy('orc', 2); }
+                else if (window.arenaWave === 30) { window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 1); }
+                else if (window.arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 2); }
+                else if (window.arenaWave === 40) { window.spawnEnemy('deathgod', 1); window.spawnEnemy('gargouille', 2); }
+                else if (window.arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('gargouille', 3); }
+                else if (window.arenaWave === 50) { window.spawnEnemy('elysia', 1); window.spawnEnemy('minotaure', 2); window.spawnEnemy('gargouille', 1); }
                 else {
-                    let totalToSpawn = 3 + Math.floor(arenaWave * 1.2);
-                    if (arenaWave >= 15) totalToSpawn = Math.min(totalToSpawn, 20);
+                    let totalToSpawn = 3 + Math.floor(window.arenaWave * 1.2);
+                    if (window.arenaWave >= 15) totalToSpawn = Math.min(totalToSpawn, 20); 
                     let spawnCounts = {};
+                    
                     for (let i = 0; i < totalToSpawn; i++) {
                         let type = ''; let r = Math.random(); 
-                        if (arenaWave < 10) { type = r < 0.7 ? 'goblin' : 'skeleton'; } 
-                        else if (arenaWave < 15) { if (r < 0.6) type = 'goblin'; else if (r < 0.9) type = 'skeleton'; else type = 'spider'; } 
-                        else if (arenaWave <= 27) { let progress = (arenaWave - 15) / 12; if (r < 0.6) type = Math.random() < progress ? 'orc' : 'goblin'; else if (r < 0.9) type = Math.random() < progress ? 'golem' : 'skeleton'; else type = Math.random() < progress ? 'wolf' : 'spider'; } 
-                        else if (arenaWave <= 40) { let progress = (arenaWave - 27) / 13; if (r < 0.6) type = Math.random() < progress ? 'minotaure' : 'orc'; else if (r < 0.9) type = Math.random() < progress ? 'gargouille' : 'golem'; else type = 'wolf'; } 
+                        if (window.arenaWave < 10) { type = r < 0.7 ? 'goblin' : 'skeleton'; } 
+                        else if (window.arenaWave < 15) { if (r < 0.6) type = 'goblin'; else if (r < 0.9) type = 'skeleton'; else type = 'spider'; } 
+                        else if (window.arenaWave <= 27) { let progress = (window.arenaWave - 15) / 12; if (r < 0.6) type = Math.random() < progress ? 'orc' : 'goblin'; else if (r < 0.9) type = Math.random() < progress ? 'golem' : 'skeleton'; else type = Math.random() < progress ? 'wolf' : 'spider'; } 
+                        else if (window.arenaWave <= 40) { let progress = (window.arenaWave - 27) / 13; if (r < 0.6) type = Math.random() < progress ? 'minotaure' : 'orc'; else if (r < 0.9) type = Math.random() < progress ? 'gargouille' : 'golem'; else type = 'wolf'; } 
                         else { if (r < 0.6) type = 'minotaure'; else if (r < 0.9) type = 'gargouille'; else type = 'wolf'; }
                         spawnCounts[type] = (spawnCounts[type] || 0) + 1;
                     }
                     for (let mobType in spawnCounts) { window.spawnEnemy(mobType, spawnCounts[mobType]); }
                 }
-                arenaWave++;
+                window.arenaWave++;
             }
-        } else if (arenaState === "PLAYING") {
+        } else if (window.arenaState === "PLAYING") {
             if (currentEnemies.length === 0) {
-                arenaState = "WAITING";
-                arenaTimer = 300; 
+                window.arenaState = "WAITING";
+                window.arenaTimer = 300; 
                 if (typeof hazards !== 'undefined') hazards.length = 0;
                 if (typeof window.updateHUD === 'function') window.updateHUD();
             }
@@ -94,30 +99,32 @@ window.update = function() {
     let roomChanged = false;
     let doorToPass = null;
     
-    for (let i = 0; i < currentDoors.length; i++) {
-        let door = currentDoors[i];
-        
-        if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
-            if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
-            continue;
-        }
-        
-        if (!doorToPass && window.checkCollision(player, door)) {
-            if (door.locked) {
-                if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; 
-                    door.locked = false; 
-                    worldState.unlockedDoors[door.id] = true;
-                    if (typeof window.updateHUD === 'function') window.updateHUD();
-                    if (door.dest !== null) doorToPass = door;
-                } else {
-                    if (door.face === 'north') player.y = door.y + door.height;
-                    else if (door.face === 'south') player.y = door.y - player.size;
-                    else if (door.face === 'east') player.x = door.x - player.size;
-                    else if (door.face === 'west') player.x = door.x + door.width;
+    if (typeof currentDoors !== 'undefined') {
+        for (let i = 0; i < currentDoors.length; i++) {
+            let door = currentDoors[i];
+            
+            if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
+                if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
+                continue;
+            }
+            
+            if (!doorToPass && window.checkCollision(player, door)) {
+                if (door.locked) {
+                    if (playerStats.inventory.keys.gold > 0) {
+                        playerStats.inventory.keys.gold--; 
+                        door.locked = false; 
+                        worldState.unlockedDoors[door.id] = true;
+                        if (typeof window.updateHUD === 'function') window.updateHUD();
+                        if (door.dest !== null) doorToPass = door;
+                    } else {
+                        if (door.face === 'north') player.y = door.y + door.height;
+                        else if (door.face === 'south') player.y = door.y - player.size;
+                        else if (door.face === 'east') player.x = door.x - player.size;
+                        else if (door.face === 'west') player.x = door.x + door.width;
+                    }
+                } else if (door.dest !== null) {
+                    doorToPass = door;
                 }
-            } else if (door.dest !== null) {
-                doorToPass = door;
             }
         }
     }
@@ -285,15 +292,19 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // =========================================================================
-    // TÉLÉPORTATION NIVEAU 2 INFAILLIBLE
-    // =========================================================================
+    // --- TÉLÉPORTATION NIVEAU 2 ---
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
-        if (window.checkCollision(player, triggerStairs)) {
-            if (playerStats.inventory.keys.skull > 0) {
-                playerStats.inventory.keys.skull--; 
-                
+        
+        let isColliding = player.x < triggerStairs.x + triggerStairs.width &&
+                          player.x + player.size > triggerStairs.x &&
+                          player.y < triggerStairs.y + triggerStairs.height &&
+                          player.y + player.size > triggerStairs.y;
+                          
+        if (isColliding && playerStats.inventory.keys.skull > 0) {
+            playerStats.inventory.keys.skull--; 
+            
+            setTimeout(() => {
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
                 if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
                 
@@ -302,8 +313,9 @@ window.update = function() {
                 player.dashTimer = 0; 
                 
                 if (typeof window.updateHUD === 'function') window.updateHUD(); 
-                return requestAnimationFrame(window.update); // ON EMPÊCHE LE FREEZE
-            }
+            }, 50);
+            
+            return;
         }
     }
     
