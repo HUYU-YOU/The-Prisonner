@@ -55,20 +55,28 @@ window.renderGameView = function() {
         shakeIntensity *= 0.9; 
     }
     
+    // CORRECTION : Les nouveaux sols sont affichés parfaitement sans "gros zoom" !
     let imageSol = assetsManager.images['sol_base'];
+    let isNewFloor = false;
     if (typeof currentRoomId !== 'undefined') {
-        if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
-        else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
-        else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
-        else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+        if (currentRoomId === 114 && assetsManager.images['floor2']) { imageSol = assetsManager.images['floor2']; isNewFloor = true; }
+        else if (currentRoomId >= 107 && currentRoomId <= 110 && assetsManager.images['floor3']) { imageSol = assetsManager.images['floor3']; isNewFloor = true; }
+        else if (currentRoomId === 103 && assetsManager.images['floor4']) { imageSol = assetsManager.images['floor4']; isNewFloor = true; }
+        else if (currentRoomId === 102 && assetsManager.images['floor5']) { imageSol = assetsManager.images['floor5']; isNewFloor = true; }
     }
 
     ctx.fillStyle = '#2c251f'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) { 
-        ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); 
-        ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        if (isNewFloor) {
+            // Étire l'image proprement sur la zone
+            ctx.drawImage(imageSol, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Mosaïque pour la texture de base du sol
+            ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); 
+            ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        }
     } else { 
         ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 1; 
         for(let i = 0; i < canvas.width; i += 60) { 
@@ -76,7 +84,6 @@ window.renderGameView = function() {
         } 
     }
 
-    // AFFICHER LES TROUS ET L'EAU DU NIVEAU 2
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
@@ -417,7 +424,8 @@ window.renderGameView = function() {
             } 
         });
 
-        let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(e.type));
+        // CORRECTION : Plus de Minotaure et de Gargouille dans la barre de Boss !
+        let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
         if (boss) {
             let bossName = "BOSS";
             if (boss.type === 'troll') bossName = "TROLL CORROMPU";
@@ -425,8 +433,6 @@ window.renderGameView = function() {
             else if (boss.type === 'dragon') bossName = "DRAGON MAUDIT";
             else if (boss.type === 'deathgod') bossName = "DEATH GOD";
             else if (boss.type === 'elysia') bossName = "ELYSIA";
-            else if (boss.type === 'minotaure') bossName = "MINOTAURE";
-            else if (boss.type === 'gargouille') bossName = "GARGOUILLE";
             
             let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
             let barWidth = 600; 
@@ -455,7 +461,6 @@ window.renderGameView = function() {
                 
                 let drawSize = p.size * 15.0; 
                 
-                // --- BOULE DE FEU GEANTE ARRONDIE ---
                 if (p.type === 'fire_mage') {
                     let fbSize = p.size * 5.0; 
                     ctx.drawImage(pImg, -fbSize/2, -fbSize/2, fbSize, fbSize);
