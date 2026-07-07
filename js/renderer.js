@@ -47,7 +47,7 @@ window.renderGameView = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
-    if (shakeTimer > 0) {
+    if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
         ctx.translate(dx, dy); 
@@ -57,10 +57,10 @@ window.renderGameView = function() {
     
     let imageSol = assetsManager.images['sol_base'];
     if (typeof currentRoomId !== 'undefined') {
-        if (currentRoomId === 114) imageSol = assetsManager.images['floor2'] || imageSol;
-        else if (currentRoomId >= 107 && currentRoomId <= 110) imageSol = assetsManager.images['floor3'] || imageSol;
-        else if (currentRoomId === 103) imageSol = assetsManager.images['floor4'] || imageSol;
-        else if (currentRoomId === 102) imageSol = assetsManager.images['floor5'] || imageSol;
+        if (currentRoomId === 114 && assetsManager.images['floor2']) { imageSol = assetsManager.images['floor2']; }
+        else if (currentRoomId >= 107 && currentRoomId <= 110 && assetsManager.images['floor3']) { imageSol = assetsManager.images['floor3']; }
+        else if (currentRoomId === 103 && assetsManager.images['floor4']) { imageSol = assetsManager.images['floor4']; }
+        else if (currentRoomId === 102 && assetsManager.images['floor5']) { imageSol = assetsManager.images['floor5']; }
     }
 
     ctx.fillStyle = '#2c251f'; 
@@ -420,6 +420,7 @@ window.renderGameView = function() {
             } 
         });
 
+        // CORRECTION : Minotaure et Gargouille retirés de la barre de Boss en haut !
         let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
         if (boss) {
             let bossName = "BOSS";
