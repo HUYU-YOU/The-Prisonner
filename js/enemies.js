@@ -311,7 +311,6 @@ window.updateEnemies = function() {
                 if (enemy.type === 'mage' && enemy.phase === 2) {
                     enemy.burstCount = 2; enemy.shootCooldown = 40; 
                 } else if (enemy.type === 'gargouille') {
-                    // CORRECTION : La gargouille tire bien plus vite !
                     enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer) * pSpeed, vy: Math.sin(angleToPlayer) * pSpeed, size: pSize, type: pType, color: pColor, damage: pDmg });
                     enemy.shootCooldown = 40; 
                 } else {
@@ -327,15 +326,12 @@ window.updateEnemies = function() {
         
         let eMaxX = bRight - shrink - enemy.size; 
         let eMaxY = bBot - shrink - enemy.size;
-        
-        // CORRECTION : Rebonds propres pour la gargouille (Elle ne sort plus des murs)
+
         if (enemy.type === 'gargouille') {
-            let nextX = enemy.x + enemy.vx;
-            let nextY = enemy.y + enemy.vy;
-            if (nextX <= minLimitX || nextX >= eMaxX) { enemy.vx *= -1; }
-            if (nextY <= minLimitY || nextY >= eMaxY) { enemy.vy *= -1; }
             dx_mov = enemy.vx;
             dy_mov = enemy.vy;
+            if (enemy.x + dx_mov < minLimitX || enemy.x + dx_mov > eMaxX) { enemy.vx *= -1; dx_mov = enemy.vx; }
+            if (enemy.y + dy_mov < minLimitY || enemy.y + dy_mov > eMaxY) { enemy.vy *= -1; dy_mov = enemy.vy; }
         } 
         else if (dist > stopDist && dist < 9999) { 
             dx_mov = (dx / dist) * currentEnemySpeed; dy_mov = (dy / dist) * currentEnemySpeed; 
@@ -358,28 +354,45 @@ window.updateEnemies = function() {
         dx_mov += repulseX; dy_mov += repulseY;
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
-        if (typeof window.currentObstacles !== 'undefined') {
-            for (let obs of window.currentObstacles) {
-                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.x = oldEx; break; }
+        let hitX = false;
+        
+        if (typeof currentObstacles !== 'undefined') {
+            for (let obs of currentObstacles) {
+                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { 
+                    enemy.x = oldEx; hitX = true; 
+                    enemy.y += (enemy.y < obs.y + obs.height/2) ? -2 : 2; break; 
+                }
             }
         }
         
-        // CORRECTION : Le troll et TOUS les ennemis bloquent sur l'escalier !
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.x = oldEx;
+        // CORRECTION CONTOURNEMENT : Le Troll et autres monstres "glissent" sur les côtés de l'escalier !
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) { 
+            enemy.x = oldEx; hitX = true; 
+            enemy.y += (enemy.y < centerStairs.y + centerStairs.height/2) ? -2 : 2; 
+        }
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
-        if (typeof window.currentObstacles !== 'undefined') {
-            for (let obs of window.currentObstacles) {
-                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { enemy.y = oldEy; break; }
+        let hitY = false;
+        
+        if (typeof currentObstacles !== 'undefined') {
+            for (let obs of currentObstacles) {
+                if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { 
+                    enemy.y = oldEy; hitY = true; 
+                    enemy.x += (enemy.x < obs.x + obs.width/2) ? -2 : 2; break; 
+                }
             }
         }
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) enemy.y = oldEy;
+        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) { 
+            enemy.y = oldEy; hitY = true; 
+            enemy.x += (enemy.x < centerStairs.x + centerStairs.width/2) ? -2 : 2; 
+        }
 
-        // Limites strictes de la carte
-        if (enemy.x < minLimitX) { enemy.x = minLimitX; if(enemy.type === 'gargouille') enemy.vx *= -1; } 
-        if (enemy.y < minLimitY) { enemy.y = minLimitY; if(enemy.type === 'gargouille') enemy.vy *= -1; } 
-        if (enemy.x > eMaxX) { enemy.x = eMaxX; if(enemy.type === 'gargouille') enemy.vx *= -1; } 
-        if (enemy.y > eMaxY) { enemy.y = eMaxY; if(enemy.type === 'gargouille') enemy.vy *= -1; }
+        if (enemy.type !== 'gargouille') {
+            if (enemy.x < minLimitX) enemy.x = minLimitX; 
+            if (enemy.y < minLimitY) enemy.y = minLimitY; 
+            if (enemy.x > eMaxX) enemy.x = eMaxX; 
+            if (enemy.y > eMaxY) enemy.y = eMaxY;
+        }
 
         if (!enemy.invulnerable) {
             if (fusionAggro && window.checkCollision(fusionAggro, enemy)) {
@@ -410,8 +423,8 @@ window.updateEnemies = function() {
                 bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 
                 playerInvulnerableTimer = 60; 
-                if (typeof window.updateHUD === 'function') window.updateHUD(); 
-                if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+                if (typeof updateHUD === 'function') updateHUD(); 
+                if (playerStats.health <= 0 && typeof handlePlayerDeath === 'function') handlePlayerDeath();
             }
         }
     });
@@ -535,11 +548,10 @@ window.updateEnemies = function() {
                 }
             }
             
-            // CORRECTION : Les petits golems apparaissent côte à côte sans se bloquer !
             if (e.type === 'golem') {
-                if (typeof window.spawnEnemy === 'function') { 
-                    window.spawnEnemy('small_golem', 1, e.x - 40, e.y); 
-                    window.spawnEnemy('small_golem', 1, e.x + 40, e.y); 
+                if (typeof spawnEnemy === 'function') { 
+                    spawnEnemy('small_golem', 1, e.x - 30, e.y); 
+                    spawnEnemy('small_golem', 1, e.x + 30, e.y); 
                 }
             }
             
@@ -564,7 +576,7 @@ window.updateEnemies = function() {
                 worldState.clearedRooms[currentRoomId] = true;
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
             }
-            if (typeof window.updateHUD === 'function') window.updateHUD();
+            if (typeof updateHUD === 'function') updateHUD();
         }
     }
 };
