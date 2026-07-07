@@ -81,17 +81,12 @@ window.renderGameView = function() {
         } 
     }
 
+    // --- LE MUR NOIR EST MAINTENANT INVISIBLE ---
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                // CORRECTION : On ne dessine PLUS le carré noir sur le niveau 2, 
-                // Ça permet de voir l'image "floor5.png" avec le trou super détaillé !
-                if (typeof currentRoomId !== 'undefined' && currentRoomId < 100) {
-                    ctx.fillStyle = '#050505'; 
-                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                    ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
-                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
-                }
+                // On ne dessine absolument rien ! La hitbox de collision existe toujours, 
+                // mais elle est 100% transparente. Ton dessin sera intact.
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
