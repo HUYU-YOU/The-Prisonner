@@ -20,7 +20,6 @@ window.handlePlayerAttack = function() {
         }
     } 
     else if (player.heroClass === 'Mage') {
-        // Boule de feu géante, ronde, très large zone d'impact !
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 18, vy: Math.sin(angle) * 18, size: 15, hitTargets: [], angle: angle, type: 'fire_mage' }); 
         attackCooldown = 28;
     } 
@@ -31,7 +30,7 @@ window.handlePlayerAttack = function() {
     else if (player.heroClass === 'Knight') {
         isAttacking = true; 
         attackCooldown = 40;
-        // Portée (Range) de l'épée grandement allongée !
+        // Portée (Range) de l'épée grandement allongée (hitbox 180) !
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 80 - 90, y: player.y + player.size / 2 + Math.sin(angle) * 80 - 90, size: 180 };
         
         currentEnemies.forEach(enemy => { 
@@ -43,7 +42,7 @@ window.handlePlayerAttack = function() {
                         let mult = playerStats.attackMultiplier || 1.0;
                         enemy.health -= 50 * mult; 
                         
-                        // Repousse l'ennemi en arrière !
+                        // Repousse l'ennemi au coup d'épée !
                         enemy.x += Math.cos(angle) * 35;
                         enemy.y += Math.sin(angle) * 35;
                         
@@ -170,7 +169,7 @@ window.updateProjectiles = function() {
             continue;
         }
 
-        // LA PARADE FRONTALE DU CHEVALIER (Cone de 120 degrés)
+        // LA PARADE DE FACE DU CHEVALIER (Bloque les projectiles)
         let parried = false;
         if (player.heroClass === 'Knight' && player.dashTimer > 0) {
             let angleToProj = Math.atan2(ep.y - (player.y + player.size/2), ep.x - (player.x + player.size/2));
