@@ -15,7 +15,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     try {
         currentRoomId = roomId; 
         
-        // CORRECTION : PLUS AUCUN "window." SUR TES LISTES
         projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
         currentObstacles = []; currentDoors = []; currentItems = []; currentEnemies = [];
         
@@ -65,7 +64,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
                 { ...doorE, id: 'door_3_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnW.x, spawnY: spawnW.y }, 
                 { ...doorN_right, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } 
             ]; 
-            currentObstacles.push({ x: canvas.width/2 - 120, y: wallMargin, width: 240, height: canvas.height - wallMargin*2, type: 'hole' });
+            // CORRECTION : L'obstacle invisible fait maintenant 100 de large au lieu de 240 ! Tu pourras t'approcher du bord.
+            currentObstacles.push({ x: canvas.width/2 - 50, y: wallMargin, width: 100, height: canvas.height - wallMargin*2, type: 'hole' });
             if (!worldState.collectedItems['key_room3']) {
                 currentItems.push({ id: 'key_room3', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
             }
@@ -150,8 +150,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
                 else if (roomId === 6) window.spawnEnemy('goblin', 2, canvas.width/2, 300);
                 else if (roomId === 7) { window.spawnEnemy('goblin', 4, 450, 200); window.spawnEnemy('skeleton', 1, 600, 300); }
                 else if (roomId === 8) window.spawnEnemy('troll', 1, canvas.width/2 - 40, 150); 
-                
-                // NIVEAU 2
                 else if (roomId === 101) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
                 else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
                 else if (roomId === 103) { window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, wallMargin + 80); window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, canvas.height - wallMargin - 80); }
