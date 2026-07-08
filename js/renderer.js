@@ -8,6 +8,7 @@ window.triggerShake = function(intensity, duration) {
 };
 
 window.spawnParticles = function(x, y, color, count, isGlow = false) {
+    if(typeof particles === 'undefined') particles = [];
     for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
@@ -47,7 +48,7 @@ window.renderGameView = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
     
-    if (shakeTimer > 0) {
+    if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
         let dy = (Math.random() - 0.5) * shakeIntensity * 2;
         ctx.translate(dx, dy); 
@@ -84,7 +85,7 @@ window.renderGameView = function() {
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                // Totalement invisible pour profiter de ton sol !
+                // Invisible - La boîte de collision empêche de traverser, mais on ne la dessine plus !
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -650,9 +651,6 @@ window.renderGameView = function() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
-    // =========================================================================
-    // SYSTÈME DE LUMIÈRE DYNAMIQUE (JOUER + HALOS SUR LES PORTES)
-    // =========================================================================
     if (!window.lightCanvas) {
         window.lightCanvas = document.createElement('canvas');
     }
