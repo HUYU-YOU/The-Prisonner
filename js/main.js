@@ -4,7 +4,6 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-// RECONSTRUCTION CLIC DROIT POUR LE DASH/RUSH
 document.addEventListener('mousedown', event => {
     if (event.button === 2 && playerStats.health > 0 && gameState === "PLAYING") {
         event.preventDefault();
@@ -98,6 +97,7 @@ window.update = function() {
 
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
+    if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
     
     let roomChanged = false;
     let doorToPass = null;
@@ -218,7 +218,6 @@ window.update = function() {
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     
-    // Collisions Obstacles (Trous / Eau)
     if (typeof currentObstacles !== 'undefined') {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
@@ -290,20 +289,17 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // TÉLÉPORTATION NIVEAU 2 SÉCURISÉE SANS CONFLIT
+    // TÉLÉPORTATION FLUIDE ET NETTOYÉE
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
         if (window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
-                
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
                 if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
-                
                 player.x = canvas.width / 2 - player.size / 2;
                 player.y = canvas.height - wallMargin - 150; 
                 player.dashTimer = 0; 
-                
                 if (typeof window.updateHUD === 'function') window.updateHUD(); 
                 return requestAnimationFrame(window.update);
             }
