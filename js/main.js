@@ -5,19 +5,19 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
-    if (typeof arenaShrink === 'undefined') window.arenaShrink = 0;
-    if (typeof waveStartDelay === 'undefined') window.waveStartDelay = 0;
+    if (typeof arenaShrink === 'undefined') arenaShrink = 0;
+    if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
 
     if (gameState === "MENU") {
         if (keys['space']) {
-            if (typeof spaceHoldTimer === 'undefined') window.spaceHoldTimer = 0;
-            window.spaceHoldTimer++;
-            if (window.spaceHoldTimer >= 300) { 
-                window.spaceHoldTimer = 0; 
+            if (typeof spaceHoldTimer === 'undefined') spaceHoldTimer = 0;
+            spaceHoldTimer++;
+            if (spaceHoldTimer >= 300) { 
+                spaceHoldTimer = 0; 
                 keys['space'] = false; 
                 if (typeof window.startArenaMode === 'function') window.startArenaMode('Necromancer'); 
             }
-        } else { window.spaceHoldTimer = 0; }
+        } else { spaceHoldTimer = 0; }
         requestAnimationFrame(window.update); return;
     }
     
@@ -37,9 +37,9 @@ window.update = function() {
     let roomChanged = false;
     let doorToPass = null;
     
-    if (typeof window.currentDoors !== 'undefined') {
-        for (let i = 0; i < window.currentDoors.length; i++) {
-            let door = window.currentDoors[i];
+    if (typeof currentDoors !== 'undefined') {
+        for (let i = 0; i < currentDoors.length; i++) {
+            let door = currentDoors[i];
             
             if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
                 if (typeof window.checkCollision === 'function' && window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
@@ -68,7 +68,7 @@ window.update = function() {
     }
 
     if (doorToPass) {
-        worldState.droppedItems[currentRoomId] = window.currentItems.map(item => ({...item}));
+        worldState.droppedItems[currentRoomId] = currentItems.map(item => ({...item}));
         worldState.openedDoors[doorToPass.id] = true;
 
         let returnFace = 'south';
@@ -81,11 +81,11 @@ window.update = function() {
         if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
 
         if (worldState.droppedItems[doorToPass.dest]) {
-            window.currentItems.splice(0, window.currentItems.length, ...worldState.droppedItems[doorToPass.dest]);
+            currentItems.splice(0, currentItems.length, ...worldState.droppedItems[doorToPass.dest]);
         }
 
-        if (typeof window.currentDoors !== 'undefined') {
-            window.currentDoors.forEach(d => {
+        if (typeof currentDoors !== 'undefined') {
+            currentDoors.forEach(d => {
                 if (d.face === returnFace) {
                     worldState.openedDoors[d.id] = true;
                     d.locked = false;
@@ -105,9 +105,9 @@ window.update = function() {
     }
     
     if (typeof leftClickHeld !== 'undefined' && leftClickHeld) {
-        if (typeof leftClickHoldTime === 'undefined') window.leftClickHoldTime = 0;
-        window.leftClickHoldTime++;
-        if (window.leftClickHoldTime >= 180 && playerStats.mana >= 100) { 
+        if (typeof leftClickHoldTime === 'undefined') leftClickHoldTime = 0;
+        leftClickHoldTime++;
+        if (leftClickHoldTime >= 180 && playerStats.mana >= 100) { 
             if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
             leftClickHeld = false; 
         }
@@ -158,15 +158,15 @@ window.update = function() {
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     
-    if (typeof window.currentObstacles !== 'undefined') {
-        for (let i = 0; i < window.currentObstacles.length; i++) {
-            let obs = window.currentObstacles[i];
+    if (typeof currentObstacles !== 'undefined') {
+        for (let i = 0; i < currentObstacles.length; i++) {
+            let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
                 if (obs.type === 'water') {
                     alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
                     player.y += 20; break;
                 } else if (obs.type === 'hole') {
-                    // CORRECTION : Si le joueur DASH, il ignore le mur invisible du trou !
+                    // CORRECTION DASH : On peut passer par-dessus le trou !
                     if (player.dashTimer <= 0) { player.x = oldPx; player.dashTimer = 0; break; }
                 } else {
                     player.x = oldPx; player.dashTimer = 0; break;
@@ -175,9 +175,9 @@ window.update = function() {
         }
     }
     
-    if (typeof window.currentCrates !== 'undefined') {
-        for (let i = 0; i < window.currentCrates.length; i++) {
-            let obj = window.currentCrates[i];
+    if (typeof currentCrates !== 'undefined') {
+        for (let i = 0; i < currentCrates.length; i++) {
+            let obj = currentCrates[i];
             if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
         }
     }
@@ -185,12 +185,12 @@ window.update = function() {
     let oldPy = player.y; player.y += dy_mov;
     if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
     
-    if (typeof window.currentObstacles !== 'undefined') {
-        for (let i = 0; i < window.currentObstacles.length; i++) {
-            let obs = window.currentObstacles[i];
+    if (typeof currentObstacles !== 'undefined') {
+        for (let i = 0; i < currentObstacles.length; i++) {
+            let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
                 if (obs.type === 'hole') {
-                    // CORRECTION : Ignorer la collision en plein DASH (Axe Y)
+                    // CORRECTION DASH : Axe Y
                     if (player.dashTimer <= 0) { player.y = oldPy; player.dashTimer = 0; break; }
                 } else if (obs.type !== 'water') {
                     player.y = oldPy; player.dashTimer = 0; break;
@@ -199,9 +199,9 @@ window.update = function() {
         }
     }
     
-    if (typeof window.currentCrates !== 'undefined') {
-        for (let i = 0; i < window.currentCrates.length; i++) {
-            let obj = window.currentCrates[i];
+    if (typeof currentCrates !== 'undefined') {
+        for (let i = 0; i < currentCrates.length; i++) {
+            let obj = currentCrates[i];
             if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
         }
     }
@@ -212,10 +212,10 @@ window.update = function() {
     let bTop = wallMargin;
     let bBot = canvas.height - wallMargin;
 
-    let minLimitX = bLeft + window.arenaShrink; 
-    let minLimitY = bTop + window.arenaShrink;
-    let maxLimitX = bRight - window.arenaShrink - player.size;
-    let maxLimitY = bBot - window.arenaShrink - player.size;
+    let minLimitX = bLeft + arenaShrink; 
+    let minLimitY = bTop + arenaShrink;
+    let maxLimitX = bRight - arenaShrink - player.size;
+    let maxLimitY = bBot - arenaShrink - player.size;
     if (player.x < minLimitX) player.x = minLimitX; if (player.y < minLimitY) player.y = minLimitY;
     if (player.x > maxLimitX) player.x = maxLimitX; if (player.y > maxLimitY) player.y = maxLimitY;
     
@@ -226,20 +226,20 @@ window.update = function() {
         player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
     }
     
-    if (typeof window.particles !== 'undefined') {
-        for (let i = window.particles.length - 1; i >= 0; i--) {
-            let p = window.particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
-            if (p.life <= 0) window.particles.splice(i, 1);
+    if (typeof particles !== 'undefined') {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
+            if (p.life <= 0) particles.splice(i, 1);
         }
     }
     
-    if (typeof window.bloodStains !== 'undefined') {
-        for (let i = window.bloodStains.length - 1; i >= 0; i--) {
-            let b = window.bloodStains[i];
+    if (typeof bloodStains !== 'undefined') {
+        for (let i = bloodStains.length - 1; i >= 0; i--) {
+            let b = bloodStains[i];
             if (b.life === undefined) b.life = (currentRoomId === 999) ? 1200 : 3600; 
             b.life--;
             if (b.life < 300) { b.opacity = b.life / 300; } else { b.opacity = 1.0; }
-            if (b.life <= 0) window.bloodStains.splice(i, 1);
+            if (b.life <= 0) bloodStains.splice(i, 1);
         }
     }
 
