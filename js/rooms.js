@@ -64,8 +64,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
                 { ...doorE, id: 'door_3_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnW.x, spawnY: spawnW.y }, 
                 { ...doorN_right, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } 
             ]; 
-            // CORRECTION : L'obstacle invisible fait maintenant 100 de large au lieu de 240 ! Tu pourras t'approcher du bord.
-            currentObstacles.push({ x: canvas.width/2 - 50, y: wallMargin, width: 100, height: canvas.height - wallMargin*2, type: 'hole' });
+            // CORRECTION : L'obstacle invisible (le gouffre) est super fin pour ne pas te bloquer au loin
+            currentObstacles.push({ x: canvas.width/2 - 25, y: wallMargin, width: 50, height: canvas.height - wallMargin*2, type: 'hole' });
             if (!worldState.collectedItems['key_room3']) {
                 currentItems.push({ id: 'key_room3', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
             }
@@ -92,6 +92,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             const doorE_bot = { x: canvas.width - wallMargin - 15, y: 2*canvas.height/3 - 75, width: wallMargin + 15, height: 150, face: 'east' };
             
             currentDoors = [ 
+                // CORRECTION : La porte Nord fait son grand retour !
+                { ...doorN, id: 'door_101_114', requiresKey: false, locked: false, dest: 114, spawnX: spawnS.x, spawnY: spawnS.y },
                 { ...doorW_top, id: 'door_101_102', requiresKey: true, locked: !worldState.unlockedDoors['door_101_102'], dest: 102, spawnX: spawnE.x, spawnY: canvas.height/3 },
                 { ...doorW_bot, id: 'door_101_106', requiresKey: true, locked: !worldState.unlockedDoors['door_101_106'], dest: 106, spawnX: spawnE.x, spawnY: 2*canvas.height/3 },
                 { ...doorE_top, id: 'door_101_103', requiresKey: true, locked: !worldState.unlockedDoors['door_101_103'], dest: 103, spawnX: spawnW.x, spawnY: canvas.height/3 },
@@ -150,12 +152,14 @@ window.loadRoom = function(roomId, entryFace = 'south') {
                 else if (roomId === 6) window.spawnEnemy('goblin', 2, canvas.width/2, 300);
                 else if (roomId === 7) { window.spawnEnemy('goblin', 4, 450, 200); window.spawnEnemy('skeleton', 1, 600, 300); }
                 else if (roomId === 8) window.spawnEnemy('troll', 1, canvas.width/2 - 40, 150); 
-                else if (roomId === 101) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
-                else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
-                else if (roomId === 103) { window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, wallMargin + 80); window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, canvas.height - wallMargin - 80); }
-                else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
+                
+                // CORRECTION : Minotaure dans les 4 salles verrouillées autour de la 101 !
+                else if (roomId === 101) { /* La salle 101 est vide pour te laisser le choix de la porte */ }
+                else if (roomId === 102) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
+                else if (roomId === 103) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
+                else if (roomId === 104) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
                 else if (roomId === 105) window.spawnEnemy('goblin', 3, canvas.width/2, 300);
-                else if (roomId === 106) window.spawnEnemy('skeleton', 3, canvas.width/2, 300);
+                else if (roomId === 106) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
                 else if (roomId === 109) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
                 else if (roomId === 111) window.spawnEnemy('goblin', 2, canvas.width/2, canvas.height/2);
                 else if (roomId === 112) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
