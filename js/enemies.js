@@ -34,9 +34,8 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'deathgod') { size = 70; hp = 1000; spd = 4.5; col = '#2c3e50'; }
         else if (type === 'elysia') { size = 70; hp = 1500; spd = 5.0; col = '#e84393'; }
         else if (type === 'armor') { size = 50; hp = 200; spd = 3.0; col = '#7f8c8d'; }
-        // CORRECTION : GOLEMS AGRANDIS DE +30% !
-        else if (type === 'golem') { size = 65; hp = 100; spd = 1.5; col = '#7f8c8d'; }
-        else if (type === 'small_golem') { size = 39; hp = 40; spd = 2.5; col = '#bdc3c7'; }
+        else if (type === 'golem') { size = 65; hp = 100; spd = 1.5; col = '#7f8c8d'; } // x1.3
+        else if (type === 'small_golem') { size = 39; hp = 40; spd = 2.5; col = '#bdc3c7'; } // x1.3
         else if (type === 'orc') { size = 50; hp = 200; spd = 4.2; col = '#2ecc71'; }
         else if (type === 'wolf') { size = 35; hp = 15; spd = 7.5; col = '#95a5a6'; } 
         else if (type === 'minotaure') { size = 60; hp = 300; spd = 3.5; col = '#e67e22'; }
@@ -118,29 +117,6 @@ window.updateEnemies = function() {
         let currentEnemySpeed = enemy.speed; 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
 
-        // CORRECTION TROLL : DASH MULTIPLIÉ PAR 8.0, TROP RAPIDE !
-        if (enemy.type === 'troll') {
-            if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
-            enemy.summonTimer--;
-            if (enemy.summonTimer <= 0) {
-                if (typeof spawnEnemy === 'function') spawnEnemy('goblin', 1, enemy.x + 20, enemy.y + 20); 
-                enemy.summonTimer = 180; 
-            }
-            
-            if (enemy.trollDashCooldown === undefined) enemy.trollDashCooldown = 600;
-            enemy.trollDashCooldown--;
-            if (enemy.trollDashCooldown === 30) { enemy.isTelegraphing = 30; }
-            if (enemy.trollDashCooldown <= 0) {
-                enemy.isDashing = 10; 
-                enemy.trollDashCooldown = (enemy.health <= enemy.maxHealth / 2) ? 180 : 600; 
-            }
-            if (enemy.isTelegraphing > 0) {
-                enemy.isTelegraphing--; currentEnemySpeed = -1.5; enemy.wobble += 0.5; 
-            } else if (enemy.isDashing > 0) { 
-                enemy.isDashing--; currentEnemySpeed *= 8.0; // FULGURANT
-            }
-        }
-
         if (enemy.type === 'mage') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.maxHealth += 300; enemy.health += 300; enemy.speed = 4.0; 
@@ -189,6 +165,28 @@ window.updateEnemies = function() {
                 }
                 enemy.shootCooldown = 60; 
                 enemy.attackAnimTimer = 30; 
+            }
+        }
+
+        if (enemy.type === 'troll') {
+            if (enemy.summonTimer === undefined) enemy.summonTimer = 0;
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) {
+                if (typeof spawnEnemy === 'function') spawnEnemy('goblin', 1, enemy.x + 20, enemy.y + 20); 
+                enemy.summonTimer = 180; 
+            }
+            
+            if (enemy.trollDashCooldown === undefined) enemy.trollDashCooldown = 600;
+            enemy.trollDashCooldown--;
+            if (enemy.trollDashCooldown === 30) { enemy.isTelegraphing = 30; }
+            if (enemy.trollDashCooldown <= 0) {
+                enemy.isDashing = 10; 
+                enemy.trollDashCooldown = (enemy.health <= enemy.maxHealth / 2) ? 180 : 600; 
+            }
+            if (enemy.isTelegraphing > 0) {
+                enemy.isTelegraphing--; currentEnemySpeed = -1.5; enemy.wobble += 0.5; 
+            } else if (enemy.isDashing > 0) { 
+                enemy.isDashing--; currentEnemySpeed *= 8.0; 
             }
         }
 
@@ -356,33 +354,35 @@ window.updateEnemies = function() {
         dx_mov += repulseX; dy_mov += repulseY;
 
         let oldEx = enemy.x; enemy.x += dx_mov; 
+        let hitX = false;
         
-        if (typeof window.currentObstacles !== 'undefined') {
-            for (let obs of window.currentObstacles) {
+        if (typeof currentObstacles !== 'undefined') {
+            for (let obs of currentObstacles) {
                 if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { 
-                    enemy.x = oldEx; 
+                    enemy.x = oldEx; hitX = true; 
                     enemy.y += (enemy.y < obs.y + obs.height/2) ? -2 : 2; break; 
                 }
             }
         }
         
         if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) { 
-            enemy.x = oldEx; 
+            enemy.x = oldEx; hitX = true; 
             enemy.y += (enemy.y < centerStairs.y + centerStairs.height/2) ? -2 : 2; 
         }
         
         let oldEy = enemy.y; enemy.y += dy_mov; 
+        let hitY = false;
         
-        if (typeof window.currentObstacles !== 'undefined') {
-            for (let obs of window.currentObstacles) {
+        if (typeof currentObstacles !== 'undefined') {
+            for (let obs of currentObstacles) {
                 if (obs.type === 'hole' && window.checkCollision(enemy, obs)) { 
-                    enemy.y = oldEy; 
+                    enemy.y = oldEy; hitY = true; 
                     enemy.x += (enemy.x < obs.x + obs.width/2) ? -2 : 2; break; 
                 }
             }
         }
         if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) { 
-            enemy.y = oldEy; 
+            enemy.y = oldEy; hitY = true; 
             enemy.x += (enemy.x < centerStairs.x + centerStairs.width/2) ? -2 : 2; 
         }
 
@@ -393,7 +393,7 @@ window.updateEnemies = function() {
             if (enemy.y > eMaxY) enemy.y = eMaxY;
         }
 
-        // NOUVEAU : LE CHEVALIER REPOUSSE TOUT PENDANT SON RUSH !
+        // LE CHEVALIER REPOUSSE TOUT PENDANT SON RUSH !
         if (player.heroClass === 'Knight' && player.dashTimer > 0) {
             let distToPlayer = Math.hypot((enemy.x + enemy.size/2) - (player.x + player.size/2), (enemy.y + enemy.size/2) - (player.y + player.size/2));
             if (distToPlayer < player.size + enemy.size + 20) {
@@ -416,41 +416,24 @@ window.updateEnemies = function() {
                 }
             } 
             else if (!fusionAggro && playerInvulnerableTimer <= 0 && window.checkCollision(player, enemy)) {
+                let dmg = 20;
+                if (enemy.type === 'armor') dmg = playerStats.maxHealth * 0.32;
+                else if (enemy.type === 'elysia') dmg = playerStats.maxHealth * 0.34;
+                else if (enemy.type === 'deathgod') dmg = playerStats.maxHealth * 0.25;
                 
-                // NOUVEAU : LE CHEVALIER PARE LES COUPS DE FACE !
-                let parried = false;
-                if (player.heroClass === 'Knight' && player.dashTimer > 0) {
-                    let angleToEnemy = Math.atan2((enemy.y + enemy.size/2) - (player.y + player.size/2), (enemy.x + enemy.size/2) - (player.x + player.size/2));
-                    let angleDiff = Math.abs(angleToEnemy - player.faceAngle) % (Math.PI * 2);
-                    if (angleDiff > Math.PI) angleDiff = (Math.PI * 2) - angleDiff;
-                    if (angleDiff < Math.PI / 1.5) parried = true;
-                }
-
-                if (parried) {
-                    enemy.x += Math.cos(player.faceAngle) * 30;
-                    enemy.y += Math.sin(player.faceAngle) * 30;
-                    if (typeof window.triggerShake === 'function') window.triggerShake(3, 5);
-                    if (typeof spawnParticles === 'function') spawnParticles(player.x + player.size/2, player.y + player.size/2, '#bdc3c7', 5);
-                } else {
-                    let dmg = 20;
-                    if (enemy.type === 'armor') dmg = playerStats.maxHealth * 0.32;
-                    else if (enemy.type === 'elysia') dmg = playerStats.maxHealth * 0.34;
-                    else if (enemy.type === 'deathgod') dmg = playerStats.maxHealth * 0.25;
-                    
-                    playerStats.health -= dmg; 
-                    enemy.attackAnimTimer = 30;
-                    
-                    let randHit = Math.floor(Math.random() * 3) + 1;
-                    let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    let bSize = player.size * 1.5;
-                    if (player.heroClass === 'Elf') bSize /= 2;
-                    
-                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
-                    
-                    playerInvulnerableTimer = 60; 
-                    if (typeof window.updateHUD === 'function') window.updateHUD(); 
-                    if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-                }
+                playerStats.health -= dmg; 
+                enemy.attackAnimTimer = 30;
+                
+                let randHit = Math.floor(Math.random() * 3) + 1;
+                let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                let bSize = player.size * 1.5;
+                if (player.heroClass === 'Elf') bSize /= 2;
+                
+                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                
+                playerInvulnerableTimer = 60; 
+                if (typeof updateHUD === 'function') updateHUD(); 
+                if (playerStats.health <= 0 && typeof handlePlayerDeath === 'function') handlePlayerDeath();
             }
         }
     });
@@ -576,8 +559,8 @@ window.updateEnemies = function() {
             
             if (e.type === 'golem') {
                 if (typeof spawnEnemy === 'function') { 
-                    spawnEnemy('small_golem', 1, e.x - 40, e.y); 
-                    spawnEnemy('small_golem', 1, e.x + 40, e.y); 
+                    spawnEnemy('small_golem', 1, e.x - 30, e.y); 
+                    spawnEnemy('small_golem', 1, e.x + 30, e.y); 
                 }
             }
             
