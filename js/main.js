@@ -4,8 +4,9 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
+// RECONSTRUCTION CLIC DROIT POUR LE DASH/RUSH
 document.addEventListener('mousedown', event => {
-    if (event.button === 2 && playerStats.health > 0) {
+    if (event.button === 2 && playerStats.health > 0 && gameState === "PLAYING") {
         event.preventDefault();
         if (player.dashCooldown <= 0) {
             player.dashTimer = (player.heroClass === 'Knight') ? 30 : 15; 
@@ -48,15 +49,23 @@ window.update = function() {
     
     if (currentRoomId === 999) {
         if (waveStartDelay > 0) waveStartDelay--;
+        
         let hasTroll = typeof currentEnemies !== 'undefined' && currentEnemies.some(e => e.type === 'troll');
-        if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { arenaShrink += 0.3; } 
-        else if (!hasTroll && arenaShrink > 0) { arenaShrink -= 0.5; if (arenaShrink < 0) arenaShrink = 0; }
+        
+        if (hasTroll && arenaState === "PLAYING" && arenaShrink < 150) { 
+            arenaShrink += 0.3; 
+        } else if (!hasTroll && arenaShrink > 0) {
+            arenaShrink -= 0.5; 
+            if (arenaShrink < 0) arenaShrink = 0;
+        }
 
         if (arenaState === "WAITING") {
             if (typeof arenaTimer === 'undefined') arenaTimer = 0;
             arenaTimer--;
+            
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
+                
                 if (arenaWave > 0 && arenaWave % 5 === 0) {
                     currentItems.push({ id: 'pot_g_'+arenaWave, type: 'potion_green', x: canvas.width/2, y: canvas.height/2, size: 15, collected: false });
                     if (typeof window.spawnParticles === 'function') window.spawnParticles(canvas.width/2, canvas.height/2, '#2ecc71', 15);
@@ -65,37 +74,48 @@ window.update = function() {
                 if (arenaWave === 10) { window.spawnEnemy('troll', 1); }
                 else if (arenaWave === 20) { window.spawnEnemy('mage', 1); }
                 else if (arenaWave === 30) { window.spawnEnemy('dragon', 1); }
-                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('minotaure', 2); }
+                else if (arenaWave === 35) { window.spawnEnemy('troll', 1); window.spawnEnemy('mage', 1); window.spawnEnemy('goblin', 3); }
                 else if (arenaWave === 40) { window.spawnEnemy('deathgod', 1); }
+                else if (arenaWave === 45) { window.spawnEnemy('mage', 1); window.spawnEnemy('dragon', 1); window.spawnEnemy('skeleton', 3); }
+                else if (arenaWave === 50) { window.spawnEnemy('elysia', 1); }
                 else {
                     let countGoblin = 3 + Math.floor(arenaWave * 1.2);
-                    window.spawnEnemy('goblin', Math.min(countGoblin, 15));
+                    window.spawnEnemy('goblin', countGoblin);
                     if (arenaWave >= 3) window.spawnEnemy('skeleton', Math.floor(arenaWave / 3) + 1);
+                    if (arenaWave >= 15) window.spawnEnemy('spider', 2);
                 }
                 arenaWave++;
             }
         } else if (arenaState === "PLAYING") {
-            if (currentEnemies.length === 0) { arenaState = "WAITING"; arenaTimer = 300; if (typeof hazards !== 'undefined') hazards.length = 0; if (typeof window.updateHUD === 'function') window.updateHUD(); }
+            if (currentEnemies.length === 0) {
+                arenaState = "WAITING";
+                arenaTimer = 300; 
+                if (typeof hazards !== 'undefined') hazards.length = 0;
+                if (typeof window.updateHUD === 'function') window.updateHUD();
+            }
         }
     }
 
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
-    if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
     
     let roomChanged = false;
     let doorToPass = null;
     
     for (let i = 0; i < currentDoors.length; i++) {
         let door = currentDoors[i];
+        
         if (currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') {
             if (window.checkCollision(player, door)) { player.y = door.y - player.size - 5; }
             continue;
         }
+        
         if (!doorToPass && window.checkCollision(player, door)) {
             if (door.locked) {
                 if (playerStats.inventory.keys.gold > 0) {
-                    playerStats.inventory.keys.gold--; door.locked = false; worldState.unlockedDoors[door.id] = true;
+                    playerStats.inventory.keys.gold--; 
+                    door.locked = false; 
+                    worldState.unlockedDoors[door.id] = true;
                     if (typeof window.updateHUD === 'function') window.updateHUD();
                     if (door.dest !== null) doorToPass = door;
                 } else {
@@ -104,13 +124,16 @@ window.update = function() {
                     else if (door.face === 'east') player.x = door.x - player.size;
                     else if (door.face === 'west') player.x = door.x + door.width;
                 }
-            } else if (door.dest !== null) { doorToPass = door; }
+            } else if (door.dest !== null) {
+                doorToPass = door;
+            }
         }
     }
 
     if (doorToPass) {
         worldState.droppedItems[currentRoomId] = currentItems.map(item => ({...item}));
         worldState.openedDoors[doorToPass.id] = true;
+
         let returnFace = 'south';
         if (doorToPass.face === 'north') returnFace = 'south';
         else if (doorToPass.face === 'south') returnFace = 'north';
@@ -120,8 +143,18 @@ window.update = function() {
         if (typeof window.saveRoomState === 'function') window.saveRoomState();
         if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
 
-        if (worldState.droppedItems[doorToPass.dest]) { currentItems.splice(0, currentItems.length, ...worldState.droppedItems[doorToPass.dest]); }
-        currentDoors.forEach(d => { if (d.face === returnFace) { worldState.openedDoors[d.id] = true; d.locked = false; } });
+        if (worldState.droppedItems[doorToPass.dest]) {
+            currentItems.splice(0, currentItems.length, ...worldState.droppedItems[doorToPass.dest]);
+        }
+
+        if (typeof currentDoors !== 'undefined') {
+            currentDoors.forEach(d => {
+                if (d.face === returnFace) {
+                    worldState.openedDoors[d.id] = true;
+                    d.locked = false;
+                }
+            });
+        }
 
         player.x = doorToPass.spawnX;
         player.y = doorToPass.spawnY;
@@ -136,7 +169,10 @@ window.update = function() {
     
     if (leftClickHeld) {
         leftClickHoldTime++;
-        if (leftClickHoldTime >= 180 && playerStats.mana >= 100) { if (typeof window.activateUltimate === 'function') window.activateUltimate(); leftClickHeld = false; }
+        if (leftClickHoldTime >= 180 && playerStats.mana >= 100) { 
+            if (typeof window.activateUltimate === 'function') window.activateUltimate(); 
+            leftClickHeld = false; 
+        }
     }
     
     if (player.dashCooldown === undefined) player.dashCooldown = 0;
@@ -170,8 +206,9 @@ window.update = function() {
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     let dx_mov = 0; let dy_mov = 0;
     
-    if (player.dashTimer > 0) { player.dashTimer--; dx_mov = player.dashVx; dy_mov = player.dashVy; } 
-    else {
+    if (player.dashTimer > 0) {
+        player.dashTimer--; dx_mov = player.dashVx; dy_mov = player.dashVy;
+    } else {
         if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
         if (keys['d'] || keys['arrowright'])              dx_mov += currentSpeedPlayer;
         if (keys['z'] || keys['w'] || keys['arrowup'])    dy_mov -= currentSpeedPlayer;
@@ -181,6 +218,7 @@ window.update = function() {
     let oldPx = player.x; player.x += dx_mov;
     if (currentRoomId === 8 && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
     
+    // Collisions Obstacles (Trous / Eau)
     if (typeof currentObstacles !== 'undefined') {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
@@ -191,7 +229,7 @@ window.update = function() {
             }
         }
     }
-    
+
     for (let i = 0; i < currentCrates.length; i++) {
         let obj = currentCrates[i];
         if (!obj.isBroken && window.checkCollision(player, obj)) { player.x = oldPx; player.dashTimer = 0; break; }
@@ -218,32 +256,54 @@ window.update = function() {
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
-    let bTop = wallMargin; let bBot = canvas.height - wallMargin;
+    let bTop = wallMargin;
+    let bBot = canvas.height - wallMargin;
 
-    let minLimitX = bLeft + arenaShrink; let minLimitY = bTop + arenaShrink;
-    let maxLimitX = bRight - arenaShrink - player.size; let maxLimitY = bBot - arenaShrink - player.size;
+    let minLimitX = bLeft + arenaShrink; 
+    let minLimitY = bTop + arenaShrink;
+    let maxLimitX = bRight - arenaShrink - player.size;
+    let maxLimitY = bBot - arenaShrink - player.size;
     if (player.x < minLimitX) player.x = minLimitX; if (player.y < minLimitY) player.y = minLimitY;
     if (player.x > maxLimitX) player.x = maxLimitX; if (player.y > maxLimitY) player.y = maxLimitY;
     
-    if (currentRoomId === 1 && typeof bookshelf !== 'undefined' && player.x + player.size > bookshelf.x && player.y + player.size > bookshelf.y && player.y < bookshelf.y + bookshelf.height) { player.x = bookshelf.x - player.size; }
-    if (player.dashTimer <= 0) { player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2)); }
+    if (currentRoomId === 1 && typeof bookshelf !== 'undefined' && player.x + player.size > bookshelf.x && player.y + player.size > bookshelf.y && player.y < bookshelf.y + bookshelf.height) {
+        player.x = bookshelf.x - player.size;
+    }
+    if (player.dashTimer <= 0) {
+        player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
+    }
     
-    for (let i = particles.length - 1; i >= 0; i--) { particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].life -= 0.03; if (particles[i].life <= 0) particles.splice(i, 1); }
-    for (let i = bloodStains.length - 1; i >= 0; i--) { if (bloodStains[i].life === undefined) bloodStains[i].life = (currentRoomId === 999) ? 1200 : 3600; bloodStains[i].life--; if (bloodStains[i].life < 300) { bloodStains[i].opacity = bloodStains[i].life / 300; } else { bloodStains[i].opacity = 1.0; } if (bloodStains[i].life <= 0) bloodStains.splice(i, 1); }
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; 
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+    
+    for (let i = bloodStains.length - 1; i >= 0; i--) {
+        let b = bloodStains[i];
+        if (b.life === undefined) b.life = (currentRoomId === 999) ? 1200 : 3600; 
+        b.life--;
+        if (b.life < 300) { b.opacity = b.life / 300; } else { b.opacity = 1.0; }
+        if (b.life <= 0) bloodStains.splice(i, 1);
+    }
 
     if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
+    // TÉLÉPORTATION NIVEAU 2 SÉCURISÉE SANS CONFLIT
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
         if (window.checkCollision(player, triggerStairs)) {
             if (playerStats.inventory.keys.skull > 0) {
                 playerStats.inventory.keys.skull--; 
+                
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
                 if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
+                
                 player.x = canvas.width / 2 - player.size / 2;
-                player.y = canvas.height - wallMargin - 150; player.dashTimer = 0; 
+                player.y = canvas.height - wallMargin - 150; 
+                player.dashTimer = 0; 
+                
                 if (typeof window.updateHUD === 'function') window.updateHUD(); 
                 return requestAnimationFrame(window.update);
             }
