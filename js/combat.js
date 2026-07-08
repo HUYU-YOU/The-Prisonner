@@ -9,13 +9,18 @@ window.handlePlayerAttack = function() {
     
     if (player.heroClass === 'Elf') {
         if (isUltimateActive) {
-            elfStealthBroken = true; let spread = 0.15;
+            elfStealthBroken = true; 
+            let spread = 0.15;
             projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle - spread) * 12, vy: Math.sin(angle - spread) * 12, size: 5, hitTargets: [], angle: angle - spread, type: 'arrow_elf' });
             projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle + spread) * 12, vy: Math.sin(angle + spread) * 12, size: 5, hitTargets: [], angle: angle + spread, type: 'arrow_elf' });
             attackCooldown = 15;
-        } else { projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12, size: 5, hitTargets: [], angle: angle, type: 'arrow_elf' }); attackCooldown = 30; }
+        } else { 
+            projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12, size: 5, hitTargets: [], angle: angle, type: 'arrow_elf' }); 
+            attackCooldown = 30; 
+        }
     } 
     else if (player.heroClass === 'Mage') {
+        // Boule de feu géante, ronde, très large zone d'impact !
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 18, vy: Math.sin(angle) * 18, size: 15, hitTargets: [], angle: angle, type: 'fire_mage' }); 
         attackCooldown = 28;
     } 
@@ -24,21 +29,29 @@ window.handlePlayerAttack = function() {
         attackCooldown = 15;
     } 
     else if (player.heroClass === 'Knight') {
-        isAttacking = true; attackCooldown = 40;
-        // CHEVALIER : Portée augmentée (box de 180 projetée en avant)
+        isAttacking = true; 
+        attackCooldown = 40;
+        // Portée (Range) de l'épée grandement allongée !
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 80 - 90, y: player.y + player.size / 2 + Math.sin(angle) * 80 - 90, size: 180 };
         
         currentEnemies.forEach(enemy => { 
             if (window.checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
-                    if (enemy.type === 'goblin' && Math.random() < 0.15) { enemy.blockAnimTimer = 45; } 
-                    else { 
-                        let mult = playerStats.attackMultiplier || 1.0; enemy.health -= 50 * mult; 
-                        enemy.x += Math.cos(angle) * 30; enemy.y += Math.sin(angle) * 30; // Repousse
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) { 
+                        enemy.blockAnimTimer = 45; 
+                    } else { 
+                        let mult = playerStats.attackMultiplier || 1.0;
+                        enemy.health -= 50 * mult; 
+                        
+                        // Repousse l'ennemi en arrière !
+                        enemy.x += Math.cos(angle) * 35;
+                        enemy.y += Math.sin(angle) * 35;
+                        
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            let bSize = enemy.size * 1.5; if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                            let bSize = enemy.size * 1.5;
+                            if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
                             bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
@@ -46,58 +59,118 @@ window.handlePlayerAttack = function() {
                 }
             } 
         });
-        for (let i = 0; i < currentCrates.length; i++) { let obj = currentCrates[i]; if (!obj.isBroken && window.checkCollision(hitBox, obj)) { obj.health -= 50; } }
+        
+        for (let i = 0; i < currentCrates.length; i++) {
+            let obj = currentCrates[i]; 
+            if (!obj.isBroken && window.checkCollision(hitBox, obj)) { obj.health -= 50; }
+        }
     }
 };
 
 window.updateProjectiles = function() {
     let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
-    let bLeft = isVertCorridor ? 350 : wallMargin; let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
-    let bTop = wallMargin; let bBot = canvas.height - wallMargin;
+    let bLeft = isVertCorridor ? 350 : wallMargin;
+    let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
+    let bTop = wallMargin; 
+    let bBot = canvas.height - wallMargin;
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
-        let p = projectiles[i]; p.x += p.vx; p.y += p.vy;
-        if (currentRoomId === 8 && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { projectiles.splice(i, 1); continue; }
-        if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { projectiles.splice(i, 1); continue; }
+        let p = projectiles[i]; 
+        p.x += p.vx; 
+        p.y += p.vy;
         
-        let projectileHit = false; let arrowHitbox = { x: p.x - p.size, y: p.y - p.size, size: p.size * 2 };
-        for (let c = 0; c < currentCrates.length; c++) { let obj = currentCrates[c]; if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; } }
+        if (currentRoomId === 8 && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
+            projectiles.splice(i, 1); continue; 
+        }
+        if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { 
+            projectiles.splice(i, 1); continue; 
+        }
+        
+        let projectileHit = false; 
+        let arrowHitbox = { x: p.x - p.size, y: p.y - p.size, size: p.size * 2 };
+
+        for (let c = 0; c < currentCrates.length; c++) {
+            let obj = currentCrates[c];
+            if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; }
+        }
 
         for (let j = 0; j < currentEnemies.length; j++) {
-            let enemy = currentEnemies[j]; if (p.hitTargets && p.hitTargets.includes(enemy)) continue;
+            let enemy = currentEnemies[j];
+            if (p.hitTargets && p.hitTargets.includes(enemy)) continue;
+            
             if (!projectileHit && window.checkCollision(arrowHitbox, enemy)) {
                 if (!enemy.invulnerable) {
-                    let isBlocked = false; if (enemy.type === 'goblin' && Math.random() < 0.15) { isBlocked = true; enemy.blockAnimTimer = 45; }
+                    let isBlocked = false;
+                    if (enemy.type === 'goblin' && Math.random() < 0.15) { 
+                        isBlocked = true; enemy.blockAnimTimer = 45; 
+                    }
                     if (!isBlocked) { 
-                        let mult = playerStats.attackMultiplier || 1.0; let dmg = 30 * mult; if (player.heroClass === 'Elf') dmg = 60 * mult; else if (p.type === 'fire_fusion') dmg = 40 * mult;
-                        enemy.health -= dmg; if (p.type === 'fire_mage' || player.heroClass === 'Mage') { enemy.isBurning = true; enemy.burnTimer = 180; }
+                        let mult = playerStats.attackMultiplier || 1.0;
+                        let dmg = 30 * mult; 
+                        if (player.heroClass === 'Elf') dmg = 60 * mult; 
+                        else if (p.type === 'fire_fusion') dmg = 40 * mult; 
+                        
+                        enemy.health -= dmg; 
+                        
+                        if (p.type === 'fire_mage' || player.heroClass === 'Mage') {
+                            enemy.isBurning = true; enemy.burnTimer = 180; 
+                        }
                     }
                 }
+                
                 if (enemy.type !== 'skeleton') {
-                    let hitNum = Math.floor(Math.random() * 3) + 1; let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    let bSize = enemy.size * 1.5; if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                    let hitNum = Math.floor(Math.random() * 3) + 1;
+                    let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                    let bSize = enemy.size * 1.5;
+                    if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
+                
                 let isPiercingElf = (isUltimateActive && player.heroClass === 'Elf');
-                if (isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion') { if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); } else { projectileHit = true; break; } 
+                let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
+                
+                if (isPiercing) { 
+                    if (!p.hitTargets) p.hitTargets = []; p.hitTargets.push(enemy); 
+                } else { 
+                    projectileHit = true; break; 
+                } 
             }
         }
         if (projectileHit) projectiles.splice(i, 1); 
     }
 
     let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
-    let fusionAggro = null; if (typeof necroSummons !== 'undefined') { fusionAggro = necroSummons.find(s => s.type === 'fusion'); }
+    let fusionAggro = null;
+    if (typeof necroSummons !== 'undefined') { fusionAggro = necroSummons.find(s => s.type === 'fusion'); }
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
-        let ep = enemyProjectiles[i]; ep.x += ep.vx; ep.y += ep.vy;
-        if (ep.type === 'armor_sword') { if (ep.lifeTimer === undefined) ep.lifeTimer = 0; ep.lifeTimer++; if (ep.lifeTimer === 30) { ep.vx *= -1; ep.vy *= -1; } if (ep.lifeTimer >= 60) { enemyProjectiles.splice(i, 1); continue; } }
+        let ep = enemyProjectiles[i];
+        ep.x += ep.vx; ep.y += ep.vy;
+        
+        if (ep.type === 'armor_sword') {
+            if (ep.lifeTimer === undefined) ep.lifeTimer = 0;
+            ep.lifeTimer++;
+            if (ep.lifeTimer === 30) { ep.vx *= -1; ep.vy *= -1; } 
+            if (ep.lifeTimer >= 60) { enemyProjectiles.splice(i, 1); continue; } 
+        }
+        
         let epHitbox = { x: ep.x - ep.size, y: ep.y - ep.size, size: ep.size * 2 };
-        if (ep.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { enemyProjectiles.splice(i, 1); continue; }
-        if (currentRoomId === 8 && window.checkCollision(epHitbox, centerStairs)) { enemyProjectiles.splice(i, 1); continue; }
-        if (fusionAggro && window.checkCollision(fusionAggro, epHitbox)) { fusionAggro.health -= ep.damage || 15; enemyProjectiles.splice(i, 1); continue; }
+        
+        if (ep.x < bLeft || ep.y < bTop || ep.x > bRight || ep.y > bBot) { 
+            enemyProjectiles.splice(i, 1); continue; 
+        }
+        if (currentRoomId === 8 && window.checkCollision(epHitbox, centerStairs)) { 
+            enemyProjectiles.splice(i, 1); continue; 
+        }
 
-        // CHEVALIER PARADE DEVANT LUI (Angle de 120 degrés)
+        if (fusionAggro && window.checkCollision(fusionAggro, epHitbox)) {
+            fusionAggro.health -= ep.damage || 15;
+            enemyProjectiles.splice(i, 1);
+            continue;
+        }
+
+        // LA PARADE FRONTALE DU CHEVALIER (Cone de 120 degrés)
         let parried = false;
         if (player.heroClass === 'Knight' && player.dashTimer > 0) {
             let angleToProj = Math.atan2(ep.y - (player.y + player.size/2), ep.x - (player.x + player.size/2));
@@ -107,27 +180,55 @@ window.updateProjectiles = function() {
         }
 
         if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
-            if (parried) { enemyProjectiles.splice(i, 1); if (typeof window.spawnParticles === 'function') window.spawnParticles(ep.x, ep.y, '#ecf0f1', 8); continue; }
-            let epDmg = ep.damage || 15; if (ep.type === 'rock_golem' || ep.type === 'rock_gargouille') epDmg = 25;
-            playerStats.health -= epDmg; if (ep.type === 'bat_web') { playerSlowTimer = 120; } if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
-            let hitNum = Math.floor(Math.random() * 3) + 1; let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            let bSize = player.size * 1.5; if (player.heroClass === 'Elf') bSize /= 2;
+            if (parried) {
+                enemyProjectiles.splice(i, 1);
+                if (typeof window.spawnParticles === 'function') window.spawnParticles(ep.x, ep.y, '#ecf0f1', 8);
+                continue;
+            }
+
+            let epDmg = ep.damage || 15;
+            if (ep.type === 'rock_golem' || ep.type === 'rock_gargouille') epDmg = 25;
+            
+            playerStats.health -= epDmg;
+            if (ep.type === 'bat_web') { playerSlowTimer = 120; } 
+            if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
+            
+            let hitNum = Math.floor(Math.random() * 3) + 1;
+            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+            let bSize = player.size * 1.5;
+            if (player.heroClass === 'Elf') bSize /= 2;
             bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
-            playerInvulnerableTimer = 45; if (typeof window.updateHUD === 'function') window.updateHUD(); if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+            
+            playerInvulnerableTimer = 45;
+            if (typeof window.updateHUD === 'function') window.updateHUD();
+            if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
             enemyProjectiles.splice(i, 1);
         }
     }
     
     if (typeof hazards !== 'undefined') {
         for (let i = hazards.length - 1; i >= 0; i--) {
-            let h = hazards[i]; h.timer--;
+            let h = hazards[i];
+            h.timer--;
             if (h.timer <= 0) {
-                let target = player; if (typeof necroSummons !== 'undefined') { let fusion = necroSummons.find(s => s.type === 'fusion'); if (fusion) target = fusion; }
+                let target = player;
+                if (typeof necroSummons !== 'undefined') {
+                    let fusion = necroSummons.find(s => s.type === 'fusion');
+                    if (fusion) target = fusion;
+                }
+
                 if (!isElfInvuln && playerInvulnerableTimer <= 0) {
                     let distH = Math.hypot((target.x + target.size/2) - h.x, (target.y + target.size/2) - h.y);
                     if (distH < h.radius) {
-                        if (target === player) { playerStats.health -= h.damage || 20; playerInvulnerableTimer = 45; if (typeof window.triggerShake === 'function') window.triggerShake(15, 25); if (typeof window.updateHUD === 'function') window.updateHUD(); if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath(); } 
-                        else { target.health -= h.damage || 20; }
+                        if (target === player) {
+                            playerStats.health -= h.damage || 20;
+                            playerInvulnerableTimer = 45;
+                            if (typeof window.triggerShake === 'function') window.triggerShake(15, 25);
+                            if (typeof window.updateHUD === 'function') window.updateHUD();
+                            if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+                        } else {
+                            target.health -= h.damage || 20; 
+                        }
                     }
                 }
                 hazards.splice(i, 1); 
@@ -141,6 +242,7 @@ window.updateItemsAndCrates = function() {
         let item = currentItems[i];
         if (window.checkCollision(player, item)) {
             worldState.collectedItems[item.id] = true; 
+            
             if (item.type === 'key') playerStats.inventory.keys.gold++; 
             else if (item.type === 'key_skull') playerStats.inventory.keys.skull++; 
             else if (item.type === 'key_orb') playerStats.inventory.keys.orb++; 
@@ -148,11 +250,14 @@ window.updateItemsAndCrates = function() {
             else if (item.type === 'potion_yellow') playerStats.inventory.potions.yellow++; 
             else if (item.type === 'potion_blue') playerStats.inventory.potions.blue++; 
             else if (item.type === 'potion_red') playerStats.inventory.potions.red++; 
-            else if (item.type === 'coin') { playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); }
-            else if (item.type === 'scroll') { playerStats.attackMultiplier = (playerStats.attackMultiplier || 1.0) + 0.10; alert("YOUR WEAPON IS UPGRADED ! (+10% Attack)"); }
-            if (typeof window.updateHUD === 'function') window.updateHUD(); currentItems.splice(i, 1); 
+            else if (item.type === 'coin') { 
+                playerStats.inventory.coins++; localStorage.setItem('kebra_coins', playerStats.inventory.coins); 
+            }
+            if (typeof window.updateHUD === 'function') window.updateHUD(); 
+            currentItems.splice(i, 1); 
         }
     }
+
     for (let i = 0; i < currentCrates.length; i++) {
         let crate = currentCrates[i];
         if (!crate.isBroken && crate.health <= 0) {
