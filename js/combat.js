@@ -20,7 +20,7 @@ window.handlePlayerAttack = function() {
         }
     } 
     else if (player.heroClass === 'Mage') {
-        // --- TA BOULE DE FEU GEANTE ICI (size 15 et vitesse 18) ---
+        // La boule de feu est massive (size 15) et très rapide (vitesse 18) !
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 18, vy: Math.sin(angle) * 18, size: 15, hitTargets: [], angle: angle, type: 'fire_mage' }); 
         attackCooldown = 28;
     } 
@@ -122,7 +122,7 @@ window.updateProjectiles = function() {
                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
-                let isPiercingElf = (player.heroClass === 'Elf' && isUltimateActive);
+                let isPiercingElf = (isUltimateActive && player.heroClass === 'Elf');
                 let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
                 
                 if (isPiercing) { 
@@ -237,6 +237,7 @@ window.updateItemsAndCrates = function() {
                 playerStats.attackMultiplier = (playerStats.attackMultiplier || 1.0) + 0.10; 
                 alert("YOUR WEAPON IS UPGRADED ! (+10% Attack)");
             }
+            
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             currentItems.splice(i, 1); 
         }
