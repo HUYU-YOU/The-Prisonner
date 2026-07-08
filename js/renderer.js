@@ -90,25 +90,43 @@ window.renderGameView = function() {
         currentCrates.forEach(crate => {
             let imgName = ''; if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; else if (crate.type === 'chest') imgName = crate.isBroken ? 'chest2' : 'chest1';
             let img = assetsManager.images[imgName]; ctx.save(); ctx.translate(crate.x + crate.size/2, crate.y + crate.size/2);
-            if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); } ctx.restore();
+            if (!crate.isBroken && crate.health < 30 && crate.type !== 'chest') { ctx.rotate(Math.sin(Date.now() / 20) * 0.1); }
+            if (img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, -crate.size/2, -crate.size/2, crate.size, crate.size); } 
+            else { ctx.fillStyle = crate.isBroken ? '#5c4033' : '#8B4513'; if (crate.type === 'chest') ctx.fillStyle = crate.isBroken ? '#7f8c8d' : '#f1c40f'; ctx.fillRect(-crate.size/2, -crate.size/2, crate.size, crate.size); }
+            ctx.restore();
         });
     }
 
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
-            if (isOpen) { stateStr = '_open'; } else if (door.requiresKey && door.locked) { stateStr = '_key'; }
-            if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
-            if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
+            if (isOpen) { stateStr = '_open'; } 
+            else if (door.requiresKey && door.locked) { stateStr = '_key'; }
+            if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+            
+            if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
+            else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
+            else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; 
+            else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
+            
+            if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } 
+            else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
         });
     }
 
     if (typeof currentItems !== 'undefined') {
         currentItems.forEach(item => {
             if (!item.collected) {
-                let floatY = Math.sin(Date.now() / 200) * 3; ctx.save(); 
+                let floatY = Math.sin(Date.now() / 200) * 3; 
+                ctx.save(); 
                 let scaleX = 1; let assetName = null;
-                if (item.type === 'key') assetName = 'gold_key'; else if (item.type === 'key_skull') assetName = 'skeleton_key'; else if (item.type === 'key_orb') assetName = 'portal_key'; else if (item.type === 'potion_green') assetName = 'potion1'; else if (item.type === 'potion_yellow') assetName = 'potion2'; else if (item.type === 'coin') { assetName = 'gold_coin'; scaleX = Math.abs(Math.cos(Date.now() / 200)); }
+                if (item.type === 'key') assetName = 'gold_key';
+                else if (item.type === 'key_skull') assetName = 'skeleton_key';
+                else if (item.type === 'key_orb') assetName = 'portal_key';
+                else if (item.type === 'potion_green') assetName = 'potion1';
+                else if (item.type === 'potion_yellow') assetName = 'potion2';
+                else if (item.type === 'coin') { assetName = 'gold_coin'; scaleX = Math.abs(Math.cos(Date.now() / 200)); }
+                
                 ctx.scale(scaleX, 1);
                 if (assetName && assetName.includes('key')) { ctx.shadowColor = 'rgba(255, 215, 0, 1)'; ctx.shadowBlur = 25 + Math.abs(Math.sin(Date.now() / 150)) * 20; floatY += Math.sin(Date.now() / 150) * 5; }
                 ctx.translate(item.x, item.y + floatY);
@@ -197,14 +215,14 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) { let displaySize = player.size * 3.75; if (player.heroClass === 'Elf') displaySize = player.size * 1.875; ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize); if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) { let swordImg = window.getAsset('Attack_sword_knight'); if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) { ctx.save(); let progress = (40 - attackCooldown) / 40; ctx.translate(25, 0); ctx.rotate(-Math.PI / 4 + progress * (Math.PI / 2)); ctx.globalAlpha = 1 - progress; ctx.shadowColor = '#ecf0f1'; ctx.shadowBlur = 15; ctx.drawImage(swordImg, -60, -60, 120, 120); ctx.restore(); } ctx.save(); let progress = (40 - attackCooldown) / 40; ctx.beginPath(); ctx.arc(0, 0, 110, -Math.PI/1.2, Math.PI/1.2); ctx.lineWidth = 20 * (1 - progress); ctx.strokeStyle = `rgba(236, 240, 241, ${1 - progress})`; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; ctx.stroke(); ctx.restore(); } } ctx.restore(); ctx.globalAlpha = 1.0; 
     }
 
-    // --- RENDU DU HALO ET DES LUMIÈRES (OPACITÉ À 70% PLUTÔT QU'À 94%) ---
+    // HALO ET SYSTÈME D'OMBRE RETROUVÉS (Visibilité à 70% pour y voir clair)
     if (!window.lightCanvas) window.lightCanvas = document.createElement('canvas');
     if (window.lightCanvas.width !== canvas.width || window.lightCanvas.height !== canvas.height) { window.lightCanvas.width = canvas.width; window.lightCanvas.height = canvas.height; window.lightCtx = window.lightCanvas.getContext('2d'); }
     let lctx = window.lightCtx; lctx.globalCompositeOperation = 'source-over'; lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; lctx.fillRect(0, 0, canvas.width, canvas.height);
     lctx.globalCompositeOperation = 'destination-out';
     
     let px = player.x + player.size/2; let py = player.y + player.size/2;
-    let pGrad = lctx.createRadialGradient(px, py, 60, px, py, 500); pGrad.addColorStop(0, 'rgba(255, 255, 255, 1)'); pGrad.addColorStop(1, 'rgba(255, 255, 255, 0)'); lctx.fillStyle = pGrad; lctx.beginPath(); lctx.arc(px, py, 500, 0, Math.PI*2); lctx.fill();
+    let pGrad = lctx.createRadialGradient(px, py, 60, px, py, 450); pGrad.addColorStop(0, 'rgba(255, 255, 255, 1)'); pGrad.addColorStop(1, 'rgba(255, 255, 255, 0)'); lctx.fillStyle = pGrad; lctx.beginPath(); lctx.arc(px, py, 450, 0, Math.PI*2); lctx.fill();
 
     if (typeof currentDoors !== 'undefined') { currentDoors.forEach(door => { let dx = door.x + door.width/2; let dy = door.y + door.height/2; if (door.face === 'north') dy = door.y; if (door.face === 'south') dy = door.y + door.height; if (door.face === 'west') dx = door.x; if (door.face === 'east') dx = door.x + door.width; let dGrad = lctx.createRadialGradient(dx, dy, 20, dx, dy, 300); dGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); dGrad.addColorStop(1, 'rgba(255, 255, 255, 0)'); lctx.fillStyle = dGrad; lctx.beginPath(); lctx.arc(dx, dy, 300, 0, Math.PI*2); lctx.fill(); }); }
     if (typeof currentItems !== 'undefined') { currentItems.forEach(item => { if (!item.collected && (item.type === 'key' || item.type === 'key_skull' || item.type === 'key_orb')) { let dGrad = lctx.createRadialGradient(item.x, item.y, 10, item.x, item.y, 200); dGrad.addColorStop(0, 'rgba(255, 215, 0, 0.9)'); dGrad.addColorStop(1, 'rgba(255, 215, 0, 0)'); lctx.fillStyle = dGrad; lctx.beginPath(); lctx.arc(item.x, item.y, 200, 0, Math.PI*2); lctx.fill(); } }); }
