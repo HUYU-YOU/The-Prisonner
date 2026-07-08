@@ -8,10 +8,11 @@ window.triggerShake = function(intensity, duration) {
 };
 
 window.spawnParticles = function(x, y, color, count, isGlow = false) {
+    window.particles = window.particles || [];
     for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2; 
         let speed = Math.random() * 5 + 2;
-        particles.push({ 
+        window.particles.push({ 
             x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
             life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
         });
@@ -81,12 +82,10 @@ window.renderGameView = function() {
         } 
     }
 
-    // --- LE MUR NOIR EST MAINTENANT INVISIBLE ---
-    if (typeof currentObstacles !== 'undefined') {
-        currentObstacles.forEach(obs => {
+    if (typeof window.currentObstacles !== 'undefined') {
+        window.currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                // On ne dessine absolument rien ! La hitbox de collision existe toujours, 
-                // mais elle est 100% transparente. Ton dessin sera intact.
+                // Ne dessine RIEN ! Rend la boîte mathématiquement là, mais 100% invisible.
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -112,8 +111,8 @@ window.renderGameView = function() {
     let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
-    if (typeof bloodStains !== 'undefined') {
-        bloodStains.forEach(blood => { 
+    if (typeof window.bloodStains !== 'undefined') {
+        window.bloodStains.forEach(blood => { 
             ctx.save();
             let alpha = 1.0;
             let fadeTime = 300;
@@ -141,7 +140,7 @@ window.renderGameView = function() {
 
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 999) { 
         ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 6; 
-        let shrink = typeof arenaShrink !== 'undefined' ? arenaShrink : 0;
+        let shrink = typeof window.arenaShrink !== 'undefined' ? window.arenaShrink : 0;
         ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
     }
 
@@ -171,8 +170,8 @@ window.renderGameView = function() {
         }
     }
 
-    if (typeof currentCrates !== 'undefined') {
-        currentCrates.forEach(crate => {
+    if (typeof window.currentCrates !== 'undefined') {
+        window.currentCrates.forEach(crate => {
             let imgName = ''; 
             if (crate.type === 'barrel') imgName = crate.isBroken ? 'crate2' : 'crate1'; 
             else if (crate.type === 'box') imgName = crate.isBroken ? 'crate4' : 'crate3'; 
@@ -187,8 +186,8 @@ window.renderGameView = function() {
         });
     }
 
-    if (typeof currentDoors !== 'undefined') {
-        currentDoors.forEach(door => {
+    if (typeof window.currentDoors !== 'undefined') {
+        window.currentDoors.forEach(door => {
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
             
             if (isOpen) { stateStr = '_open'; } 
@@ -205,8 +204,8 @@ window.renderGameView = function() {
         });
     }
 
-    if (typeof currentItems !== 'undefined') {
-        currentItems.forEach(item => {
+    if (typeof window.currentItems !== 'undefined') {
+        window.currentItems.forEach(item => {
             if (!item.collected) {
                 let floatY = Math.sin(Date.now() / 200) * 3; 
                 ctx.save(); ctx.translate(item.x, item.y + floatY); 
@@ -253,8 +252,8 @@ window.renderGameView = function() {
         });
     }
 
-    if (typeof hazards !== 'undefined') {
-        hazards.forEach(h => { 
+    if (typeof window.hazards !== 'undefined') {
+        window.hazards.forEach(h => { 
             ctx.save();
             let isElysia = h.isElysia || false;
             let assetName = isElysia ? 'Attack_meteorites_elysia' : 'Attack_meteorites_dragon';
@@ -271,8 +270,8 @@ window.renderGameView = function() {
         });
     }
 
-    if (typeof necroSummons !== 'undefined') {
-        necroSummons.forEach(s => {
+    if (typeof window.necroSummons !== 'undefined') {
+        window.necroSummons.forEach(s => {
             ctx.save(); 
             ctx.translate(s.x + s.size/2, s.y + s.size/2);
             
@@ -298,8 +297,8 @@ window.renderGameView = function() {
         });
     }
 
-    if (typeof currentEnemies !== 'undefined') {
-        currentEnemies.forEach(enemy => {
+    if (typeof window.currentEnemies !== 'undefined') {
+        window.currentEnemies.forEach(enemy => {
             ctx.save(); 
             ctx.translate(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
             
@@ -419,28 +418,10 @@ window.renderGameView = function() {
                 ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
             } 
         });
-
-        let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
-        if (boss) {
-            let bossName = "BOSS";
-            if (boss.type === 'troll') bossName = "TROLL CORROMPU";
-            else if (boss.type === 'mage') bossName = "MAGE EXILÉ";
-            else if (boss.type === 'dragon') bossName = "DRAGON MAUDIT";
-            else if (boss.type === 'deathgod') bossName = "DEATH GOD";
-            else if (boss.type === 'elysia') bossName = "ELYSIA";
-            
-            let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
-            let barWidth = 600; 
-            let bx = canvas.width/2 - barWidth/2;
-            
-            ctx.fillStyle = '#111'; ctx.fillRect(bx, 30, barWidth, 24); 
-            ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
-            ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
-        }
     }
 
-    if (typeof projectiles !== 'undefined') {
-        projectiles.forEach(p => { 
+    if (typeof window.projectiles !== 'undefined') {
+        window.projectiles.forEach(p => { 
             ctx.save(); 
             ctx.translate(p.x, p.y); 
             
@@ -471,8 +452,8 @@ window.renderGameView = function() {
         });
     }
     
-    if (typeof enemyProjectiles !== 'undefined') {
-        enemyProjectiles.forEach(p => { 
+    if (typeof window.enemyProjectiles !== 'undefined') {
+        window.enemyProjectiles.forEach(p => { 
             ctx.save(); 
             ctx.translate(p.x, p.y); 
             let pAngle = Math.atan2(p.vy, p.vx); 
@@ -553,10 +534,10 @@ window.renderGameView = function() {
         }
         
         let actionP = 'view';
-        if ((typeof isAttacking !== 'undefined' && isAttacking) || (typeof attackCooldown !== 'undefined' && attackCooldown > 0)) {
+        if ((typeof window.isAttacking !== 'undefined' && window.isAttacking) || (typeof window.attackCooldown !== 'undefined' && window.attackCooldown > 0)) {
             actionP = 'attack';
             let midTime = prefixP === 'Knight' ? 20 : 15;
-            if (typeof attackCooldown !== 'undefined' && attackCooldown > midTime) actionP = 'attack1';
+            if (typeof window.attackCooldown !== 'undefined' && window.attackCooldown > midTime) actionP = 'attack1';
             else actionP = 'attack2';
         }
         
@@ -597,11 +578,11 @@ window.renderGameView = function() {
             
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
-            if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
+            if (prefixP === 'Knight' && typeof window.attackCooldown !== 'undefined' && window.attackCooldown > 0) {
                 let swordImg = window.getAsset('Attack_sword_knight');
                 if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
                     ctx.save();
-                    let progress = (40 - attackCooldown) / 40;
+                    let progress = (40 - window.attackCooldown) / 40;
                     let swingAngle = -Math.PI / 4 + progress * (Math.PI / 2);
                     
                     ctx.translate(25, 0); 
@@ -619,8 +600,8 @@ window.renderGameView = function() {
                 ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
                 
                 ctx.save();
-                if (typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
-                    let progress = (40 - attackCooldown) / 40;
+                if (typeof window.attackCooldown !== 'undefined' && window.attackCooldown > 0) {
+                    let progress = (40 - window.attackCooldown) / 40;
                     let swipeAngle = -Math.PI / 2 + progress * (Math.PI * 1.3);
                     ctx.rotate(swipeAngle);
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
@@ -652,33 +633,60 @@ window.renderGameView = function() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
-    if (typeof particles !== 'undefined') {
-        particles.forEach(p => { 
-            ctx.globalAlpha = Math.max(0, p.life); 
-            if (p.glow) { 
-                ctx.save(); 
-                ctx.shadowColor = p.color; 
-                ctx.shadowBlur = 10; 
-            } 
-            ctx.fillStyle = p.color; 
-            ctx.beginPath(); 
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); 
-            ctx.fill(); 
-            if (p.glow) ctx.restore(); 
+    // =========================================================================
+    // NOUVEAU SYSTÈME DE LUMIÈRES DYNAMIQUES (Joueur + Portes)
+    // =========================================================================
+    if (!window.lightCanvas) {
+        window.lightCanvas = document.createElement('canvas');
+    }
+    if (window.lightCanvas.width !== canvas.width || window.lightCanvas.height !== canvas.height) {
+        window.lightCanvas.width = canvas.width;
+        window.lightCanvas.height = canvas.height;
+        window.lightCtx = window.lightCanvas.getContext('2d');
+    }
+
+    let lctx = window.lightCtx;
+    lctx.globalCompositeOperation = 'source-over';
+    lctx.fillStyle = 'rgba(0, 0, 0, 0.94)'; 
+    lctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    lctx.globalCompositeOperation = 'destination-out';
+
+    // 1. Lumière du joueur
+    let px = player.x + player.size/2;
+    let py = player.y + player.size/2;
+    let pGrad = lctx.createRadialGradient(px, py, 40, px, py, 350);
+    pGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    pGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    lctx.fillStyle = pGrad;
+    lctx.beginPath();
+    lctx.arc(px, py, 350, 0, Math.PI*2);
+    lctx.fill();
+
+    // 2. Lumières des portes (Torches)
+    if (typeof window.currentDoors !== 'undefined') {
+        window.currentDoors.forEach(door => {
+            let dx = door.x + door.width/2;
+            let dy = door.y + door.height/2;
+            
+            if (door.face === 'north') dy = door.y;
+            if (door.face === 'south') dy = door.y + door.height;
+            if (door.face === 'west') dx = door.x;
+            if (door.face === 'east') dx = door.x + door.width;
+
+            let dGrad = lctx.createRadialGradient(dx, dy, 10, dx, dy, 200);
+            dGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            dGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            lctx.fillStyle = dGrad;
+            lctx.beginPath();
+            lctx.arc(dx, dy, 200, 0, Math.PI*2);
+            lctx.fill();
         });
     }
-    ctx.globalAlpha = 1.0; 
-    
+
     ctx.save();
-    let gradient = ctx.createRadialGradient(
-        player.x + player.size/2, player.y + player.size/2, 100, 
-        player.x + player.size/2, player.y + player.size/2, canvas.width * 0.7 
-    );
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');        
-    gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.4)');   
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');     
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height); 
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(window.lightCanvas, 0, 0);
     ctx.restore();
     
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 999) {
@@ -693,5 +701,4 @@ window.renderGameView = function() {
         }
         ctx.textAlign = 'left';
     }
-    ctx.restore(); 
 };
