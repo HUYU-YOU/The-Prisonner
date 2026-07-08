@@ -85,7 +85,7 @@ window.renderGameView = function() {
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                // Invisible - La boîte de collision empêche de traverser, mais on ne la dessine plus !
+                // Invisible - on ne dessine rien !
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -208,7 +208,7 @@ window.renderGameView = function() {
         currentItems.forEach(item => {
             if (!item.collected) {
                 let floatY = Math.sin(Date.now() / 200) * 3; 
-                ctx.save(); ctx.translate(item.x, item.y + floatY); 
+                ctx.save(); 
                 
                 let scaleX = 1; let assetName = null;
                 if (item.type === 'key') assetName = 'gold_key';
@@ -220,25 +220,31 @@ window.renderGameView = function() {
                 else if (item.type === 'potion_red') assetName = 'potion4';
                 else if (item.type === 'coin') { assetName = 'gold_coin'; scaleX = Math.abs(Math.cos(Date.now() / 200)); }
                 
-                ctx.scale(scaleX, 1); 
+                // CORRECTION : Les Clés ont une pulsation dorée et flottent
+                if (assetName && assetName.includes('key')) {
+                    ctx.shadowColor = 'rgba(255, 215, 0, 1)'; 
+                    ctx.shadowBlur = 25 + Math.abs(Math.sin(Date.now() / 150)) * 20; 
+                    floatY += Math.sin(Date.now() / 150) * 5; 
+                } else {
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
+                    ctx.shadowBlur = 10; 
+                }
                 
+                ctx.translate(item.x, item.y + floatY);
+                ctx.scale(scaleX, 1); 
+
                 if (item.type === 'scroll') {
                     ctx.fillStyle = '#f5f6fa'; ctx.fillRect(-10, -15, 20, 30); 
                     ctx.fillStyle = '#c0392b'; ctx.fillRect(-10, -5, 20, 10);  
-                }
-                else if (assetName && assetName.includes('key')) {
-                    ctx.shadowColor = 'rgba(255, 255, 100, 0.9)'; ctx.shadowBlur = 20; 
-                } else {
-                    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; 
-                }
-
-                if (item.type !== 'scroll') {
+                } else if (item.type !== 'scroll') {
                     let itemImg = window.getAsset(assetName);
                     if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
                         let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight;
                         let displaySize = item.size * 2.5; 
                         if (assetName === 'gold_coin') displaySize = item.size * 3.5; 
-                        else if (assetName && assetName.includes('key')) displaySize = item.size * 1.25; 
+                        
+                        // CORRECTION : Les clés sont deux fois plus grosses !
+                        else if (assetName && assetName.includes('key')) displaySize = item.size * 2.2; 
                         
                         ctx.drawImage(itemImg, -displaySize/2, -(displaySize / imgRatio)/2, displaySize, displaySize / imgRatio);
                     } else {
@@ -434,7 +440,19 @@ window.renderGameView = function() {
             
             ctx.fillStyle = '#111'; ctx.fillRect(bx, 30, barWidth, 24); 
             ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
-            ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.fillText(bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : "")), canvas.width/2, 22); ctx.textAlign = 'left';
+            
+            // CORRECTION : NOM DU BOSS BEAUCOUP PLUS VISIBLE AVEC CONTOUR NOIR !
+            ctx.font = 'bold 28px Arial'; 
+            ctx.textAlign = 'center'; 
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#000'; // Contour noir
+            
+            let text = bossName + (boss.invulnerable ? " (INTRAITABLE)" : (isPhase2 ? " (ENRAGÉ)" : ""));
+            ctx.strokeText(text, canvas.width/2, 22); // Dessine le contour
+            
+            ctx.fillStyle = isPhase2 ? '#8e44ad' : '#f1c40f'; 
+            ctx.fillText(text, canvas.width/2, 22); // Dessine le texte jaune/violet
+            ctx.textAlign = 'left';
         }
     }
 
@@ -662,19 +680,27 @@ window.renderGameView = function() {
 
     let lctx = window.lightCtx;
     lctx.globalCompositeOperation = 'source-over';
-    lctx.fillStyle = 'rgba(0, 0, 0, 0.94)'; 
+    
+    // CORRECTION : Le Mage voit tout !
+    if (player.heroClass === 'Mage') {
+        lctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
+    } else {
+        lctx.fillStyle = 'rgba(0, 0, 0, 0.94)'; 
+    }
     lctx.fillRect(0, 0, canvas.width, canvas.height);
 
     lctx.globalCompositeOperation = 'destination-out';
 
     let px = player.x + player.size/2;
     let py = player.y + player.size/2;
-    let pGrad = lctx.createRadialGradient(px, py, 40, px, py, 350);
+    
+    // CORRECTION : Halo du joueur plus grand (450 au lieu de 350)
+    let pGrad = lctx.createRadialGradient(px, py, 60, px, py, 450);
     pGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
     pGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     lctx.fillStyle = pGrad;
     lctx.beginPath();
-    lctx.arc(px, py, 350, 0, Math.PI*2);
+    lctx.arc(px, py, 450, 0, Math.PI*2);
     lctx.fill();
 
     if (typeof currentDoors !== 'undefined') {
