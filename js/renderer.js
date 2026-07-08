@@ -85,7 +85,6 @@ window.renderGameView = function() {
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                // Invisible - La boîte de collision empêche de traverser, mais on ne la dessine plus !
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -624,9 +623,21 @@ window.renderGameView = function() {
                     ctx.globalAlpha = 1 - progress; 
                     ctx.shadowColor = '#ecf0f1'; 
                     ctx.shadowBlur = 15; 
-                    ctx.drawImage(swordImg, -45, -45, 90, 90);
+                    ctx.drawImage(swordImg, -60, -60, 120, 120);
                     ctx.restore();
                 }
+
+                // NOUVEAU : GIGANTESQUE ARC VISUEL POUR MONTRER LA PORTÉE DU CHEVALIER !
+                ctx.save();
+                let progress = (40 - attackCooldown) / 40; 
+                ctx.beginPath();
+                ctx.arc(0, 0, 110, -Math.PI/1.2, Math.PI/1.2); // Forme de fauchage
+                ctx.lineWidth = 20 * (1 - progress);
+                ctx.strokeStyle = 'rgba(236, 240, 241, ' + (1 - progress) + ')';
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.restore();
             }
         } else {
             if (prefixP === 'Knight') {
@@ -679,10 +690,11 @@ window.renderGameView = function() {
     let lctx = window.lightCtx;
     lctx.globalCompositeOperation = 'source-over';
     
+    // CORRECTION : Lumière globale beaucoup plus claire ! 
     if (player.heroClass === 'Mage') {
-        lctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
+        lctx.fillStyle = 'rgba(0, 0, 0, 0.10)'; // Le Mage voit pratiquement tout
     } else {
-        lctx.fillStyle = 'rgba(0, 0, 0, 0.94)'; 
+        lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; // On y voit bien mieux pour les autres !
     }
     lctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -691,12 +703,13 @@ window.renderGameView = function() {
     let px = player.x + player.size/2;
     let py = player.y + player.size/2;
     
-    let pGrad = lctx.createRadialGradient(px, py, 60, px, py, 450);
+    // CORRECTION : Halo du joueur encore plus grand (500)
+    let pGrad = lctx.createRadialGradient(px, py, 80, px, py, 500);
     pGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
     pGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     lctx.fillStyle = pGrad;
     lctx.beginPath();
-    lctx.arc(px, py, 450, 0, Math.PI*2);
+    lctx.arc(px, py, 500, 0, Math.PI*2);
     lctx.fill();
 
     if (typeof currentDoors !== 'undefined') {
@@ -709,26 +722,25 @@ window.renderGameView = function() {
             if (door.face === 'west') dx = door.x;
             if (door.face === 'east') dx = door.x + door.width;
 
-            let dGrad = lctx.createRadialGradient(dx, dy, 10, dx, dy, 200);
-            dGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            let dGrad = lctx.createRadialGradient(dx, dy, 20, dx, dy, 300);
+            dGrad.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
             dGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
             lctx.fillStyle = dGrad;
             lctx.beginPath();
-            lctx.arc(dx, dy, 200, 0, Math.PI*2);
+            lctx.arc(dx, dy, 300, 0, Math.PI*2);
             lctx.fill();
         });
     }
 
-    // CORRECTION : Les Clés au sol brillent avec la même lumière que les portes !
     if (typeof currentItems !== 'undefined') {
         currentItems.forEach(item => {
             if (!item.collected && (item.type === 'key' || item.type === 'key_skull' || item.type === 'key_orb')) {
-                let dGrad = lctx.createRadialGradient(item.x, item.y, 5, item.x, item.y, 150);
-                dGrad.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
+                let dGrad = lctx.createRadialGradient(item.x, item.y, 10, item.x, item.y, 200);
+                dGrad.addColorStop(0, 'rgba(255, 215, 0, 0.9)');
                 dGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
                 lctx.fillStyle = dGrad;
                 lctx.beginPath();
-                lctx.arc(item.x, item.y, 150, 0, Math.PI*2);
+                lctx.arc(item.x, item.y, 200, 0, Math.PI*2);
                 lctx.fill();
             }
         });
