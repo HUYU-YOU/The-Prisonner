@@ -32,7 +32,7 @@ window.renderGameView = function() {
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); 
     
-    if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
+    if (shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; let dy = (Math.random() - 0.5) * shakeIntensity * 2;
         ctx.translate(dx, dy); shakeTimer--; shakeIntensity *= 0.9; 
     }
@@ -49,6 +49,11 @@ window.renderGameView = function() {
     if (imageSol && imageSol.complete && imageSol.naturalWidth > 0) { 
         if (isNewFloor) { ctx.drawImage(imageSol, 0, 0, canvas.width, canvas.height); } 
         else { ctx.fillStyle = ctx.createPattern(imageSol, 'repeat'); ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    } else {
+        ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 1;
+        for(let i = 0; i < canvas.width; i += 60) {
+            for(let j = 0; j < canvas.height; j += 60) { ctx.strokeRect(i, j, 60, 60); }
+        }
     }
 
     if (typeof currentObstacles !== 'undefined') {
@@ -100,42 +105,32 @@ window.renderGameView = function() {
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
-            if (isOpen) { stateStr = '_open'; } 
-            else if (door.requiresKey && door.locked) { stateStr = '_key'; }
-            if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
-            
-            if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
-            else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
-            else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; 
-            else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
-            
-            if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } 
-            else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
+            if (isOpen) { stateStr = '_open'; } else if (door.requiresKey && door.locked) { stateStr = '_key'; }
+            if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
+            if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
         });
     }
 
     if (typeof currentItems !== 'undefined') {
         currentItems.forEach(item => {
             if (!item.collected) {
-                let floatY = Math.sin(Date.now() / 200) * 3; 
-                ctx.save(); 
+                let floatY = Math.sin(Date.now() / 200) * 3; ctx.save(); 
                 let scaleX = 1; let assetName = null;
-                if (item.type === 'key') assetName = 'gold_key';
-                else if (item.type === 'key_skull') assetName = 'skeleton_key';
-                else if (item.type === 'key_orb') assetName = 'portal_key';
-                else if (item.type === 'potion_green') assetName = 'potion1';
-                else if (item.type === 'potion_yellow') assetName = 'potion2';
-                else if (item.type === 'coin') { assetName = 'gold_coin'; scaleX = Math.abs(Math.cos(Date.now() / 200)); }
+                if (item.type === 'key') assetName = 'gold_key'; 
+                else if (item.type === 'key_skull') assetName = 'skeleton_key'; 
+                else if (item.type === 'key_orb') assetName = 'portal_key'; 
+                else if (item.type === 'potion_green') assetName = 'potion1'; 
+                else if (item.type === 'potion_yellow') assetName = 'potion2'; 
+                else if (item.type === 'coin') { assetName = 'gold_coin'; scaleX = 1; /* FIX : fini l'effet chelou ! */ }
                 
-                ctx.scale(scaleX, 1);
                 if (assetName && assetName.includes('key')) { ctx.shadowColor = 'rgba(255, 215, 0, 1)'; ctx.shadowBlur = 25 + Math.abs(Math.sin(Date.now() / 150)) * 20; floatY += Math.sin(Date.now() / 150) * 5; }
                 ctx.translate(item.x, item.y + floatY);
-                if (item.type !== 'scroll') {
-                    let itemImg = window.getAsset(assetName);
-                    if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
-                        let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight; let displaySize = item.size * 2.5; if (assetName === 'gold_coin') displaySize = item.size * 3.5; else if (assetName && assetName.includes('key')) displaySize = item.size * 2.2; 
-                        ctx.drawImage(itemImg, -displaySize/2, -(displaySize / imgRatio)/2, displaySize, displaySize / imgRatio);
-                    }
+                ctx.scale(scaleX, 1);
+                
+                let itemImg = window.getAsset(assetName);
+                if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
+                    let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight; let displaySize = item.size * 2.5; if (assetName === 'gold_coin') displaySize = item.size * 3.5; else if (assetName && assetName.includes('key')) displaySize = item.size * 2.2; 
+                    ctx.drawImage(itemImg, -displaySize/2, -(displaySize / imgRatio)/2, displaySize, displaySize / imgRatio);
                 }
                 ctx.restore();
             }
@@ -181,12 +176,20 @@ window.renderGameView = function() {
         }
     }
 
+    // --- ENTIÈREMENT RESTAURÉ : LE DESSIN DES PROJÉCTILES DU JOUEUR (FLÈCHES DE L'ARCHER REVENUES !) ---
     if (typeof projectiles !== 'undefined') {
         projectiles.forEach(p => { 
             ctx.save(); ctx.translate(p.x, p.y); 
-            let pImgName = 'Attack_arrow_elf'; if (p.type === 'fire_mage') pImgName = 'Attack_fire_mage'; else if (p.type === 'fire_necromancien' || p.type === 'fire_fusion') pImgName = 'Attack_fire_necromancien';
+            let pImgName = 'Attack_arrow_elf'; 
+            if (p.type === 'fire_mage') pImgName = 'Attack_fire_mage'; 
+            else if (p.type === 'fire_necromancien' || p.type === 'fire_fusion') pImgName = 'Attack_fire_necromancien';
             let pImg = window.getAsset(pImgName);
-            if (pImg && pImg.complete && pImg.naturalWidth > 0) { ctx.rotate(p.angle + Math.PI / 2); ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; ctx.shadowBlur = 30; let drawSize = p.size * 15.0; if (p.type === 'fire_mage') { let fbSize = p.size * 5.0; ctx.drawImage(pImg, -fbSize/2, -fbSize/2, fbSize, fbSize); } else { if (p.type === 'fire_necromancien') { drawSize = drawSize / 2; } ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize); } } ctx.restore();
+            if (pImg && pImg.complete && pImg.naturalWidth > 0) { 
+                ctx.rotate(p.angle + Math.PI / 2); ctx.shadowColor = p.type === 'fire_mage' ? '#e67e22' : '#8e44ad'; ctx.shadowBlur = 30; 
+                let drawSize = p.size * 15.0; 
+                if (p.type === 'fire_mage') { let fbSize = p.size * 5.0; ctx.drawImage(pImg, -fbSize/2, -fbSize/2, fbSize, fbSize); } 
+                else { if (p.type === 'fire_necromancien') { drawSize = drawSize / 2; } ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize); } 
+            } else { ctx.rotate(p.angle); ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-8, -1, 16, 2); } ctx.restore();
         });
     }
     
@@ -215,10 +218,14 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) { let displaySize = player.size * 3.75; if (player.heroClass === 'Elf') displaySize = player.size * 1.875; ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize); if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) { let swordImg = window.getAsset('Attack_sword_knight'); if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) { ctx.save(); let progress = (40 - attackCooldown) / 40; ctx.translate(25, 0); ctx.rotate(-Math.PI / 4 + progress * (Math.PI / 2)); ctx.globalAlpha = 1 - progress; ctx.shadowColor = '#ecf0f1'; ctx.shadowBlur = 15; ctx.drawImage(swordImg, -60, -60, 120, 120); ctx.restore(); } ctx.save(); let progress = (40 - attackCooldown) / 40; ctx.beginPath(); ctx.arc(0, 0, 110, -Math.PI/1.2, Math.PI/1.2); ctx.lineWidth = 20 * (1 - progress); ctx.strokeStyle = `rgba(236, 240, 241, ${1 - progress})`; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; ctx.stroke(); ctx.restore(); } } ctx.restore(); ctx.globalAlpha = 1.0; 
     }
 
-    // HALO ET SYSTÈME D'OMBRE RETROUVÉS (Visibilité à 70% pour y voir clair)
+    if (typeof playerStats !== 'undefined' && playerStats.inventory && playerStats.inventory.coins !== undefined) {
+        let coinImg = window.getAsset('gold_coin'); if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) { ctx.drawImage(coinImg, wallMargin + 15, 20, 30, 30); }
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left'; ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
+    }
+    
     if (!window.lightCanvas) window.lightCanvas = document.createElement('canvas');
     if (window.lightCanvas.width !== canvas.width || window.lightCanvas.height !== canvas.height) { window.lightCanvas.width = canvas.width; window.lightCanvas.height = canvas.height; window.lightCtx = window.lightCanvas.getContext('2d'); }
-    let lctx = window.lightCtx; lctx.globalCompositeOperation = 'source-over'; lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; lctx.fillRect(0, 0, canvas.width, canvas.height);
+    let lctx = window.lightCtx; lctx.globalCompositeOperation = 'source-over'; lctx.fillStyle = player.heroClass === 'Mage' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.70)'; lctx.fillRect(0, 0, canvas.width, canvas.height);
     lctx.globalCompositeOperation = 'destination-out';
     
     let px = player.x + player.size/2; let py = player.y + player.size/2;
