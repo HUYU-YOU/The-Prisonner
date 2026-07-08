@@ -4,6 +4,24 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
+// NOUVEAU : LE CLIC DROIT POUR LE DASH / RUSH DU CHEVALIER
+document.addEventListener('mousedown', event => {
+    if (event.button === 2 && playerStats.health > 0) {
+        event.preventDefault();
+        if (player.dashCooldown <= 0) {
+            // Le rush du Chevalier dure le double de temps (30 frames)
+            player.dashTimer = (player.heroClass === 'Knight') ? 30 : 15; 
+            let dx = mouse.x - (player.x + player.size/2);
+            let dy = mouse.y - (player.y + player.size/2);
+            let dist = Math.hypot(dx, dy);
+            let speed = (player.heroClass === 'Knight') ? 12 : 15; 
+            player.dashVx = (dx/dist) * speed;
+            player.dashVy = (dy/dist) * speed;
+            player.dashCooldown = (player.heroClass === 'Knight') ? 60 : 90;
+        }
+    }
+});
+
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
