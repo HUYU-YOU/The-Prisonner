@@ -166,7 +166,6 @@ window.update = function() {
                     alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
                     player.y += 20; break;
                 } else if (obs.type === 'hole') {
-                    // CORRECTION DASH : On peut passer par-dessus le trou !
                     if (player.dashTimer <= 0) { player.x = oldPx; player.dashTimer = 0; break; }
                 } else {
                     player.x = oldPx; player.dashTimer = 0; break;
@@ -190,7 +189,6 @@ window.update = function() {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
                 if (obs.type === 'hole') {
-                    // CORRECTION DASH : Axe Y
                     if (player.dashTimer <= 0) { player.y = oldPy; player.dashTimer = 0; break; }
                 } else if (obs.type !== 'water') {
                     player.y = oldPy; player.dashTimer = 0; break;
