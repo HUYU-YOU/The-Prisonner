@@ -20,7 +20,6 @@ window.handlePlayerAttack = function() {
         }
     } 
     else if (player.heroClass === 'Mage') {
-        // La boule de feu est massive (size 15) et très rapide (vitesse 18) !
         projectiles.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, vx: Math.cos(angle) * 18, vy: Math.sin(angle) * 18, size: 15, hitTargets: [], angle: angle, type: 'fire_mage' }); 
         attackCooldown = 28;
     } 
@@ -31,16 +30,26 @@ window.handlePlayerAttack = function() {
     else if (player.heroClass === 'Knight') {
         isAttacking = true; 
         attackCooldown = 40;
-        let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 60 - 60, y: player.y + player.size / 2 + Math.sin(angle) * 60 - 60, size: 120 };
+        
+        // NOUVEAU : LA SUPER PORTÉE DU CHEVALIER (Size 180, et avancée de 80 pixels)
+        let hitBox = { 
+            x: player.x + player.size / 2 + Math.cos(angle) * 80 - 90, 
+            y: player.y + player.size / 2 + Math.sin(angle) * 80 - 90, 
+            size: 180 
+        };
         
         currentEnemies.forEach(enemy => { 
-            if (window.checkCollision(hitBox, enemy)) {
+            if (typeof window.checkCollision === 'function' && window.checkCollision(hitBox, enemy)) {
                 if (!enemy.invulnerable) {
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
                         enemy.blockAnimTimer = 45; 
                     } else { 
                         let mult = playerStats.attackMultiplier || 1.0;
                         enemy.health -= 50 * mult; 
+                        
+                        // NOUVEAU : LE COUP REPOUSSE L'ENNEMI !
+                        enemy.x += Math.cos(angle) * 30;
+                        enemy.y += Math.sin(angle) * 30;
                         
                         if (enemy.type !== 'skeleton') {
                             let hitNum = Math.floor(Math.random() * 3) + 1;
@@ -57,7 +66,7 @@ window.handlePlayerAttack = function() {
         
         for (let i = 0; i < currentCrates.length; i++) {
             let obj = currentCrates[i]; 
-            if (!obj.isBroken && window.checkCollision(hitBox, obj)) { obj.health -= 50; }
+            if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(hitBox, obj)) { obj.health -= 50; }
         }
     }
 };
@@ -75,7 +84,7 @@ window.updateProjectiles = function() {
         p.x += p.vx; 
         p.y += p.vy;
         
-        if (currentRoomId === 8 && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
+        if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision({x: p.x - p.size, y: p.y - p.size, width: p.size*2, height: p.size*2}, centerStairs)) { 
             projectiles.splice(i, 1); continue; 
         }
         if (p.x < bLeft || p.y < bTop || p.x > bRight || p.y > bBot) { 
@@ -87,14 +96,14 @@ window.updateProjectiles = function() {
 
         for (let c = 0; c < currentCrates.length; c++) {
             let obj = currentCrates[c];
-            if (!obj.isBroken && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; }
+            if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(arrowHitbox, obj)) { obj.health -= 50; projectileHit = true; break; }
         }
 
         for (let j = 0; j < currentEnemies.length; j++) {
             let enemy = currentEnemies[j];
             if (p.hitTargets && p.hitTargets.includes(enemy)) continue;
             
-            if (!projectileHit && window.checkCollision(arrowHitbox, enemy)) {
+            if (!projectileHit && typeof window.checkCollision === 'function' && window.checkCollision(arrowHitbox, enemy)) {
                 if (!enemy.invulnerable) {
                     let isBlocked = false;
                     if (enemy.type === 'goblin' && Math.random() < 0.15) { 
@@ -122,7 +131,7 @@ window.updateProjectiles = function() {
                     bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
-                let isPiercingElf = (isUltimateActive && player.heroClass === 'Elf');
+                let isPiercingElf = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf');
                 let isPiercing = isPiercingElf || player.heroClass === 'Mage' || p.type === 'fire_fusion';
                 
                 if (isPiercing) { 
@@ -135,7 +144,7 @@ window.updateProjectiles = function() {
         if (projectileHit) projectiles.splice(i, 1); 
     }
 
-    let isElfInvuln = (isUltimateActive && player.heroClass === 'Elf' && !elfStealthBroken);
+    let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
     let fusionAggro = null;
     if (typeof necroSummons !== 'undefined') { fusionAggro = necroSummons.find(s => s.type === 'fusion'); }
 
@@ -155,17 +164,35 @@ window.updateProjectiles = function() {
         if (ep.x < bLeft || ep.y < bTop || ep.x > bRight || ep.y > bBot) { 
             enemyProjectiles.splice(i, 1); continue; 
         }
-        if (currentRoomId === 8 && window.checkCollision(epHitbox, centerStairs)) { 
+        if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(epHitbox, centerStairs)) { 
             enemyProjectiles.splice(i, 1); continue; 
         }
 
-        if (fusionAggro && window.checkCollision(fusionAggro, epHitbox)) {
+        if (fusionAggro && typeof window.checkCollision === 'function' && window.checkCollision(fusionAggro, epHitbox)) {
             fusionAggro.health -= ep.damage || 15;
             enemyProjectiles.splice(i, 1);
             continue;
         }
 
-        if (!fusionAggro && !isElfInvuln && playerInvulnerableTimer <= 0 && window.checkCollision(player, epHitbox)) {
+        // NOUVEAU : LA PARADE DU CHEVALIER (Pendant son Dash)
+        let parried = false;
+        if (player.heroClass === 'Knight' && player.dashTimer > 0) {
+            let angleToProj = Math.atan2(ep.y - (player.y + player.size/2), ep.x - (player.x + player.size/2));
+            let angleDiff = Math.abs(angleToProj - player.faceAngle) % (Math.PI * 2);
+            if (angleDiff > Math.PI) angleDiff = (Math.PI * 2) - angleDiff;
+            // Bloque tous les tirs dans un angle de 240 degrés devant lui
+            if (angleDiff < Math.PI / 1.5) parried = true; 
+        }
+
+        if (!fusionAggro && !isElfInvuln && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0) && typeof window.checkCollision === 'function' && window.checkCollision(player, epHitbox)) {
+            
+            if (parried) {
+                // Le projectile rebondit et est détruit sans faire de dégâts !
+                enemyProjectiles.splice(i, 1);
+                if (typeof window.spawnParticles === 'function') window.spawnParticles(ep.x, ep.y, '#ecf0f1', 8);
+                continue;
+            }
+
             let epDmg = ep.damage || 15;
             if (ep.type === 'rock_golem' || ep.type === 'rock_gargouille') epDmg = 25;
             
@@ -197,7 +224,7 @@ window.updateProjectiles = function() {
                     if (fusion) target = fusion;
                 }
 
-                if (!isElfInvuln && playerInvulnerableTimer <= 0) {
+                if (!isElfInvuln && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0)) {
                     let distH = Math.hypot((target.x + target.size/2) - h.x, (target.y + target.size/2) - h.y);
                     if (distH < h.radius) {
                         if (target === player) {
@@ -220,7 +247,7 @@ window.updateProjectiles = function() {
 window.updateItemsAndCrates = function() {
     for (let i = currentItems.length - 1; i >= 0; i--) {
         let item = currentItems[i];
-        if (window.checkCollision(player, item)) {
+        if (typeof window.checkCollision === 'function' && window.checkCollision(player, item)) {
             worldState.collectedItems[item.id] = true; 
             
             if (item.type === 'key') playerStats.inventory.keys.gold++; 
