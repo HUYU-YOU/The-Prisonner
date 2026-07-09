@@ -4,27 +4,6 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-// AJOUT : Clic Droit pour le Dash / Rush du Chevalier
-document.addEventListener('mousedown', event => {
-    if (event.button === 2 && playerStats.health > 0 && gameState === "PLAYING") {
-        event.preventDefault();
-        if (player.dashCooldown <= 0) {
-            player.dashTimer = (player.heroClass === 'Knight') ? 30 : 15; 
-            let dx = mouse.x - (player.x + player.size/2);
-            let dy = mouse.y - (player.y + player.size/2);
-            let dist = Math.hypot(dx, dy);
-            let speed = (player.heroClass === 'Knight') ? 12 : 15; 
-            if (dist > 0) {
-                player.dashVx = (dx/dist) * speed;
-                player.dashVy = (dy/dist) * speed;
-            } else {
-                player.dashVx = speed; player.dashVy = 0;
-            }
-            player.dashCooldown = (player.heroClass === 'Knight') ? 60 : 90;
-        }
-    }
-});
-
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
@@ -187,7 +166,6 @@ window.update = function() {
                     alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
                     player.y += 20; break;
                 } else if (obs.type === 'hole') {
-                    // Ignorer le trou si on Dash
                     if (player.dashTimer <= 0) { player.x = oldPx; player.dashTimer = 0; break; }
                 } else {
                     player.x = oldPx; player.dashTimer = 0; break;
@@ -267,9 +245,9 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
+    // COLLISION ESCALIER SALLE 8 (Fin Niveau 1)
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
-        
         let isColliding = player.x < triggerStairs.x + triggerStairs.width &&
                           player.x + player.size > triggerStairs.x &&
                           player.y < triggerStairs.y + triggerStairs.height &&
@@ -277,16 +255,31 @@ window.update = function() {
                           
         if (isColliding && playerStats.inventory.keys.skull > 0) {
             playerStats.inventory.keys.skull--; 
-            
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
-            
             player.x = canvas.width / 2 - player.size / 2;
             player.y = canvas.height - wallMargin - 150; 
             player.dashTimer = 0; 
-            
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
-            
+            return requestAnimationFrame(window.update);
+        }
+    }
+
+    // COLLISION ESCALIER SALLE 101 (Retour Niveau 1)
+    if (currentRoomId === 101) {
+        let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
+        let isColliding = player.x < triggerStairs.x + triggerStairs.width &&
+                          player.x + player.size > triggerStairs.x &&
+                          player.y < triggerStairs.y + triggerStairs.height &&
+                          player.y + player.size > triggerStairs.y;
+                          
+        if (isColliding) {
+            if (typeof window.saveRoomState === 'function') window.saveRoomState();
+            if (typeof window.loadRoom === 'function') window.loadRoom(8, 'north');
+            player.x = canvas.width / 2 - player.size / 2;
+            player.y = canvas.height / 2 - player.size / 2 + 80; // Spawn juste sous l'escalier
+            player.dashTimer = 0; 
+            if (typeof window.updateHUD === 'function') window.updateHUD(); 
             return requestAnimationFrame(window.update);
         }
     }
