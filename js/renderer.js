@@ -1,3 +1,46 @@
+// ============================================================================
+// js/renderer.js - MOTEUR DE RENDU VISUEL ET EFFETS
+// ============================================================================
+
+window.triggerShake = function(intensity, duration) { 
+    shakeIntensity = intensity; 
+    shakeTimer = duration; 
+};
+
+window.spawnParticles = function(x, y, color, count, isGlow = false) {
+    if(typeof particles === 'undefined') particles = [];
+    for (let i = 0; i < count; i++) {
+        let angle = Math.random() * Math.PI * 2; 
+        let speed = Math.random() * 5 + 2;
+        particles.push({ 
+            x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
+            life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
+        });
+    }
+};
+
+window.getDirectionName = function(angle) {
+    let deg = angle * (180 / Math.PI);
+    if (deg < 0) deg += 360;
+
+    if (deg >= 337.5 || deg < 22.5) return 'east';
+    if (deg >= 22.5 && deg < 67.5) return 'southeast';
+    if (deg >= 67.5 && deg < 112.5) return 'south';
+    if (deg >= 112.5 && deg < 157.5) return 'southwest';
+    if (deg >= 157.5 && deg < 202.5) return 'west';
+    if (deg >= 202.5 && deg < 247.5) return 'northwest';
+    if (deg >= 247.5 && deg < 292.5) return 'north';
+    if (deg >= 292.5 && deg < 337.5) return 'northeast';
+    return 'south';
+};
+
+window.getAsset = function(name) {
+    if (!name) return null;
+    return assetsManager.images[name] || 
+           assetsManager.images[name.toLowerCase()] || 
+           assetsManager.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
+};
+
 window.renderGameView = function() {
     if (!ctx) return;
     
@@ -42,7 +85,7 @@ window.renderGameView = function() {
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
             if (obs.type === 'hole') {
-                // Invisible - La boîte de collision empêche de traverser, mais on ne la dessine plus !
+                // Invisible
             } else if (obs.type === 'water') {
                 ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -101,25 +144,20 @@ window.renderGameView = function() {
         ctx.strokeRect(wallMargin + shrink, wallMargin + shrink, canvas.width - (wallMargin + shrink) * 2, canvas.height - (wallMargin + shrink) * 2);
     }
 
-    // AJOUT: Dessiner l'escalier dans la salle 8 ET la salle 100
-    if (typeof currentRoomId !== 'undefined' && (currentRoomId === 8 || currentRoomId === 100)) {
-        let sImg = assetsManager.images['stairs_down']; 
-        if (currentRoomId === 100) { sImg = assetsManager.images['stairs_up'] || assetsManager.images['stairs_down']; }
-        
-        let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === 8) {
+        let sImg = assetsManager.images['stairs_down']; let sx = canvas.width/2 - 75, sy = canvas.height/2 - 75, sw = 150, sh = 150; 
         ctx.save();
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
             ctx.drawImage(sImg, sx, sy, sw, sh); 
-            if (currentRoomId === 8 && !worldState.bossDefeated) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
+            if (!worldState.bossDefeated) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
         } else {
             ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.strokeRect(sx, sy, sw, sh);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            if (currentRoomId === 8 && !worldState.bossDefeated) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
-            else { ctx.fillStyle = '#f1c40f'; ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 + 5); }
+            if (!worldState.bossDefeated) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
+            else { ctx.fillStyle = '#f1c40f'; ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5); }
             ctx.textAlign = 'left';
         }
-        if (currentRoomId === 8 && worldState.bossDefeated) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
-        if (currentRoomId === 100) { ctx.shadowColor = '#3498db'; ctx.shadowBlur = 30; ctx.strokeStyle = '#3498db'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
+        if (worldState.bossDefeated) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
         ctx.restore();
     }
 
@@ -557,9 +595,19 @@ window.renderGameView = function() {
                     ctx.globalAlpha = 1 - progress; 
                     ctx.shadowColor = '#ecf0f1'; 
                     ctx.shadowBlur = 15; 
-                    ctx.drawImage(swordImg, -45, -45, 90, 90);
+                    ctx.drawImage(swordImg, -60, -60, 120, 120);
                     ctx.restore();
                 }
+                ctx.save();
+                let progress = (40 - attackCooldown) / 40;
+                ctx.beginPath();
+                ctx.arc(0, 0, 110, -Math.PI/1.2, Math.PI/1.2);
+                ctx.lineWidth = 20 * (1 - progress);
+                ctx.strokeStyle = `rgba(236, 240, 241, ${1 - progress})`;
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.restore();
             }
         } else {
             if (prefixP === 'Knight') {
@@ -588,7 +636,7 @@ window.renderGameView = function() {
     }
     
     // =========================================================================
-    // DESSINER LA LUMIÈRE AVANT L'UI
+    // 1. DESSINER LA LUMIÈRE AVANT L'UI !
     // =========================================================================
     if (!window.lightCanvas) {
         window.lightCanvas = document.createElement('canvas');
@@ -660,9 +708,9 @@ window.renderGameView = function() {
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(window.lightCanvas, 0, 0);
     ctx.restore();
-
+    
     // =========================================================================
-    // DESSINER L'UI PAR DESSUS L'OMBRE POUR QU'ELLE SOIT 100% VISIBLE
+    // 2. DESSINER L'UI PAR DESSUS L'OMBRE POUR QU'ELLE SOIT 100% VISIBLE
     // =========================================================================
     if (typeof playerStats !== 'undefined' && playerStats.inventory && playerStats.inventory.coins !== undefined) {
         let coinImg = window.getAsset('gold_coin');
