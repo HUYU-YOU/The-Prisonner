@@ -97,7 +97,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { x: canvas.width/2 + 100, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_102_105', dest: 105, spawnX: canvas.width/2 + 100, spawnY: spawnS.y },
             { ...doorW, id: 'door_102_106', requiresKey: false, locked: false, dest: 106, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
-        currentObstacles.push({ x: canvas.width/2 - 150, y: wallMargin, width: 300, height: canvas.height - wallMargin*2, type: 'hole' });
+        // GOUFFRE AGRANDI (500px) ET CLÉ À GAUCHE
+        currentObstacles.push({ x: canvas.width/2 - 250, y: wallMargin, width: 500, height: canvas.height - wallMargin*2, type: 'hole' });
         if (!worldState.collectedItems['key_room102']) {
             currentItems.push({ id: 'key_room102', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
         }
@@ -111,10 +112,11 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         currentObstacles.push({ x: canvas.width - wallMargin - 150, y: canvas.height - wallMargin - 150, width: 150, height: 150, type: 'hole' });
     }
     else if (roomId === 104) { 
-        let dW1 = { x: -15, y: 180, width: wallMargin + 15, height: 150, face: 'west' };
-        let dW2 = { x: -15, y: canvas.height - 330, width: wallMargin + 15, height: 150, face: 'west' };
-        let dE1 = { x: canvas.width - wallMargin, y: 180, width: wallMargin + 15, height: 150, face: 'east' };
-        let dE2 = { x: canvas.width - wallMargin, y: canvas.height - 330, width: wallMargin + 15, height: 150, face: 'east' };
+        // 4 PORTES (2 GAUCHE, 2 DROITE) TOUTES FERMÉES À CLÉ
+        let dW1 = { x: -15, y: 150, width: wallMargin + 15, height: 150, face: 'west' };
+        let dW2 = { x: -15, y: canvas.height - 300, width: wallMargin + 15, height: 150, face: 'west' };
+        let dE1 = { x: canvas.width - wallMargin - 15, y: 150, width: wallMargin + 15, height: 150, face: 'east' };
+        let dE2 = { x: canvas.width - wallMargin - 15, y: canvas.height - 300, width: wallMargin + 15, height: 150, face: 'east' };
 
         currentDoors = [ 
             { ...doorN, id: 'door_104_101', requiresKey: false, locked: false, dest: 101, spawnX: spawnS.x, spawnY: spawnS.y },
@@ -136,10 +138,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorE, id: 'door_106_102', dest: 102, spawnX: spawnW.x, spawnY: spawnW.y }
         ]; 
     }
-    else if (roomId === 107) { currentDoors = [ { ...doorE, id: 'door_107_104', dest: 104, spawnX: wallMargin + 20, spawnY: 255 } ]; }
-    else if (roomId === 108) { currentDoors = [ { ...doorE, id: 'door_108_104', dest: 104, spawnX: wallMargin + 20, spawnY: canvas.height - 255 } ]; }
-    else if (roomId === 109) { currentDoors = [ { ...doorW, id: 'door_109_104', dest: 104, spawnX: canvas.width - wallMargin - 60, spawnY: 255 } ]; }
-    else if (roomId === 110) { currentDoors = [ { ...doorW, id: 'door_110_104', dest: 104, spawnX: canvas.width - wallMargin - 60, spawnY: canvas.height - 255 } ]; }
+    else if (roomId === 107) { currentDoors = [ { ...doorE, id: 'door_107_104', dest: 104, spawnX: wallMargin + 20, spawnY: 225 } ]; }
+    else if (roomId === 108) { currentDoors = [ { ...doorE, id: 'door_108_104', dest: 104, spawnX: wallMargin + 20, spawnY: canvas.height - 225 } ]; }
+    else if (roomId === 109) { currentDoors = [ { ...doorW, id: 'door_109_104', dest: 104, spawnX: canvas.width - wallMargin - 60, spawnY: 225 } ]; }
+    else if (roomId === 110) { currentDoors = [ { ...doorW, id: 'door_110_104', dest: 104, spawnX: canvas.width - wallMargin - 60, spawnY: canvas.height - 225 } ]; }
     else if (roomId === 111) { currentDoors = [ { ...doorS, id: 'door_111_103', dest: 103, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_111_112', dest: 112, spawnX: spawnS.x, spawnY: spawnS.y }, { ...doorW, id: 'door_111_114', requiresKey: true, locked: !worldState.unlockedDoors['door_111_114'], dest: 114, spawnX: spawnE.x, spawnY: spawnE.y } ]; }
     else if (roomId === 112) { currentDoors = [ { ...doorS, id: 'door_112_111', dest: 111, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_112_113', dest: 113, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
     else if (roomId === 113) { currentDoors = [ { ...doorS, id: 'door_113_112', dest: 112, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
