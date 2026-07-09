@@ -1,3 +1,16 @@
+// ============================================================================
+// js/rooms.js - LOGIQUE DES SALLES ET SAUVEGARDES
+// ============================================================================
+
+window.saveRoomState = function() {
+    if (currentRoomId === 999) return; 
+    if (!worldState.enemyStates) worldState.enemyStates = {};
+    if (typeof currentEnemies !== 'undefined') {
+        worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
+        if (currentEnemies.length === 0) { worldState.clearedRooms[currentRoomId] = true; }
+    }
+};
+
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
