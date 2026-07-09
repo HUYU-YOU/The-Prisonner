@@ -7,12 +7,12 @@ const assetsManager = {
     images: {},
     load(name, path) {
         let img = new Image();
-        img.crossOrigin = "Anonymous";
         img.src = path;
         this.images[name] = img;
         img.onload = () => console.log("Chargé : " + name);
         img.onerror = () => console.error("Erreur de chargement : " + path);
     }
+};
 };
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
