@@ -1,16 +1,3 @@
-// ============================================================================
-// js/rooms.js - LOGIQUE DES SALLES ET SAUVEGARDES
-// ============================================================================
-
-window.saveRoomState = function() {
-    if (currentRoomId === 999) return; 
-    if (!worldState.enemyStates) worldState.enemyStates = {};
-    if (typeof currentEnemies !== 'undefined') {
-        worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
-        if (currentEnemies.length === 0) { worldState.clearedRooms[currentRoomId] = true; }
-    }
-};
-
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
@@ -49,7 +36,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     const doorN_right = { x: canvas.width - wallMargin - 200, y: 0, width: 150, height: wallMargin + 15, face: 'north' };
     const spawnN_right = { x: canvas.width - wallMargin - 125, y: wallMargin + 20 };
 
-    // --- NIVEAU 1 ---
     if (roomId === 1) { 
         currentDoors = [ { ...doorN, id: 'door_1_2', requiresKey: true, locked: !worldState.unlockedDoors['door_1_2'], dest: 2, spawnX: spawnS.x, spawnY: spawnS.y } ]; 
         if (!worldState.collectedItems['key_tuto']) currentItems.push({ id: 'key_tuto', type: 'key', x: 800, y: 400, size: 20, collected: false });
@@ -83,13 +69,13 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     }
     else if (roomId === 8) { currentDoors = [ { ...doorS, id: 'door_8_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
 
-    // --- NIVEAU 2 RESTAURÉ À TON ORIGINAL ! ---
+    // --- NIVEAU 2 ---
     else if (roomId === 101) { 
         currentDoors = [ 
             { ...doorN, id: 'door_101_114', requiresKey: true, locked: !worldState.unlockedDoors['door_101_114'], dest: 114, spawnX: spawnS.x, spawnY: spawnS.y },
             { ...doorS, id: 'door_101_104', requiresKey: false, locked: false, dest: 104, spawnX: spawnN.x, spawnY: spawnN.y },
             { ...doorE, id: 'door_101_103', requiresKey: false, locked: false, dest: 103, spawnX: spawnW.x, spawnY: spawnW.y },
-            { ...doorW, id: 'door_101_102', requiresKey: false, locked: false, dest: 102, spawnX: spawnE.x, spawnY: spawnE.y } // Porte de gauche ouverte !
+            { ...doorW, id: 'door_101_102', requiresKey: false, locked: false, dest: 102, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
     }
     else if (roomId === 102) { 
@@ -98,7 +84,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { x: canvas.width/2 + 100, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_102_105', dest: 105, spawnX: canvas.width/2 + 100, spawnY: spawnS.y },
             { ...doorW, id: 'door_102_106', requiresKey: false, locked: false, dest: 106, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
-        currentObstacles.push({ x: canvas.width/2 - 20, y: wallMargin, width: 40, height: canvas.height - wallMargin*2, type: 'hole' });
+        currentObstacles.push({ x: canvas.width/2 - 150, y: wallMargin, width: 300, height: canvas.height - wallMargin*2, type: 'hole' });
+        if (!worldState.collectedItems['key_room102']) {
+            currentItems.push({ id: 'key_room102', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
+        }
     }
     else if (roomId === 103) { 
         currentDoors = [ 
@@ -109,10 +98,17 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         currentObstacles.push({ x: canvas.width - wallMargin - 150, y: canvas.height - wallMargin - 150, width: 150, height: 150, type: 'hole' });
     }
     else if (roomId === 104) { 
+        let dW1 = { x: -15, y: 180, width: wallMargin + 15, height: 150, face: 'west' };
+        let dW2 = { x: -15, y: canvas.height - 330, width: wallMargin + 15, height: 150, face: 'west' };
+        let dE1 = { x: canvas.width - wallMargin, y: 180, width: wallMargin + 15, height: 150, face: 'east' };
+        let dE2 = { x: canvas.width - wallMargin, y: canvas.height - 330, width: wallMargin + 15, height: 150, face: 'east' };
+
         currentDoors = [ 
             { ...doorN, id: 'door_104_101', requiresKey: false, locked: false, dest: 101, spawnX: spawnS.x, spawnY: spawnS.y },
-            { ...doorW, id: 'door_104_107', requiresKey: true, locked: !worldState.unlockedDoors['door_104_107'], dest: 107, spawnX: spawnE.x, spawnY: spawnE.y },
-            { ...doorE, id: 'door_104_109', requiresKey: true, locked: !worldState.unlockedDoors['door_104_109'], dest: 109, spawnX: spawnW.x, spawnY: spawnW.y }
+            { ...dW1, id: 'door_104_107', requiresKey: true, locked: !worldState.unlockedDoors['door_104_107'], dest: 107, spawnX: spawnE.x, spawnY: spawnE.y },
+            { ...dW2, id: 'door_104_108', requiresKey: true, locked: !worldState.unlockedDoors['door_104_108'], dest: 108, spawnX: spawnE.x, spawnY: spawnE.y },
+            { ...dE1, id: 'door_104_109', requiresKey: true, locked: !worldState.unlockedDoors['door_104_109'], dest: 109, spawnX: spawnW.x, spawnY: spawnW.y },
+            { ...dE2, id: 'door_104_110', requiresKey: true, locked: !worldState.unlockedDoors['door_104_110'], dest: 110, spawnX: spawnW.x, spawnY: spawnW.y }
         ]; 
     }
     else if (roomId === 105) { 
@@ -127,10 +123,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorE, id: 'door_106_102', dest: 102, spawnX: spawnW.x, spawnY: spawnW.y }
         ]; 
     }
-    else if (roomId === 107) { currentDoors = [ { ...doorE, id: 'door_107_104', dest: 104, spawnX: spawnW.x, spawnY: spawnW.y }, { ...doorS, id: 'door_107_108', dest: 108, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
-    else if (roomId === 108) { currentDoors = [ { ...doorN, id: 'door_108_107', dest: 107, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
-    else if (roomId === 109) { currentDoors = [ { ...doorW, id: 'door_109_104', dest: 104, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorS, id: 'door_109_110', dest: 110, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
-    else if (roomId === 110) { currentDoors = [ { ...doorN, id: 'door_110_109', dest: 109, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
+    else if (roomId === 107) { currentDoors = [ { ...doorE, id: 'door_107_104', dest: 104, spawnX: wallMargin + 20, spawnY: 255 } ]; }
+    else if (roomId === 108) { currentDoors = [ { ...doorE, id: 'door_108_104', dest: 104, spawnX: wallMargin + 20, spawnY: canvas.height - 255 } ]; }
+    else if (roomId === 109) { currentDoors = [ { ...doorW, id: 'door_109_104', dest: 104, spawnX: canvas.width - wallMargin - 60, spawnY: 255 } ]; }
+    else if (roomId === 110) { currentDoors = [ { ...doorW, id: 'door_110_104', dest: 104, spawnX: canvas.width - wallMargin - 60, spawnY: canvas.height - 255 } ]; }
     else if (roomId === 111) { currentDoors = [ { ...doorS, id: 'door_111_103', dest: 103, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_111_112', dest: 112, spawnX: spawnS.x, spawnY: spawnS.y }, { ...doorW, id: 'door_111_114', requiresKey: true, locked: !worldState.unlockedDoors['door_111_114'], dest: 114, spawnX: spawnE.x, spawnY: spawnE.y } ]; }
     else if (roomId === 112) { currentDoors = [ { ...doorS, id: 'door_112_111', dest: 111, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorN, id: 'door_112_113', dest: 113, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
     else if (roomId === 113) { currentDoors = [ { ...doorS, id: 'door_113_112', dest: 112, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
@@ -157,7 +153,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 7) { window.spawnEnemy('goblin', 4, 450, 200); window.spawnEnemy('skeleton', 1, 600, 300); }
             else if (roomId === 8) window.spawnEnemy('troll', 1, canvas.width/2 - 40, 150); 
             
-            // SPAWN DES MOBS NIVEAU 2 RESTAURÉ 
             else if (roomId === 101) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
             else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
             else if (roomId === 103) { window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, wallMargin + 80); window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, canvas.height - wallMargin - 80); }
