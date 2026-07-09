@@ -1,3 +1,46 @@
+// ============================================================================
+// js/renderer.js - MOTEUR DE RENDU VISUEL ET EFFETS
+// ============================================================================
+
+window.triggerShake = function(intensity, duration) { 
+    shakeIntensity = intensity; 
+    shakeTimer = duration; 
+};
+
+window.spawnParticles = function(x, y, color, count, isGlow = false) {
+    if(typeof particles === 'undefined') particles = [];
+    for (let i = 0; i < count; i++) {
+        let angle = Math.random() * Math.PI * 2; 
+        let speed = Math.random() * 5 + 2;
+        particles.push({ 
+            x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, 
+            life: 1.0, color: color, size: Math.random() * 5 + 3, glow: isGlow 
+        });
+    }
+};
+
+window.getDirectionName = function(angle) {
+    let deg = angle * (180 / Math.PI);
+    if (deg < 0) deg += 360;
+
+    if (deg >= 337.5 || deg < 22.5) return 'east';
+    if (deg >= 22.5 && deg < 67.5) return 'southeast';
+    if (deg >= 67.5 && deg < 112.5) return 'south';
+    if (deg >= 112.5 && deg < 157.5) return 'southwest';
+    if (deg >= 157.5 && deg < 202.5) return 'west';
+    if (deg >= 202.5 && deg < 247.5) return 'northwest';
+    if (deg >= 247.5 && deg < 292.5) return 'north';
+    if (deg >= 292.5 && deg < 337.5) return 'northeast';
+    return 'south';
+};
+
+window.getAsset = function(name) {
+    if (!name) return null;
+    return assetsManager.images[name] || 
+           assetsManager.images[name.toLowerCase()] || 
+           assetsManager.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
+};
+
 window.renderGameView = function() {
     if (!ctx) return;
     
