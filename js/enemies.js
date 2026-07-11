@@ -1,7 +1,3 @@
-// ============================================================================
-// js/enemies.js - IA DES ENNEMIS ET APPARITIONS
-// ============================================================================
-
 window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
     for (let i = 0; i < count; i++) {
         let ex = baseX; let ey = baseY;
@@ -34,12 +30,16 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'deathgod') { size = 70; hp = 1000; spd = 4.5; col = '#2c3e50'; }
         else if (type === 'elysia') { size = 70; hp = 1500; spd = 5.0; col = '#e84393'; }
         else if (type === 'armor') { size = 50; hp = 200; spd = 3.0; col = '#7f8c8d'; }
-        else if (type === 'golem') { size = 65; hp = 100; spd = 1.5; col = '#7f8c8d'; } // x1.3
-        else if (type === 'small_golem') { size = 39; hp = 40; spd = 2.5; col = '#bdc3c7'; } // x1.3
+        else if (type === 'golem') { size = 65; hp = 100; spd = 1.5; col = '#7f8c8d'; } 
+        else if (type === 'small_golem') { size = 39; hp = 40; spd = 2.5; col = '#bdc3c7'; } 
         else if (type === 'orc') { size = 50; hp = 200; spd = 4.2; col = '#2ecc71'; }
         else if (type === 'wolf') { size = 35; hp = 15; spd = 7.5; col = '#95a5a6'; } 
         else if (type === 'minotaure') { size = 60; hp = 300; spd = 3.5; col = '#e67e22'; }
         else if (type === 'gargouille') { size = 60; hp = 300; spd = 5.0; col = '#34495e'; }
+        // NOUVEAUX MOBS NIVEAU 3
+        else if (type === 'siren') { size = 45; hp = 250; spd = 4.0; col = '#0984e3'; }
+        else if (type === 'anglerfish') { size = 60; hp = 600; spd = 2.0; col = '#d35400'; }
+        else if (type === 'kraken') { size = 180; hp = 5000; spd = 0.5; col = '#2c3e50'; }
 
         if (typeof isArenaMode !== 'undefined' && isArenaMode && typeof arenaWave !== 'undefined' && arenaWave >= 25 && !['spider', 'wolf', 'dragon', 'deathgod', 'elysia', 'armor'].includes(type)) {
             hp += (arenaWave - 24) * 30;
@@ -63,7 +63,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
 };
 
 window.updateEnemies = function() {
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113 || currentRoomId === 205 || currentRoomId === 206);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin; 
@@ -116,6 +116,44 @@ window.updateEnemies = function() {
         let currentEnemySpeed = enemy.speed; 
         if (enemy.slowTimer > 0 || enemy.isPermanentlySlowed) currentEnemySpeed *= 0.5; 
 
+        // IA POISSON LANTERNE (Marche aléatoire + OS)
+        if (enemy.type === 'anglerfish') {
+            if (enemy.wanderTimer === undefined || enemy.wanderTimer <= 0) {
+                enemy.wanderAngle = Math.random() * Math.PI * 2;
+                enemy.wanderTimer = 90 + Math.random() * 90;
+            }
+            enemy.wanderTimer--;
+            dx = Math.cos(enemy.wanderAngle) * dist; 
+            dy = Math.sin(enemy.wanderAngle) * dist;
+            enemy.faceAngleTarget = enemy.wanderAngle;
+
+            if (dist < (player.size + enemy.size) * 0.75 && playerInvulnerableTimer <= 0 && !isElfInvuln) {
+                playerStats.health = 0;
+                if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+            }
+        }
+        
+        // IA KRAKEN (Boss)
+        if (enemy.type === 'kraken') {
+            if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
+                enemy.phase = 2; enemy.speed = 1.5;
+            }
+            if (enemy.summonTimer === undefined) enemy.summonTimer = 120;
+            enemy.summonTimer--;
+            if (enemy.summonTimer <= 0) {
+                if (typeof spawnEnemy === 'function') { spawnEnemy('siren', 1, enemy.x - 40, enemy.y - 40); }
+                enemy.summonTimer = enemy.phase === 2 ? 180 : 300; 
+            }
+            if (enemy.shootCooldown <= 0 && !isElfInvuln) {
+                let pSpeed = 6;
+                for(let k = -3; k <= 3; k++) {
+                    let spreadAngle = angleToPlayer + (k * 0.15);
+                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 15, type: 'ink_ball', color: '#111', damage: 30 });
+                }
+                enemy.shootCooldown = 90; enemy.attackAnimTimer = 30; 
+            }
+        }
+
         if (enemy.type === 'mage') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.maxHealth += 300; enemy.health += 300; enemy.speed = 4.0; 
@@ -136,9 +174,7 @@ window.updateEnemies = function() {
         }
         
         if (enemy.type === 'dragon') {
-            if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
-                enemy.phase = 2; 
-            }
+            if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) { enemy.phase = 2; }
             if (enemy.summonTimer === undefined) enemy.summonTimer = 60;
             enemy.summonTimer--;
             let isPhase2 = (enemy.phase === 2);
@@ -162,8 +198,7 @@ window.updateEnemies = function() {
                     let spreadAngle = angleToPlayer + (k * 0.2);
                     enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 12, type: 'fire_dragon', color: '#e74c3c', damage: 25 });
                 }
-                enemy.shootCooldown = 60; 
-                enemy.attackAnimTimer = 30; 
+                enemy.shootCooldown = 60; enemy.attackAnimTimer = 30; 
             }
         }
 
@@ -298,7 +333,7 @@ window.updateEnemies = function() {
             }
         }
 
-        let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille'].includes(enemy.type);
+        let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille', 'siren'].includes(enemy.type);
         if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6 * 1.3, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
             if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4 * 1.3; pSize = 9; pDmg = 5; }
@@ -308,6 +343,7 @@ window.updateEnemies = function() {
             else if (enemy.type === 'armor') { pType = 'armor_sword'; pColor = '#7f8c8d'; pSpeed = 8 * 1.3; pSize = 15; pDmg = 35; }
             else if (enemy.type === 'golem' || enemy.type === 'small_golem') { pType = 'rock_golem'; pColor = '#7f8c8d'; pSpeed = 5 * 1.3; pSize = 10; pDmg = 25; }
             else if (enemy.type === 'gargouille') { pType = 'rock_gargouille'; pColor = '#34495e'; pSpeed = 6 * 1.3; pSize = 12; pDmg = 25; }
+            else if (enemy.type === 'siren') { pType = 'water_ball'; pColor = '#3498db'; pSpeed = 7 * 1.3; pSize = 10; pDmg = 20; }
 
             if (enemy.type !== 'dragon') {
                 if (enemy.type === 'mage' && enemy.phase === 2) {
@@ -367,7 +403,6 @@ window.updateEnemies = function() {
             }
         }
         
-        // CORRECTION COLLISION ESCALIERS (LES MOB SONT BLOQUÉS PAR L'ESCALIER)
         if ((currentRoomId === 8 || currentRoomId === 101) && window.checkCollision(enemy, centerStairs)) { 
             enemy.x = oldEx; hitX = true; 
             enemy.y += (enemy.y < centerStairs.y + centerStairs.height/2) ? -2 : 2; 
@@ -537,7 +572,7 @@ window.updateEnemies = function() {
             
             if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
 
-            if (['troll', 'deathgod', 'elysia'].includes(e.type) && currentRoomId === 8 && !worldState.bossDefeated) { 
+            if (['troll', 'deathgod', 'elysia', 'kraken'].includes(e.type) && (currentRoomId === 8 || currentRoomId === 208) && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
                 currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
@@ -566,7 +601,7 @@ window.updateEnemies = function() {
                 }
             }
             
-            if (Math.random() < 0.3 && !['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'armor'].includes(e.type)) { 
+            if (Math.random() < 0.3 && !['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'armor', 'kraken'].includes(e.type)) { 
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
@@ -575,7 +610,7 @@ window.updateEnemies = function() {
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
             
             let killSize = e.size * 3.75; 
-            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille'].includes(e.type.toLowerCase())) killSize /= 2;
+            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille', 'anglerfish', 'siren'].includes(e.type.toLowerCase())) killSize /= 2;
             if (e.type === 'skeleton') killSize = (e.size * 3.75) / 3;
             
             bloodStains.push({ type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2, size: killSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
