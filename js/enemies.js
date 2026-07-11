@@ -157,7 +157,7 @@ window.updateEnemies = function() {
             }
             
             if (enemy.shootCooldown <= 0 && !isElfInvuln) {
-                let pSpeed = 8;
+                let pSpeed = 8 * 1.3;
                 for(let k = -2; k <= 2; k++) {
                     let spreadAngle = angleToPlayer + (k * 0.2);
                     enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 12, type: 'fire_dragon', color: '#e74c3c', damage: 25 });
@@ -247,7 +247,8 @@ window.updateEnemies = function() {
             if (enemy.isDashing > 0) { enemy.isDashing--; currentEnemySpeed *= 3; }
             
             if (enemy.shootCooldown <= 0 && dist < 400 && !isElfInvuln) {
-                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*8, vy: Math.sin(angleToPlayer)*8, size: 15, type: 'armor_sword', color: '#7f8c8d', damage: playerStats.maxHealth * 0.32, lifeTimer: 0 });
+                let pSpeed = 8 * 1.3;
+                enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angleToPlayer)*pSpeed, vy: Math.sin(angleToPlayer)*pSpeed, size: 15, type: 'armor_sword', color: '#7f8c8d', damage: playerStats.maxHealth * 0.32, lifeTimer: 0 });
                 enemy.shootCooldown = 180; enemy.attackAnimTimer = 20;
             }
         }
@@ -261,9 +262,10 @@ window.updateEnemies = function() {
                 if (enemy.isDashing > 0) { enemy.isDashing--; currentEnemySpeed *= 4; }
                 
                 if (enemy.shootCooldown <= 0) {
+                    let pSpeed = 6 * 1.3;
                     for(let i=0; i<8; i++) {
                         let angle = (Math.PI*2 / 8) * i;
-                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*6, vy: Math.sin(angle)*6, size: 6, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*pSpeed, vy: Math.sin(angle)*pSpeed, size: 6, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
                     }
                     enemy.shootCooldown = 90 * hpRatio; enemy.attackAnimTimer = 15;
                 }
@@ -278,9 +280,10 @@ window.updateEnemies = function() {
                 if (enemy.phaseTimer <= 0) { enemy.health -= (enemy.maxHealth * 0.05); enemy.phaseTimer = 300; } 
                 
                 if (enemy.shootCooldown <= 0) {
+                    let pSpeed = 4 * 1.3;
                     for(let i=0; i<12; i++) {
                         let angle = (Math.PI*2 / 12) * i + enemy.wobble*2;
-                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*4, vy: Math.sin(angle)*4, size: 8, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
+                        enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(angle)*pSpeed, vy: Math.sin(angle)*pSpeed, size: 8, type: 'fire_elysia', color: '#e84393', damage: playerStats.maxHealth * 0.34 });
                     }
                     enemy.shootCooldown = 60 * hpRatio; enemy.attackAnimTimer = 10;
                 }
@@ -295,16 +298,17 @@ window.updateEnemies = function() {
             }
         }
 
+        // VITESSE DES PROJECTILES AUGMENTÉE DE 30% (* 1.3)
         let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille'].includes(enemy.type);
         if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
-            let pSpeed = 6, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
-            if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4; pSize = 9; pDmg = 5; }
-            else if (enemy.type === 'mage') { pType = 'fire_mage_corompue'; pColor = '#e67e22'; pSpeed = 7; pSize = 12; pDmg = 15; }
-            else if (enemy.type === 'deathgod') { pType = 'fire_deathgod'; pColor = '#2c3e50'; pSpeed = 7; pSize = 12; pDmg = 15; }
-            else if (enemy.type === 'elysia') { pType = 'fire_elysia'; pColor = '#e84393'; pSpeed = 7; pSize = 12; pDmg = 15; }
-            else if (enemy.type === 'armor') { pType = 'armor_sword'; pColor = '#7f8c8d'; pSpeed = 8; pSize = 15; pDmg = 35; }
-            else if (enemy.type === 'golem' || enemy.type === 'small_golem') { pType = 'rock_golem'; pColor = '#7f8c8d'; pSpeed = 5; pSize = 10; pDmg = 25; }
-            else if (enemy.type === 'gargouille') { pType = 'rock_gargouille'; pColor = '#34495e'; pSpeed = 6; pSize = 12; pDmg = 25; }
+            let pSpeed = 6 * 1.3, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
+            if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4 * 1.3; pSize = 9; pDmg = 5; }
+            else if (enemy.type === 'mage') { pType = 'fire_mage_corompue'; pColor = '#e67e22'; pSpeed = 7 * 1.3; pSize = 12; pDmg = 15; }
+            else if (enemy.type === 'deathgod') { pType = 'fire_deathgod'; pColor = '#2c3e50'; pSpeed = 7 * 1.3; pSize = 12; pDmg = 15; }
+            else if (enemy.type === 'elysia') { pType = 'fire_elysia'; pColor = '#e84393'; pSpeed = 7 * 1.3; pSize = 12; pDmg = 15; }
+            else if (enemy.type === 'armor') { pType = 'armor_sword'; pColor = '#7f8c8d'; pSpeed = 8 * 1.3; pSize = 15; pDmg = 35; }
+            else if (enemy.type === 'golem' || enemy.type === 'small_golem') { pType = 'rock_golem'; pColor = '#7f8c8d'; pSpeed = 5 * 1.3; pSize = 10; pDmg = 25; }
+            else if (enemy.type === 'gargouille') { pType = 'rock_gargouille'; pColor = '#34495e'; pSpeed = 6 * 1.3; pSize = 12; pDmg = 25; }
 
             if (enemy.type !== 'dragon') {
                 if (enemy.type === 'mage' && enemy.phase === 2) {
@@ -580,7 +584,6 @@ window.updateEnemies = function() {
             
             currentEnemies.splice(i, 1);
             
-            // GESTION DE FIN DE VAGUE ARÈNE (PORTE + CLÉ)
             if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
                 currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
                 currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
