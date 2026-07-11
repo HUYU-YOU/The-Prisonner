@@ -9,8 +9,8 @@ window.saveRoomState = function() {
         worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
         if (currentEnemies.length === 0) { worldState.clearedRooms[currentRoomId] = true; }
     }
-    
 };
+
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
@@ -102,7 +102,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     }
     else if (roomId === 8) { currentDoors = [ { ...doorS, id: 'door_8_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
 
-    // --- NIVEAU 2 ---
     else if (roomId === 101) { 
         currentDoors = [ 
             { ...doorN, id: 'door_101_114', requiresKey: true, locked: !worldState.unlockedDoors['door_101_114'], dest: 114, spawnX: spawnS.x, spawnY: spawnS.y },
@@ -187,7 +186,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         arenaState = "WAITING";
         arenaTimer = 180; // 3 secondes d'attente
         
-        // LE CORRECTIF EST ICI ! Le point d'apparition et les resets de portes/objets pour l'arène.
         currentDoors = []; 
         currentItems = []; 
         arenaShrink = 0; 
