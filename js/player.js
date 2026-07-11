@@ -101,10 +101,9 @@ window.triggerDash = function() {
         let dist = Math.hypot(dx, dy); 
         if (dist === 0) { dx = 1; dy = 0; dist = 1; }
         
-        // Logique spécifique au Chevalier fusionnée ici
         let speed = (player.heroClass === 'Knight') ? 12 : 15; 
         
-        player.dashVx = (dx/dist) * (player.speed * (speed / 5)); // Ratio adapté
+        player.dashVx = (dx/dist) * (player.speed * (speed / 5)); 
         player.dashVy = (dy/dist) * (player.speed * (speed / 5));
         
         player.dashTimer = (player.heroClass === 'Knight') ? 30 : 15; 
@@ -112,6 +111,7 @@ window.triggerDash = function() {
         playerInvulnerableTimer = 15; 
     }
 };
+
 window.activateUltimate = function() {
     if (playerStats.mana < 100) return;
 
