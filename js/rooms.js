@@ -35,7 +35,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     if (!worldState.roomFloors) worldState.roomFloors = {};
     if (!worldState.roomFloors[roomId]) {
         if (roomId === 1) worldState.roomFloors[roomId] = 'sol_base';
-        else if (roomId === 3) worldState.roomFloors[roomId] = 'floor5'; // FORCÉ POUR LA SALLE 3
+        else if (roomId === 3) worldState.roomFloors[roomId] = 'floor5'; // SALLE 3 : Sol forcé
         else if (roomId === 114) worldState.roomFloors[roomId] = 'floor2';
         else if (roomId >= 107 && roomId <= 110) worldState.roomFloors[roomId] = 'floor3';
         else if (roomId === 103) worldState.roomFloors[roomId] = 'floor4';
@@ -79,10 +79,12 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorE, id: 'door_3_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnW.x, spawnY: spawnW.y }, 
             { ...doorN_right, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } 
         ]; 
-        // GOUFFRE AU MILIEU ET COFFRE À GAUCHE
-        currentObstacles.push({ x: canvas.width/2 - 50, y: wallMargin, width: 100, height: canvas.height - wallMargin*2, type: 'hole' });
+        // SALLE 3 : GOUFFRE ÉLARGI AU MILIEU
+        currentObstacles.push({ x: canvas.width/2 - 120, y: wallMargin, width: 240, height: canvas.height - wallMargin*2, type: 'hole' });
+        
+        // SALLE 3 : COFFRE PLACÉ À GAUCHE
         let isOpened3 = worldState.openedChests['chest_3'];
-        currentCrates.push({ id: 'chest_3', type: 'chest', x: canvas.width/2 + 100, y: canvas.height/2, size: 60, health: isOpened3 ? 0 : 1, isBroken: isOpened3 });
+        currentCrates.push({ id: 'chest_3', type: 'chest', x: bLeft + 100, y: canvas.height/2 - 30, size: 60, health: isOpened3 ? 0 : 1, isBroken: isOpened3 });
     }
     else if (roomId === 4) { currentDoors = [ { ...doorW, id: 'door_4_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorN, id: 'door_4_6', requiresKey: false, locked: false, dest: 6, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
     else if (roomId === 5) { 
@@ -127,8 +129,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorW, id: 'door_103_101', requiresKey: false, locked: false, dest: 101, spawnX: spawnE.x, spawnY: spawnE.y },
             { ...doorN, id: 'door_103_111', requiresKey: false, locked: false, dest: 111, spawnX: spawnS.x, spawnY: spawnS.y }
         ]; 
-        currentObstacles.push({ x: canvas.width - wallMargin - 150, y: wallMargin, width: 150, height: 150, type: 'hole' });
-        currentObstacles.push({ x: canvas.width - wallMargin - 150, y: canvas.height - wallMargin - 150, width: 150, height: 150, type: 'hole' });
+        // SALLE 103 : TROUS INVISIBLES DANS LES COINS DROITS
+        currentObstacles.push({ x: canvas.width - wallMargin - 200, y: wallMargin, width: 200, height: 200, type: 'hole' });
+        currentObstacles.push({ x: canvas.width - wallMargin - 200, y: canvas.height - wallMargin - 200, width: 200, height: 200, type: 'hole' });
     }
     else if (roomId === 104) { 
         let dW1 = { x: -15, y: 150, width: wallMargin + 15, height: 150, face: 'west' };
@@ -173,7 +176,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         let broken1 = worldState.brokenCrates[roomId + "_1"]; currentCrates.push({ id: roomId + "_1", type: 'box', x: bRight - 90, y: canvas.height - 150, size: 45, health: broken1 ? 0 : 30, isBroken: broken1 });
     }
 
-    // --- MODE ARÈNE (VAGUES) ---
     if (roomId === 999) {
         let isBossWave = (arenaWave % 5 === 0);
         if (isBossWave) {
@@ -210,10 +212,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             }
             else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
             else if (roomId === 103) { 
-                window.spawnEnemy('skeleton', 1, bLeft + 40, bTop + 40); 
-                window.spawnEnemy('skeleton', 1, bRight - 80, bTop + 40); 
-                window.spawnEnemy('skeleton', 1, bLeft + 40, bBot - 80); 
-                window.spawnEnemy('skeleton', 1, bRight - 80, bBot - 80); 
+                // SALLE 103 : SQUELETTES BLOQUÉS DANS LES COINS
+                window.spawnEnemy('skeleton', 1, bRight - 100, bTop + 50); 
+                window.spawnEnemy('skeleton', 1, bRight - 100, bBot - 90); 
                 currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); 
             }
             else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
