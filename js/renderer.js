@@ -40,10 +40,13 @@ window.getAsset = function(name) {
            assetsManager.images[name.toLowerCase()] || 
            assetsManager.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
 };
-
 window.renderGameView = function() {
     if (!ctx) return;
     
+    // PURGE TOTALE DES STYLES POUR ÉVITER LES ARTEFACTS VISUELS
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1.0;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.save(); 
@@ -67,7 +70,7 @@ window.renderGameView = function() {
             floorKey = worldState.roomFloors[currentRoomId];
         }
         
-        if (assetsManager.images[floorKey]) {
+        if (assetsManager.images[floorKey] && assetsManager.images[floorKey].complete) {
             imageSol = assetsManager.images[floorKey];
             isNewFloor = (floorKey !== 'sol_base');
         }
@@ -162,20 +165,20 @@ window.renderGameView = function() {
                 ctx.drawImage(sImg, -sw/2, -sh/2, sw, sh);
             } else {
                 ctx.drawImage(sImg, sx, sy, sw, sh); 
-                if (currentRoomId === 8 && !worldState.bossDefeated) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
+                if (currentRoomId === 8 && !worldState.level2Unlocked) { ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; ctx.fillRect(sx, sy, sw, sh); }
             }
         } else {
             ctx.fillStyle = '#111'; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.strokeRect(sx, sy, sw, sh);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
             if (currentRoomId === 8) {
-                if (!worldState.bossDefeated) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
+                if (!worldState.level2Unlocked) { ctx.fillText("ESCALIER", sx + sw/2, sy + sh/2 - 10); ctx.fillStyle = '#e74c3c'; ctx.fillText("BLOQUÉ !", sx + sw/2, sy + sh/2 + 20); } 
                 else { ctx.fillStyle = '#f1c40f'; ctx.fillText("SORTIE ICI", sx + sw/2, sy + sh/2 + 5); }
             } else if (currentRoomId === 101) {
                 ctx.fillStyle = '#3498db'; ctx.fillText("RETOUR NIVEAU 1", sx + sw/2, sy + sh/2 + 5);
             }
             ctx.textAlign = 'left';
         }
-        if (currentRoomId === 8 && worldState.bossDefeated) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
+        if (currentRoomId === 8 && worldState.level2Unlocked) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 30; ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
         if (currentRoomId === 101) { ctx.shadowColor = '#3498db'; ctx.shadowBlur = 30; ctx.strokeStyle = '#3498db'; ctx.lineWidth = 4; ctx.strokeRect(sx, sy, sw, sh); }
         ctx.restore();
     }
@@ -207,11 +210,12 @@ window.renderGameView = function() {
 
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
+            ctx.save(); // Isolation stricte du rendu de chaque porte
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
             
             if (isOpen) { stateStr = '_open'; } 
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
-            if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.bossDefeated && door.face === 'south') { stateStr = '_close'; }
+            if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.level2Unlocked && door.face === 'south') { stateStr = '_close'; }
             
             if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
             else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
@@ -220,6 +224,7 @@ window.renderGameView = function() {
             
             if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } 
             else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
+            ctx.restore();
         });
     }
 
@@ -765,7 +770,8 @@ window.renderGameView = function() {
             ctx.fillStyle = '#111'; ctx.fillRect(bx, 30, barWidth, 24); 
             ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
             
-            ctx.font = 'bold 28px Arial'; 
+            // CORRECTION: TAILLE DU TEXTE RÉDUITE POUR LE BOSS
+            ctx.font = 'bold 20px Arial'; 
             ctx.textAlign = 'center'; 
             ctx.lineWidth = 4;
             ctx.strokeStyle = '#000'; 
