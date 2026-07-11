@@ -393,7 +393,6 @@ window.updateEnemies = function() {
             if (enemy.y > eMaxY) enemy.y = eMaxY;
         }
 
-        // LE CHEVALIER REPOUSSE TOUT PENDANT SON RUSH !
         if (player.heroClass === 'Knight' && player.dashTimer > 0) {
             let distToPlayer = Math.hypot((enemy.x + enemy.size/2) - (player.x + player.size/2), (enemy.y + enemy.size/2) - (player.y + player.size/2));
             if (distToPlayer < player.size + enemy.size + 20) {
@@ -568,8 +567,17 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
+            // SKINS ENNEMIS BRÛLÉS (MORT)
             let killNum = Math.floor(Math.random() * 3) + 1;
-            let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
+            let imgPrefix = 'bloods_kill_view';
+            
+            if (e.type === 'skeleton') {
+                imgPrefix = 'skeleton_kill_view';
+            } else if (e.isBurning) {
+                imgPrefix = 'burned_ennemy_view';
+                killNum = Math.floor(Math.random() * 2) + 1;
+            }
+            
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
             
             let killSize = e.size * 3.75; 
