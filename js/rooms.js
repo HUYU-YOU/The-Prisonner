@@ -17,7 +17,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
     currentObstacles = []; currentDoors = []; currentItems = []; currentEnemies = [];
     
-    playerInvulnerableTimer = 30; // 0.5 seconde d'invincibilité
+    playerInvulnerableTimer = 90; 
     
     if (!worldState.bloodStains) worldState.bloodStains = {}; 
     if (!worldState.visitedRooms) worldState.visitedRooms = {};
@@ -32,9 +32,25 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     bloodStains = worldState.bloodStains[roomId];
     worldState.visitedRooms[roomId] = true; 
     
+    // GÉNÉRATION DES SOLS ALÉATOIRES
+    if (!worldState.roomFloors) worldState.roomFloors = {};
+    if (!worldState.roomFloors[roomId]) {
+        if (roomId === 1) worldState.roomFloors[roomId] = 'sol_base';
+        else if (roomId === 114) worldState.roomFloors[roomId] = 'floor2';
+        else if (roomId >= 107 && roomId <= 110) worldState.roomFloors[roomId] = 'floor3';
+        else if (roomId === 103) worldState.roomFloors[roomId] = 'floor4';
+        else if (roomId === 102) worldState.roomFloors[roomId] = 'floor5';
+        else if (roomId !== 999) {
+            let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
+            worldState.roomFloors[roomId] = randomFloors[Math.floor(Math.random() * randomFloors.length)];
+        }
+    }
+
     let isVertCorridor = (roomId === 5 || roomId === 6 || roomId === 111 || roomId === 112 || roomId === 113);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
+    let bTop = wallMargin; 
+    let bBot = canvas.height - wallMargin;
 
     const doorN = { x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north' };
     const doorS = { x: canvas.width/2 - 75, y: canvas.height - wallMargin - 15, width: 150, height: wallMargin + 15, face: 'south' };
@@ -69,14 +85,12 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     }
     else if (roomId === 4) { currentDoors = [ { ...doorW, id: 'door_4_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorN, id: 'door_4_6', requiresKey: false, locked: false, dest: 6, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
     else if (roomId === 5) { 
-        // Porte NORD de la salle 5 (Gauche) vers 7 : on atterrit à gauche dans la salle 7
         currentDoors = [ 
             { ...doorS, id: 'door_5_3', requiresKey: false, locked: false, dest: 3, spawnX: spawnN_right.x, spawnY: spawnN_right.y }, 
             { ...doorN, id: 'door_5_7', requiresKey: false, locked: false, dest: 7, spawnX: 200 + 75 - 20, spawnY: canvas.height - wallMargin - 60 } 
         ]; 
     }
     else if (roomId === 6) { 
-        // Porte NORD de la salle 6 (Droite) vers 7 : on atterrit à droite dans la salle 7
         currentDoors = [ 
             { ...doorS, id: 'door_6_4', requiresKey: false, locked: false, dest: 4, spawnX: spawnN.x, spawnY: spawnN.y }, 
             { ...doorN, id: 'door_6_7', requiresKey: false, locked: false, dest: 7, spawnX: 800 + 75 - 20, spawnY: canvas.height - wallMargin - 60 } 
@@ -88,7 +102,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     }
     else if (roomId === 8) { currentDoors = [ { ...doorS, id: 'door_8_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
 
-    // --- NIVEAU 2 ---
     else if (roomId === 101) { 
         currentDoors = [ 
             { ...doorN, id: 'door_101_114', requiresKey: true, locked: !worldState.unlockedDoors['door_101_114'], dest: 114, spawnX: spawnS.x, spawnY: spawnS.y },
@@ -161,11 +174,17 @@ window.loadRoom = function(roomId, entryFace = 'south') {
 
     // --- MODE ARÈNE (VAGUES) ---
     if (roomId === 999) {
-        let floors = ['sol_base', 'floor2', 'floor3', 'floor4', 'floor5'];
-        worldState.arenaFloor = floors[Math.floor(Math.random() * floors.length)];
         arenaWave = (typeof arenaWave !== 'undefined') ? arenaWave + 1 : 1;
+        let isBossWave = (arenaWave % 5 === 0);
+        
+        if (isBossWave) {
+            worldState.arenaFloor = 'floor6';
+        } else {
+            let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
+            worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
+        }
         arenaState = "WAITING";
-        arenaTimer = 180; // Décompte de 3 secondes avant la vague
+        arenaTimer = 180; // 3 secondes d'attente
     } 
     else {
         if (worldState.enemyStates[roomId]) { 
@@ -180,16 +199,27 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 7) { window.spawnEnemy('goblin', 4, 450, 200); window.spawnEnemy('skeleton', 1, 600, 300); }
             else if (roomId === 8) window.spawnEnemy('troll', 1, canvas.width/2 - 40, 150); 
             
-            else if (roomId === 101) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
+            else if (roomId === 101) { 
+                window.spawnEnemy('skeleton', 1, bLeft + 40, bTop + 40); 
+                window.spawnEnemy('skeleton', 1, bRight - 80, bTop + 40); 
+                window.spawnEnemy('skeleton', 1, bLeft + 40, bBot - 80); 
+                window.spawnEnemy('skeleton', 1, bRight - 80, bBot - 80); 
+            }
             else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
-            else if (roomId === 103) { window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, wallMargin + 80); window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, canvas.height - wallMargin - 80); }
+            else if (roomId === 103) { 
+                window.spawnEnemy('skeleton', 1, bLeft + 40, bTop + 40); 
+                window.spawnEnemy('skeleton', 1, bRight - 80, bTop + 40); 
+                window.spawnEnemy('skeleton', 1, bLeft + 40, bBot - 80); 
+                window.spawnEnemy('skeleton', 1, bRight - 80, bBot - 80); 
+                currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); // Bloqués
+            }
             else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
             else if (roomId === 105) window.spawnEnemy('orc', 3, canvas.width/2, 300);
-            else if (roomId === 106) window.spawnEnemy('orc', 3, canvas.width/2, 300);
+            else if (roomId === 106) window.spawnEnemy('orc', 3, canvas.width/2, 300); 
             else if (roomId >= 107 && roomId <= 110) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
             else if (roomId === 111) window.spawnEnemy('goblin', 2, canvas.width/2, canvas.height/2);
             else if (roomId === 112) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
             else if (roomId === 113) { window.spawnEnemy('troll', 1, canvas.width/2 - 100, canvas.height/2); window.spawnEnemy('troll', 1, canvas.width/2 + 100, canvas.height/2); }
         }
-    }
+    } else { currentDoors = []; currentItems = []; arenaShrink = 0; player.x = canvas.width / 2 - player.size / 2; player.y = canvas.height / 2 - player.size / 2; }
 };
