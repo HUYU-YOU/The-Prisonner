@@ -97,7 +97,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { x: canvas.width/2 + 100, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_102_105', dest: 105, spawnX: canvas.width/2 + 100, spawnY: spawnS.y },
             { ...doorW, id: 'door_102_106', requiresKey: false, locked: false, dest: 106, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
-        // GOUFFRE AGRANDI (500px) ET CLÉ À GAUCHE
         currentObstacles.push({ x: canvas.width/2 - 250, y: wallMargin, width: 500, height: canvas.height - wallMargin*2, type: 'hole' });
         if (!worldState.collectedItems['key_room102']) {
             currentItems.push({ id: 'key_room102', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
@@ -112,7 +111,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         currentObstacles.push({ x: canvas.width - wallMargin - 150, y: canvas.height - wallMargin - 150, width: 150, height: 150, type: 'hole' });
     }
     else if (roomId === 104) { 
-        // 4 PORTES (2 GAUCHE, 2 DROITE) TOUTES FERMÉES À CLÉ
         let dW1 = { x: -15, y: 150, width: wallMargin + 15, height: 150, face: 'west' };
         let dW2 = { x: -15, y: canvas.height - 300, width: wallMargin + 15, height: 150, face: 'west' };
         let dE1 = { x: canvas.width - wallMargin - 15, y: 150, width: wallMargin + 15, height: 150, face: 'east' };
