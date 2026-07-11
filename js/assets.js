@@ -13,7 +13,6 @@ const assetsManager = {
         img.onerror = () => console.error("Erreur de chargement : " + path);
     }
 };
-};
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
 assetsManager.load('floor2', 'assets/tiles/floor2.png');
