@@ -35,6 +35,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     if (!worldState.roomFloors) worldState.roomFloors = {};
     if (!worldState.roomFloors[roomId]) {
         if (roomId === 1) worldState.roomFloors[roomId] = 'sol_base';
+        else if (roomId === 3) worldState.roomFloors[roomId] = 'floor5'; // FORCÉ POUR LA SALLE 3
         else if (roomId === 114) worldState.roomFloors[roomId] = 'floor2';
         else if (roomId >= 107 && roomId <= 110) worldState.roomFloors[roomId] = 'floor3';
         else if (roomId === 103) worldState.roomFloors[roomId] = 'floor4';
@@ -78,9 +79,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorE, id: 'door_3_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnW.x, spawnY: spawnW.y }, 
             { ...doorN_right, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } 
         ]; 
-        currentObstacles.push({ x: canvas.width/2 - 25, y: wallMargin, width: 50, height: canvas.height - wallMargin*2, type: 'hole' });
+        // GOUFFRE AU MILIEU ET COFFRE À GAUCHE
+        currentObstacles.push({ x: canvas.width/2 - 50, y: wallMargin, width: 100, height: canvas.height - wallMargin*2, type: 'hole' });
         let isOpened3 = worldState.openedChests['chest_3'];
-        currentCrates.push({ id: 'chest_3', type: 'chest', x: wallMargin + 100, y: canvas.height/2, size: 60, health: isOpened3 ? 0 : 1, isBroken: isOpened3 });
+        currentCrates.push({ id: 'chest_3', type: 'chest', x: canvas.width/2 + 100, y: canvas.height/2, size: 60, health: isOpened3 ? 0 : 1, isBroken: isOpened3 });
     }
     else if (roomId === 4) { currentDoors = [ { ...doorW, id: 'door_4_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorN, id: 'door_4_6', requiresKey: false, locked: false, dest: 6, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
     else if (roomId === 5) { 
@@ -173,17 +175,13 @@ window.loadRoom = function(roomId, entryFace = 'south') {
 
     // --- MODE ARÈNE (VAGUES) ---
     if (roomId === 999) {
-        arenaWave = (typeof arenaWave !== 'undefined') ? arenaWave + 1 : 1;
         let isBossWave = (arenaWave % 5 === 0);
-        
         if (isBossWave) {
             worldState.arenaFloor = 'floor6';
         } else {
             let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
             worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
         }
-        arenaState = "WAITING";
-        arenaTimer = 180;
         
         currentDoors = []; 
         currentItems = []; 
@@ -216,7 +214,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
                 window.spawnEnemy('skeleton', 1, bRight - 80, bTop + 40); 
                 window.spawnEnemy('skeleton', 1, bLeft + 40, bBot - 80); 
                 window.spawnEnemy('skeleton', 1, bRight - 80, bBot - 80); 
-                currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); // Bloqués
+                currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); 
             }
             else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
             else if (roomId === 105) window.spawnEnemy('orc', 3, canvas.width/2, 300);
