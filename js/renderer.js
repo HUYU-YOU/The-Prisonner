@@ -43,7 +43,6 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
     
-    // PURGE TOTALE DES STYLES POUR ÉVITER LES ARTEFACTS VISUELS
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1.0;
@@ -106,7 +105,7 @@ window.renderGameView = function() {
         });
     }
 
-    let isVertCorridor = (typeof currentRoomId !== 'undefined' && (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113));
+    let isVertCorridor = (typeof currentRoomId !== 'undefined' && (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113 || currentRoomId === 205 || currentRoomId === 206));
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
         ctx.fillRect(0, 0, 350 - wallMargin, canvas.height); 
@@ -210,7 +209,7 @@ window.renderGameView = function() {
 
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
-            ctx.save(); // Isolation stricte du rendu de chaque porte
+            ctx.save();
             let doorImg = null; let isOpen = (worldState && worldState.openedDoors && worldState.openedDoors[door.id]) || false; let stateStr = '_close'; 
             
             if (isOpen) { stateStr = '_open'; } 
@@ -410,10 +409,11 @@ window.renderGameView = function() {
             if (enemy.type === 'troll' || enemy.type === 'orc') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
             else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
             else if (enemy.type === 'dragon' || enemy.type === 'minotaure') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
+            else if (enemy.type === 'kraken') { ctx.shadowColor = '#2c3e50'; ctx.shadowBlur = 35; }
             
             let displaySize = enemy.size * 3.75; 
             if (img && img.complete && img.naturalWidth > 0) {
-                if (['troll', 'dragon', 'goblin', 'skeleton', 'small_golem', 'orc', 'golem', 'gargouille'].includes(eTypeLow)) {
+                if (['troll', 'dragon', 'goblin', 'skeleton', 'small_golem', 'orc', 'golem', 'gargouille', 'anglerfish', 'siren', 'kraken'].includes(eTypeLow)) {
                     displaySize = enemy.size * 1.875; 
                 } else if (eTypeLow === 'wolf') {
                     displaySize = (enemy.size * 1.875) * 1.25; 
@@ -446,7 +446,7 @@ window.renderGameView = function() {
             }
             ctx.restore(); 
             
-            if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille'].includes(enemy.type)) { 
+            if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille', 'kraken'].includes(enemy.type)) { 
                 ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
                 ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
             } 
@@ -500,6 +500,9 @@ window.renderGameView = function() {
             else if (p.type === 'armor_sword') epImgName = 'Attack_sword_armor';
             else if (p.type === 'rock_golem') epImgName = 'Attack_rock_golem';
             else if (p.type === 'rock_gargouille') epImgName = 'Attack_rock_gargouille';
+            // NIVEAU 3 PROJECTILES
+            else if (p.type === 'water_ball') epImgName = 'Attack_water_ball'; // Si tu l'as
+            else if (p.type === 'ink_ball') epImgName = 'Attack_ink_ball'; // Si tu l'as
             
             let epImg = window.getAsset(epImgName);
             if (p.rollAngle === undefined) p.rollAngle = 0;
@@ -574,13 +577,28 @@ window.renderGameView = function() {
             else actionP = 'attack2';
         }
         
+        // NIVEAU 3 : SPRITES DE NAGE (Si le joueur est dans l'eau)
+        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200);
+        
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
+        if (isSwimming) skinNameP = `${prefixP}_swim_${dirP}_${actionP}`; // Cherche le skin de nage
+        
         let pImg = window.getAsset(skinNameP);
         let is8DirP = true;
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-            let pSkinName = `${prefixP}_${dirP}_view`;
+            let pSkinName = isSwimming ? `${prefixP}_swim_${dirP}_view` : `${prefixP}_${dirP}_view`;
             pImg = window.getAsset(pSkinName);
+        }
+
+        if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
+            // RETOUR AU SKIN NORMAL SI LE SKIN NAGE N'EST PAS TROUVÉ
+            skinNameP = `${prefixP}_${dirP}_${actionP}`;
+            pImg = window.getAsset(skinNameP);
+            if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
+                let pSkinName = `${prefixP}_${dirP}_view`;
+                pImg = window.getAsset(pSkinName);
+            }
         }
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
@@ -594,7 +612,12 @@ window.renderGameView = function() {
         }
 
         if (is8DirP) {
-            ctx.rotate(tilt); 
+            // SI DANS L'EAU SANS SKIN SPÉCIFIQUE, ON ROTATE LE PERSO HORIZONTALEMENT POUR FAIRE COMME S'IL NAGEAIT
+            if (isSwimming && skinNameP.indexOf('swim') === -1) {
+                ctx.rotate(player.faceAngle + Math.PI/2);
+            } else {
+                ctx.rotate(tilt); 
+            }
         } else {
             if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
             else ctx.rotate(player.faceAngle + tilt); 
@@ -619,7 +642,7 @@ window.renderGameView = function() {
                     let progress = (maxCd - attackCooldown) / maxCd; 
                     let swingAngle = -Math.PI / 2 + progress * Math.PI; 
                     
-                    ctx.rotate(-tilt); 
+                    if (is8DirP && !(isSwimming && skinNameP.indexOf('swim') === -1)) ctx.rotate(-tilt); 
                     ctx.rotate(player.faceAngle); 
                     ctx.rotate(swingAngle); 
                     
@@ -678,7 +701,12 @@ window.renderGameView = function() {
     
     if (isElfUlt) {
         lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
-    } else if (player.heroClass === 'Mage') {
+    } 
+    // NIVEAU 3 : MASQUE DE LUMIÈRE BLEU ABYSSAL
+    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200) {
+        lctx.fillStyle = 'rgba(5, 20, 35, 0.85)'; 
+    }
+    else if (player.heroClass === 'Mage') {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
     } else {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; 
@@ -697,6 +725,21 @@ window.renderGameView = function() {
     lctx.beginPath();
     lctx.arc(px, py, 450, 0, Math.PI*2);
     lctx.fill();
+
+    // NIVEAU 3 : LUMIÈRE DU POISSON LANTERNE
+    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && typeof currentEnemies !== 'undefined') {
+        currentEnemies.forEach(e => {
+            if (e.type === 'anglerfish') {
+                let lx = e.x + e.size/2 + Math.cos(e.faceAngleTarget) * 30;
+                let ly = e.y + e.size/2 + Math.sin(e.faceAngleTarget) * 30;
+                let aGrad = lctx.createRadialGradient(lx, ly, 10, lx, ly, 150);
+                aGrad.addColorStop(0, 'rgba(241, 196, 15, 0.9)');
+                aGrad.addColorStop(1, 'rgba(241, 196, 15, 0)');
+                lctx.fillStyle = aGrad;
+                lctx.beginPath(); lctx.arc(lx, ly, 150, 0, Math.PI*2); lctx.fill();
+            }
+        });
+    }
 
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
@@ -753,8 +796,19 @@ window.renderGameView = function() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
+    // NIVEAU 3 : BARRE D'OXYGÈNE
+    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && typeof worldState.oxygen !== 'undefined') {
+        let oxyPercent = Math.max(0, worldState.oxygen / 36000);
+        let boxWidth = 300; let boxX = canvas.width - boxWidth - wallMargin;
+        ctx.fillStyle = '#111'; ctx.fillRect(boxX, 20, boxWidth, 20);
+        ctx.fillStyle = '#3498db'; ctx.fillRect(boxX + 2, 22, (boxWidth - 4) * oxyPercent, 16);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+        ctx.fillText("OXYGÈNE : " + Math.ceil(worldState.oxygen / 60) + " s", boxX + boxWidth/2, 36);
+        ctx.textAlign = 'left';
+    }
+
     if (typeof currentEnemies !== 'undefined') {
-        let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia'].includes(e.type));
+        let boss = currentEnemies.find(e => ['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'kraken'].includes(e.type));
         if (boss) {
             let bossName = "BOSS";
             if (boss.type === 'troll') bossName = "TROLL CORROMPU";
@@ -762,6 +816,7 @@ window.renderGameView = function() {
             else if (boss.type === 'dragon') bossName = "DRAGON MAUDIT";
             else if (boss.type === 'deathgod') bossName = "DEATH GOD";
             else if (boss.type === 'elysia') bossName = "ELYSIA";
+            else if (boss.type === 'kraken') bossName = "LEVIATHAN DES ABYSSES";
             
             let isPhase2 = boss.phase === 2 || (boss.health <= boss.maxHealth / 2); 
             let barWidth = 600; 
@@ -770,7 +825,6 @@ window.renderGameView = function() {
             ctx.fillStyle = '#111'; ctx.fillRect(bx, 30, barWidth, 24); 
             ctx.fillStyle = isPhase2 ? '#8e44ad' : '#e74c3c'; ctx.fillRect(bx + 2, 32, (barWidth - 4) * (Math.max(0, boss.health) / boss.maxHealth), 20);
             
-            // CORRECTION: TAILLE DU TEXTE RÉDUITE POUR LE BOSS
             ctx.font = 'bold 20px Arial'; 
             ctx.textAlign = 'center'; 
             ctx.lineWidth = 4;
