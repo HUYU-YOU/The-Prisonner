@@ -2,7 +2,6 @@
 // js/main.js - MOTEUR PRINCIPAL ET BOUCLE DE JEU
 // ============================================================================
 
-document.addEventListener('contextmenu', event => event.preventDefault());
 
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
