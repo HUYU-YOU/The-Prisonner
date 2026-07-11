@@ -51,11 +51,36 @@ window.togglePause = function() {
 window.drawMiniMap = function() {
     let mapCanvas = document.getElementById('map-canvas');
     if (!mapCanvas) return;
+    
+    // OPTIMISATION VISUELLE DE LA CARTE
+    mapCanvas.width = 400;
+    mapCanvas.height = 400;
+    mapCanvas.style.width = "100%";
+    mapCanvas.style.height = "auto";
+    mapCanvas.style.maxWidth = "350px";
+    mapCanvas.style.borderRadius = "8px";
+
     let mctx = mapCanvas.getContext('2d');
     mctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+    mctx.fillStyle = '#111';
+    mctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
     
-    const mapGrid = { 1: {x: 2, y: 4}, 2: {x: 2, y: 3}, 3: {x: 1, y: 3}, 4: {x: 3, y: 3}, 5: {x: 1, y: 2}, 6: {x: 3, y: 2}, 7: {x: 2, y: 1}, 8: {x: 2, y: 0} };
-    let boxSize = 40; let offsetX = 50; let offsetY = 30;
+    // NOUVELLE GRILLE INCLUANT LE NIVEAU 1 ET LE NIVEAU 2
+    const mapGrid = { 
+        1: {x: 2, y: 9}, 2: {x: 2, y: 8}, 3: {x: 1, y: 8}, 4: {x: 3, y: 8}, 
+        5: {x: 1, y: 7}, 6: {x: 3, y: 7}, 7: {x: 2, y: 6}, 8: {x: 2, y: 5},
+        101: {x: 2, y: 4}, 102: {x: 1, y: 4}, 103: {x: 3, y: 4}, 104: {x: 2, y: 5}, 
+        114: {x: 2, y: 3}, 111: {x: 3, y: 3}, 112: {x: 3, y: 2}, 113: {x: 3, y: 1},
+        105: {x: 1, y: 3}, 106: {x: 0, y: 4}, 107: {x: 1, y: 5}, 108: {x: 1, y: 6},
+        109: {x: 3, y: 5}, 110: {x: 3, y: 6}, 999: {x: 4, y: 4}
+    };
+    
+    let boxSize = 35; 
+    let currPos = mapGrid[currentRoomId] || {x: 2, y: 4};
+    
+    // CENTRAGE DYNAMIQUE SUR LA POSITION DU JOUEUR
+    let offsetX = (mapCanvas.width / 2) - (currPos.x * boxSize) - (boxSize / 2);
+    let offsetY = (mapCanvas.height / 2) - (currPos.y * boxSize) - (boxSize / 2);
 
     for (let id in mapGrid) {
         let roomId = parseInt(id);
@@ -63,18 +88,21 @@ window.drawMiniMap = function() {
             let px = offsetX + mapGrid[roomId].x * boxSize;
             let py = offsetY + mapGrid[roomId].y * boxSize;
             let width = boxSize; let height = boxSize;
-            if (roomId === 2 || roomId === 3) width = boxSize + 15;
+
+            if (roomId === 2) width = boxSize * 1.5; // Ajustement visuel mineur
 
             if (roomId === currentRoomId) mctx.fillStyle = '#f1c40f'; 
-            else if (roomId === 8) mctx.fillStyle = '#e74c3c'; 
+            else if (roomId === 8 || roomId === 108 || roomId === 110 || roomId === 113) mctx.fillStyle = '#e74c3c'; 
             else mctx.fillStyle = '#7f8c8d'; 
 
-            mctx.fillRect(px, py, width - 5, height - 5);
+            mctx.fillRect(px, py, width - 4, height - 4);
             mctx.strokeStyle = '#2c3e50'; mctx.lineWidth = 2;
-            mctx.strokeRect(px, py, width - 5, height - 5);
+            mctx.strokeRect(px, py, width - 4, height - 4);
 
-            mctx.fillStyle = '#111'; mctx.font = 'bold 16px Arial';
-            mctx.fillText(roomId, px + 15, py + 25);
+            if (roomId === currentRoomId) {
+                mctx.fillStyle = '#111'; mctx.font = 'bold 16px Arial'; mctx.textAlign = 'center';
+                mctx.fillText("X", px + width/2 - 2, py + height/2 + 6);
+            }
         }
     }
 };
