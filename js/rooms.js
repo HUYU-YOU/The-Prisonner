@@ -9,15 +9,15 @@ window.saveRoomState = function() {
         worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
         if (currentEnemies.length === 0) { worldState.clearedRooms[currentRoomId] = true; }
     }
+    
 };
-
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
     projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
     currentObstacles = []; currentDoors = []; currentItems = []; currentEnemies = [];
     
-    playerInvulnerableTimer = 90; 
+    playerInvulnerableTimer = 30; // 0.5 seconde d'invincibilité
     
     if (!worldState.bloodStains) worldState.bloodStains = {}; 
     if (!worldState.visitedRooms) worldState.visitedRooms = {};
@@ -102,6 +102,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     }
     else if (roomId === 8) { currentDoors = [ { ...doorS, id: 'door_8_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
 
+    // --- NIVEAU 2 ---
     else if (roomId === 101) { 
         currentDoors = [ 
             { ...doorN, id: 'door_101_114', requiresKey: true, locked: !worldState.unlockedDoors['door_101_114'], dest: 114, spawnX: spawnS.x, spawnY: spawnS.y },
@@ -185,6 +186,13 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         }
         arenaState = "WAITING";
         arenaTimer = 180; // 3 secondes d'attente
+        
+        // LE CORRECTIF EST ICI ! Le point d'apparition et les resets de portes/objets pour l'arène.
+        currentDoors = []; 
+        currentItems = []; 
+        arenaShrink = 0; 
+        player.x = canvas.width / 2 - player.size / 2; 
+        player.y = canvas.height / 2 - player.size / 2;
     } 
     else {
         if (worldState.enemyStates[roomId]) { 
@@ -221,5 +229,5 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 112) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
             else if (roomId === 113) { window.spawnEnemy('troll', 1, canvas.width/2 - 100, canvas.height/2); window.spawnEnemy('troll', 1, canvas.width/2 + 100, canvas.height/2); }
         }
-    } else { currentDoors = []; currentItems = []; arenaShrink = 0; player.x = canvas.width / 2 - player.size / 2; player.y = canvas.height / 2 - player.size / 2; }
+    }
 };
