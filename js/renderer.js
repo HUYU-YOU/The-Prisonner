@@ -40,6 +40,7 @@ window.getAsset = function(name) {
            assetsManager.images[name.toLowerCase()] || 
            assetsManager.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
 };
+
 window.renderGameView = function() {
     if (!ctx) return;
     
@@ -48,6 +49,8 @@ window.renderGameView = function() {
     ctx.globalAlpha = 1.0;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    
+    // SAUVEGARDE DU CONTEXTE GLOBAL
     ctx.save(); 
     
     if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
@@ -94,13 +97,9 @@ window.renderGameView = function() {
 
     if (typeof currentObstacles !== 'undefined') {
         currentObstacles.forEach(obs => {
-            if (obs.type === 'hole') {
-                // Invisible
-            } else if (obs.type === 'water') {
-                ctx.fillStyle = 'rgba(41, 128, 185, 0.8)'; 
+            if (obs.type === 'water_visual') {
+                ctx.fillStyle = 'rgba(41, 128, 185, 0.4)'; 
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                ctx.fillStyle = '#ecf0f1'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-                ctx.fillText("NIVEAU 3", obs.x + obs.width/2, obs.y + obs.height/2);
             }
         });
     }
@@ -406,7 +405,7 @@ window.renderGameView = function() {
             ctx.shadowOffsetX = 4; 
             ctx.shadowOffsetY = 4;
             
-            if (enemy.type === 'troll' || enemy.type === 'orc') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
+            if (enemy.type === 'orc') { ctx.shadowColor = '#27ae60'; ctx.shadowBlur = 20; } 
             else if (enemy.type === 'mage') { ctx.shadowColor = '#9b59b6'; ctx.shadowBlur = 20; } 
             else if (enemy.type === 'dragon' || enemy.type === 'minotaure') { ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 25; }
             else if (enemy.type === 'kraken') { ctx.shadowColor = '#2c3e50'; ctx.shadowBlur = 35; }
@@ -500,9 +499,8 @@ window.renderGameView = function() {
             else if (p.type === 'armor_sword') epImgName = 'Attack_sword_armor';
             else if (p.type === 'rock_golem') epImgName = 'Attack_rock_golem';
             else if (p.type === 'rock_gargouille') epImgName = 'Attack_rock_gargouille';
-            // NIVEAU 3 PROJECTILES
-            else if (p.type === 'water_ball') epImgName = 'Attack_water_ball'; // Si tu l'as
-            else if (p.type === 'ink_ball') epImgName = 'Attack_ink_ball'; // Si tu l'as
+            else if (p.type === 'water_ball') epImgName = 'Attack_water_ball'; 
+            else if (p.type === 'ink_ball') epImgName = 'Attack_ink_ball'; 
             
             let epImg = window.getAsset(epImgName);
             if (p.rollAngle === undefined) p.rollAngle = 0;
@@ -577,22 +575,23 @@ window.renderGameView = function() {
             else actionP = 'attack2';
         }
         
-        // NIVEAU 3 : SPRITES DE NAGE (Si le joueur est dans l'eau)
         let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200);
-        
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
-        if (isSwimming) skinNameP = `${prefixP}_swim_${dirP}_${actionP}`; // Cherche le skin de nage
+        
+        if (isSwimming) {
+            let animFrame = (Math.floor(Date.now() / 250) % 2 === 0) ? '1' : '2';
+            skinNameP = `${prefixP}_swim${animFrame}_${dirP}_${actionP}`;
+        } 
         
         let pImg = window.getAsset(skinNameP);
         let is8DirP = true;
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-            let pSkinName = isSwimming ? `${prefixP}_swim_${dirP}_view` : `${prefixP}_${dirP}_view`;
+            let pSkinName = isSwimming ? `${prefixP}_swim1_${dirP}_view` : `${prefixP}_${dirP}_view`;
             pImg = window.getAsset(pSkinName);
         }
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-            // RETOUR AU SKIN NORMAL SI LE SKIN NAGE N'EST PAS TROUVÉ
             skinNameP = `${prefixP}_${dirP}_${actionP}`;
             pImg = window.getAsset(skinNameP);
             if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
@@ -612,7 +611,6 @@ window.renderGameView = function() {
         }
 
         if (is8DirP) {
-            // SI DANS L'EAU SANS SKIN SPÉCIFIQUE, ON ROTATE LE PERSO HORIZONTALEMENT POUR FAIRE COMME S'IL NAGEAIT
             if (isSwimming && skinNameP.indexOf('swim') === -1) {
                 ctx.rotate(player.faceAngle + Math.PI/2);
             } else {
@@ -701,12 +699,9 @@ window.renderGameView = function() {
     
     if (isElfUlt) {
         lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
-    } 
-    // NIVEAU 3 : MASQUE DE LUMIÈRE BLEU ABYSSAL
-    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200) {
+    } else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200) {
         lctx.fillStyle = 'rgba(5, 20, 35, 0.85)'; 
-    }
-    else if (player.heroClass === 'Mage') {
+    } else if (player.heroClass === 'Mage') {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
     } else {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; 
@@ -726,7 +721,6 @@ window.renderGameView = function() {
     lctx.arc(px, py, 450, 0, Math.PI*2);
     lctx.fill();
 
-    // NIVEAU 3 : LUMIÈRE DU POISSON LANTERNE
     if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && typeof currentEnemies !== 'undefined') {
         currentEnemies.forEach(e => {
             if (e.type === 'anglerfish') {
@@ -796,7 +790,6 @@ window.renderGameView = function() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
-    // NIVEAU 3 : BARRE D'OXYGÈNE
     if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && typeof worldState.oxygen !== 'undefined') {
         let oxyPercent = Math.max(0, worldState.oxygen / 36000);
         let boxWidth = 300; let boxX = canvas.width - boxWidth - wallMargin;
@@ -851,4 +844,7 @@ window.renderGameView = function() {
         }
         ctx.textAlign = 'left';
     }
+
+    // LE RESTORE CRUCIAL POUR ÉVITER L'ÉCRAN NOIR !
+    ctx.restore(); 
 };
