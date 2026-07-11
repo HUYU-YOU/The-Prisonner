@@ -44,14 +44,13 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
     
+    // MÉTHODE BLINDÉE ANTI-ÉCRAN NOIR : RÉINITIALISATION FORCÉE DU CANVAS
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1.0;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
-    
-    // SAUVEGARDE DU CONTEXTE GLOBAL
-    ctx.save(); 
     
     if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
@@ -769,10 +768,8 @@ window.renderGameView = function() {
         });
     }
 
-    ctx.save();
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(window.lightCanvas, 0, 0);
-    ctx.restore();
     
     // =========================================================================
     // 2. DESSINER L'UI PAR DESSUS L'OMBRE POUR QU'ELLE SOIT 100% VISIBLE
@@ -844,7 +841,4 @@ window.renderGameView = function() {
         }
         ctx.textAlign = 'left';
     }
-
-    // LE RESTORE CRUCIAL POUR ÉVITER L'ÉCRAN NOIR !
-    ctx.restore(); 
 };
