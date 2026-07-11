@@ -2,7 +2,6 @@
 // js/main.js - MOTEUR PRINCIPAL ET BOUCLE DE JEU
 // ============================================================================
 
-
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
@@ -244,7 +243,6 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // COLLISION ESCALIER SALLE 8 (Fin Niveau 1)
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
         let isColliding = player.x < triggerStairs.x + triggerStairs.width &&
@@ -264,7 +262,6 @@ window.update = function() {
         }
     }
 
-    // COLLISION ESCALIER SALLE 101 (Retour Niveau 1)
     if (currentRoomId === 101) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
         let isColliding = player.x < triggerStairs.x + triggerStairs.width &&
@@ -276,7 +273,7 @@ window.update = function() {
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(8, 'north');
             player.x = canvas.width / 2 - player.size / 2;
-            player.y = canvas.height / 2 - player.size / 2 + 80; // Spawn juste sous l'escalier
+            player.y = canvas.height / 2 - player.size / 2 + 80; 
             player.dashTimer = 0; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             return requestAnimationFrame(window.update);
