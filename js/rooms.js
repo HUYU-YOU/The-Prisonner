@@ -64,9 +64,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorN_right, id: 'door_3_5', requiresKey: false, locked: false, dest: 5, spawnX: spawnS.x, spawnY: spawnS.y } 
         ]; 
         currentObstacles.push({ x: canvas.width/2 - 25, y: wallMargin, width: 50, height: canvas.height - wallMargin*2, type: 'hole' });
-        if (!worldState.collectedItems['key_room3']) {
-            currentItems.push({ id: 'key_room3', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
-        }
+        // CLÉ REMPLACÉE PAR UN COFFRE
+        let isOpened3 = worldState.openedChests['chest_3'];
+        currentCrates.push({ id: 'chest_3', type: 'chest', x: wallMargin + 100, y: canvas.height/2, size: 60, health: isOpened3 ? 0 : 1, isBroken: isOpened3 });
     }
     else if (roomId === 4) { currentDoors = [ { ...doorW, id: 'door_4_2', requiresKey: false, locked: false, dest: 2, spawnX: spawnE.x, spawnY: spawnE.y }, { ...doorN, id: 'door_4_6', requiresKey: false, locked: false, dest: 6, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
     else if (roomId === 5) { 
@@ -97,7 +97,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { x: canvas.width/2 + 100, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_102_105', dest: 105, spawnX: canvas.width/2 + 100, spawnY: spawnS.y },
             { ...doorW, id: 'door_102_106', requiresKey: false, locked: false, dest: 106, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
-        currentObstacles.push({ x: canvas.width/2 - 250, y: wallMargin, width: 500, height: canvas.height - wallMargin*2, type: 'hole' });
+        // HITBOX RÉTRÉCIE ET CENTRÉE
+        currentObstacles.push({ x: canvas.width/2 - 120, y: wallMargin, width: 240, height: canvas.height - wallMargin*2, type: 'hole' });
         if (!worldState.collectedItems['key_room102']) {
             currentItems.push({ id: 'key_room102', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
         }
@@ -171,7 +172,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 103) { window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, wallMargin + 80); window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 80, canvas.height - wallMargin - 80); }
             else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
             else if (roomId === 105) window.spawnEnemy('orc', 3, canvas.width/2, 300);
-            else if (roomId === 106) window.spawnEnemy('wolf', 3, canvas.width/2, 300);
+            else if (roomId === 106) window.spawnEnemy('orc', 3, canvas.width/2, 300); // LOUPS REMPLACÉS PAR DES ORCS
             else if (roomId >= 107 && roomId <= 110) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
             else if (roomId === 111) window.spawnEnemy('goblin', 2, canvas.width/2, canvas.height/2);
             else if (roomId === 112) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
