@@ -101,7 +101,6 @@ window.updateEnemies = function() {
             enemy.burnTimer--;
             if (enemy.burnTimer % 60 === 0) { 
                 enemy.health -= 10; 
-                if (typeof spawnParticles === 'function') spawnParticles(enemy.x + enemy.size/2, enemy.y + enemy.size/2, '#e67e22', 15, true);
             }
             if (enemy.burnTimer <= 0) enemy.isBurning = false;
         }
@@ -567,17 +566,8 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
-            // SKINS ENNEMIS BRÛLÉS (MORT)
+            let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
             let killNum = Math.floor(Math.random() * 3) + 1;
-            let imgPrefix = 'bloods_kill_view';
-            
-            if (e.type === 'skeleton') {
-                imgPrefix = 'skeleton_kill_view';
-            } else if (e.isBurning) {
-                imgPrefix = 'burned_ennemy_view';
-                killNum = Math.floor(Math.random() * 2) + 1;
-            }
-            
             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
             
             let killSize = e.size * 3.75; 
@@ -589,6 +579,14 @@ window.updateEnemies = function() {
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
             
             currentEnemies.splice(i, 1);
+            
+            // GESTION DE FIN DE VAGUE ARÈNE (PORTE + CLÉ)
+            if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
+                currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
+                arenaState = "DOOR_OPEN"; 
+            }
+            
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
                 worldState.clearedRooms[currentRoomId] = true;
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
