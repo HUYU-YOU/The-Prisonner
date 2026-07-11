@@ -29,7 +29,7 @@ window.handlePlayerAttack = function() {
     } 
     else if (player.heroClass === 'Knight') {
         isAttacking = true; 
-        attackCooldown = 40;
+        attackCooldown = 25; // PLUS RAPIDE
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 80 - 90, y: player.y + player.size / 2 + Math.sin(angle) * 80 - 90, size: 180 };
         
         currentEnemies.forEach(enemy => { 
@@ -45,18 +45,11 @@ window.handlePlayerAttack = function() {
                         enemy.y += Math.sin(angle) * 35;
                         
                         if (enemy.type !== 'skeleton') {
-                            // SKIN ENNEMI BRÛLÉ
-                            let hitPrefix = 'bloods_hit_view';
                             let hitNum = Math.floor(Math.random() * 3) + 1;
-                            if (enemy.isBurning || player.heroClass === 'Mage') {
-                                hitPrefix = 'burned_ennemy_view';
-                                hitNum = Math.floor(Math.random() * 2) + 1;
-                            }
-                            
                             let maxLife = (currentRoomId === 999) ? 1200 : 3600;
                             let bSize = enemy.size * 1.5;
                             if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
-                            bloodStains.push({ type: 'hit', imgId: hitPrefix + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                         }
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
@@ -124,18 +117,11 @@ window.updateProjectiles = function() {
                 }
                 
                 if (enemy.type !== 'skeleton') {
-                    // SKIN ENNEMI BRÛLÉ
-                    let hitPrefix = 'bloods_hit_view';
                     let hitNum = Math.floor(Math.random() * 3) + 1;
-                    if (enemy.isBurning || p.type === 'fire_mage' || p.type === 'fire_necromancien' || p.type === 'fire_fusion' || player.heroClass === 'Mage') {
-                        hitPrefix = 'burned_ennemy_view';
-                        hitNum = Math.floor(Math.random() * 2) + 1;
-                    }
-
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
                     let bSize = enemy.size * 1.5;
                     if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
-                    bloodStains.push({ type: 'hit', imgId: hitPrefix + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
                 }
                 
                 let isPiercingElf = (isUltimateActive && player.heroClass === 'Elf');
