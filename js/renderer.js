@@ -653,6 +653,8 @@ window.renderGameView = function() {
     }
 
     let lctx = window.lightCtx;
+    lctx.clearRect(0, 0, window.lightCanvas.width, window.lightCanvas.height);
+    
     lctx.globalCompositeOperation = 'source-over';
     
     if (player.heroClass === 'Mage') {
