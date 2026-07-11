@@ -35,35 +35,42 @@ window.update = function() {
     if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
     if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
     
-    // GESTION DU DÉCOMPTE ET DU SPAWN PROGRESSIF DANS L'ARÈNE
+    // GESTION OXYGÈNE (NIVEAU 3)
+    if (currentRoomId >= 200) {
+        if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000; // 10 minutes (60 fps * 600 s)
+        worldState.oxygen--;
+        if (worldState.oxygen <= 0) {
+            playerStats.health = 0;
+            if (typeof window.updateHUD === 'function') window.updateHUD();
+            if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+        }
+    }
+
     if (currentRoomId === 999) {
         if (typeof arenaState !== 'undefined' && arenaState === "WAITING") {
             arenaTimer--;
             if (arenaTimer <= 0) {
                 arenaState = "PLAYING";
-                // Formule : La vague 1 a 5 ennemis, la vague 10 en a 20, la vague 20 en a 35, etc.
                 window.arenaEnemiesToSpawn = 5 + Math.floor(arenaWave * 1.5);
             }
         } 
         else if (typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
             if (window.arenaEnemiesToSpawn > 0 && currentEnemies.length < 20) {
-                // Spawn progressif (2% de chance à chaque frame d'ajouter un monstre)
                 if (Math.random() < 0.02) {
                     let pool = [];
                     if (arenaWave <= 10) pool.push('goblin', 'skeleton');
                     if (arenaWave >= 9 && arenaWave <= 15) pool.push('spider');
-                    if (arenaWave >= 16) pool.push('orc', 'skeleton'); // Remplace gobelins
-                    if (arenaWave >= 21) { pool = pool.filter(e => e !== 'skeleton'); pool.push('golem'); } // Remplace squelettes
-                    if (arenaWave >= 25) { pool = pool.filter(e => e !== 'orc'); pool.push('minotaure'); } // Remplace orcs
-                    if (arenaWave >= 31) { pool = pool.filter(e => e !== 'golem'); pool.push('gargouille', 'wolf'); } // Remplace golems
+                    if (arenaWave >= 16) pool.push('orc', 'skeleton'); 
+                    if (arenaWave >= 21) { pool = pool.filter(e => e !== 'skeleton'); pool.push('golem'); } 
+                    if (arenaWave >= 25) { pool = pool.filter(e => e !== 'orc'); pool.push('minotaure'); } 
+                    if (arenaWave >= 31) { pool = pool.filter(e => e !== 'golem'); pool.push('gargouille', 'wolf'); } 
 
-                    if (pool.length === 0) pool = ['goblin']; // Sécurité
+                    if (pool.length === 0) pool = ['goblin']; 
                     let t = pool[Math.floor(Math.random() * pool.length)];
                     if (typeof spawnEnemy === 'function') spawnEnemy(t, 1);
                     window.arenaEnemiesToSpawn--;
                 }
             } else if (window.arenaEnemiesToSpawn <= 0 && currentEnemies.length === 0) {
-                // Fin de la vague : On fait pop la porte et la clé !
                 currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
                 currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
                 arenaState = "DOOR_OPEN"; 
@@ -189,6 +196,10 @@ window.update = function() {
     if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
     let currentSpeedPlayer = (typeof playerSlowTimer !== 'undefined' && playerSlowTimer > 0) ? player.speed / 2 : player.speed;
+    
+    // NIVEAU 3 : VITESSE RÉDUITE DANS L'EAU (-35%)
+    if (currentRoomId >= 200) currentSpeedPlayer *= 0.65;
+    
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
     let dx_mov = 0; let dy_mov = 0;
@@ -201,7 +212,6 @@ window.update = function() {
     }
 
     if (player.dashTimer > 0 || insideHole) {
-        // PROLONGATION AUTOMATIQUE DU DASH SI AU-DESSUS D'UN TROU
         if (insideHole && player.dashTimer <= 0) { player.dashTimer = 2; }
         player.dashTimer--; 
         
@@ -225,8 +235,20 @@ window.update = function() {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
                 if (obs.type === 'water') {
-                    alert("DIRECTION NIVEAU 3 ! (Prochainement...)");
-                    player.y += 20; break;
+                    if (currentRoomId === 114) {
+                        keys = {}; player.dashTimer = 0;
+                        if (confirm("L'eau est sombre et glaciale... Devrais-je plonger dans les abysses ?")) {
+                            worldState.oxygen = 36000;
+                            if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                            if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
+                            player.x = canvas.width / 2 - player.size / 2;
+                            player.y = canvas.height - wallMargin - 150;
+                        } else {
+                            player.x = oldPx;
+                            player.y += 80;
+                        }
+                    }
+                    break;
                 } else {
                     player.x = oldPx; player.dashTimer = 0; break;
                 }
@@ -248,7 +270,21 @@ window.update = function() {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
-                if (obs.type !== 'water') {
+                if (obs.type === 'water') {
+                    if (currentRoomId === 114) {
+                        keys = {}; player.dashTimer = 0;
+                        if (confirm("L'eau est sombre et glaciale... Devrais-je plonger dans les abysses ?")) {
+                            worldState.oxygen = 36000;
+                            if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                            if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
+                            player.x = canvas.width / 2 - player.size / 2;
+                            player.y = canvas.height - wallMargin - 150;
+                        } else {
+                            player.y = oldPy - 80;
+                        }
+                    }
+                    break;
+                } else {
                     player.y = oldPy; player.dashTimer = 0; break;
                 }
             }
@@ -262,7 +298,7 @@ window.update = function() {
         }
     }
     
-    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113);
+    let isVertCorridor = (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113 || currentRoomId === 205 || currentRoomId === 206);
     let bLeft = isVertCorridor ? 350 : wallMargin;
     let bRight = isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin;
     let bTop = wallMargin;
@@ -303,7 +339,6 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // LOGIQUE ESCALIER DÉFINITIVE (PERSISTANCE DE L'OUVERTURE)
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
         let isColliding = player.x < triggerStairs.x + triggerStairs.width && player.x + player.size > triggerStairs.x && player.y < triggerStairs.y + triggerStairs.height && player.y + player.size > triggerStairs.y;
@@ -316,7 +351,7 @@ window.update = function() {
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
             player.x = canvas.width / 2 - player.size / 2;
-            player.y = canvas.height / 2 + 100; // Apparaît bien en dessous de l'escalier
+            player.y = canvas.height / 2 + 100;
             player.dashTimer = 0; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             return requestAnimationFrame(window.update);
@@ -331,7 +366,7 @@ window.update = function() {
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(8, 'north');
             player.x = canvas.width / 2 - player.size / 2;
-            player.y = canvas.height / 2 + 100; // Apparaît bien en dessous de l'escalier
+            player.y = canvas.height / 2 + 100;
             player.dashTimer = 0; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             return requestAnimationFrame(window.update);
