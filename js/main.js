@@ -33,17 +33,40 @@ window.update = function() {
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
+    if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
     
-    // GESTION DU DÉCOMPTE DANS L'ARÈNE
-    if (currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "WAITING") {
-        arenaTimer--;
-        if (arenaTimer <= 0) {
-            arenaState = "PLAYING";
-            let count = 3 + Math.floor(arenaWave * 1.5);
-            let types = ['goblin', 'skeleton', 'spider', 'wolf', 'orc'];
-            for(let i=0; i<count; i++) {
-                let t = types[Math.floor(Math.random() * types.length)];
-                if (typeof spawnEnemy === 'function') spawnEnemy(t, 1);
+    // GESTION DU DÉCOMPTE ET DU SPAWN PROGRESSIF DANS L'ARÈNE
+    if (currentRoomId === 999) {
+        if (typeof arenaState !== 'undefined' && arenaState === "WAITING") {
+            arenaTimer--;
+            if (arenaTimer <= 0) {
+                arenaState = "PLAYING";
+                // Formule : La vague 1 a 5 ennemis, la vague 10 en a 20, la vague 20 en a 35, etc.
+                window.arenaEnemiesToSpawn = 5 + Math.floor(arenaWave * 1.5);
+            }
+        } 
+        else if (typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
+            if (window.arenaEnemiesToSpawn > 0 && currentEnemies.length < 20) {
+                // Spawn progressif (2% de chance à chaque frame d'ajouter un monstre)
+                if (Math.random() < 0.02) {
+                    let pool = [];
+                    if (arenaWave <= 10) pool.push('goblin', 'skeleton');
+                    if (arenaWave >= 9 && arenaWave <= 15) pool.push('spider');
+                    if (arenaWave >= 16) pool.push('orc', 'skeleton'); // Remplace gobelins
+                    if (arenaWave >= 21) { pool = pool.filter(e => e !== 'skeleton'); pool.push('golem'); } // Remplace squelettes
+                    if (arenaWave >= 25) { pool = pool.filter(e => e !== 'orc'); pool.push('minotaure'); } // Remplace orcs
+                    if (arenaWave >= 31) { pool = pool.filter(e => e !== 'golem'); pool.push('gargouille', 'wolf'); } // Remplace golems
+
+                    if (pool.length === 0) pool = ['goblin']; // Sécurité
+                    let t = pool[Math.floor(Math.random() * pool.length)];
+                    if (typeof spawnEnemy === 'function') spawnEnemy(t, 1);
+                    window.arenaEnemiesToSpawn--;
+                }
+            } else if (window.arenaEnemiesToSpawn <= 0 && currentEnemies.length === 0) {
+                // Fin de la vague : On fait pop la porte et la clé !
+                currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
+                arenaState = "DOOR_OPEN"; 
             }
         }
     }
@@ -109,6 +132,15 @@ window.update = function() {
 
         player.x = doorToPass.spawnX;
         player.y = doorToPass.spawnY;
+        
+        if (currentRoomId === 999) {
+            arenaWave++; 
+            arenaState = "WAITING";
+            arenaTimer = 180;
+            player.x = canvas.width/2 - player.size/2;
+            player.y = canvas.height/2 - player.size/2;
+        }
+        
         requestAnimationFrame(window.update);
         return;
     }
@@ -162,7 +194,6 @@ window.update = function() {
     let dx_mov = 0; let dy_mov = 0;
     let insideHole = false;
     
-    // VÉRIFICATION SI LE JOUEUR EST AU DESSUS D'UN GOUFFRE
     if (typeof currentObstacles !== 'undefined') {
         for (let obs of currentObstacles) {
             if (obs.type === 'hole' && window.checkCollision(player, obs)) { insideHole = true; break; }
@@ -170,8 +201,15 @@ window.update = function() {
     }
 
     if (player.dashTimer > 0 || insideHole) {
-        if (player.dashTimer <= 0 && insideHole) player.dashTimer = 1; // Force la traversée
-        player.dashTimer--; dx_mov = player.dashVx; dy_mov = player.dashVy;
+        // PROLONGATION AUTOMATIQUE DU DASH SI AU-DESSUS D'UN TROU
+        if (insideHole && player.dashTimer <= 0) { player.dashTimer = 2; }
+        player.dashTimer--; 
+        
+        if (player.dashVx === 0 && player.dashVy === 0 && insideHole) {
+            player.dashVx = Math.cos(player.faceAngle) * player.speed * 2;
+            player.dashVy = Math.sin(player.faceAngle) * player.speed * 2;
+        }
+        dx_mov = player.dashVx; dy_mov = player.dashVy;
     } else {
         if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
         if (keys['d'] || keys['arrowright'])              dx_mov += currentSpeedPlayer;
@@ -180,9 +218,9 @@ window.update = function() {
     }
     
     let oldPx = player.x; player.x += dx_mov;
-    if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.x = oldPx; player.dashTimer = 0; } 
+    if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || (!worldState.level2Unlocked && playerStats.inventory.keys.skull <= 0))) { player.x = oldPx; player.dashTimer = 0; } 
     
-    if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0) {
+    if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0 && !insideHole) {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
@@ -204,9 +242,9 @@ window.update = function() {
     }
     
     let oldPy = player.y; player.y += dy_mov;
-    if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || playerStats.inventory.keys.skull <= 0)) { player.y = oldPy; player.dashTimer = 0; } 
+    if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || (!worldState.level2Unlocked && playerStats.inventory.keys.skull <= 0))) { player.y = oldPy; player.dashTimer = 0; } 
     
-    if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0) {
+    if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0 && !insideHole) {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
@@ -265,17 +303,20 @@ window.update = function() {
     if (typeof window.updateEnemies === 'function') window.updateEnemies();
     if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-    // COLLISIONS DES ESCALIERS MODIFIÉES POUR NE PLUS BLOQUER
+    // LOGIQUE ESCALIER DÉFINITIVE (PERSISTANCE DE L'OUVERTURE)
     if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
         let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
         let isColliding = player.x < triggerStairs.x + triggerStairs.width && player.x + player.size > triggerStairs.x && player.y < triggerStairs.y + triggerStairs.height && player.y + player.size > triggerStairs.y;
                           
-        if (isColliding && playerStats.inventory.keys.skull > 0) {
-            playerStats.inventory.keys.skull--; 
+        if (isColliding && (worldState.level2Unlocked || playerStats.inventory.keys.skull > 0)) {
+            if (!worldState.level2Unlocked) {
+                playerStats.inventory.keys.skull--; 
+                worldState.level2Unlocked = true;
+            }
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(101, 'south');
             player.x = canvas.width / 2 - player.size / 2;
-            player.y = canvas.height / 2 + 100; // Apparaît en bas
+            player.y = canvas.height / 2 + 100; // Apparaît bien en dessous de l'escalier
             player.dashTimer = 0; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             return requestAnimationFrame(window.update);
@@ -290,7 +331,7 @@ window.update = function() {
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(8, 'north');
             player.x = canvas.width / 2 - player.size / 2;
-            player.y = canvas.height / 2 + 100; // Apparaît en bas
+            player.y = canvas.height / 2 + 100; // Apparaît bien en dessous de l'escalier
             player.dashTimer = 0; 
             if (typeof window.updateHUD === 'function') window.updateHUD(); 
             return requestAnimationFrame(window.update);
@@ -301,5 +342,4 @@ window.update = function() {
     requestAnimationFrame(window.update);
 };
 
-// LA LIGNE MAGIQUE POUR DÉMARRER LE JEU
 window.update();
