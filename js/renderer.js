@@ -60,14 +60,17 @@ window.renderGameView = function() {
     let isNewFloor = false;
     
     if (typeof currentRoomId !== 'undefined') {
-        if (currentRoomId === 999 && worldState && worldState.arenaFloor && assetsManager.images[worldState.arenaFloor]) {
-            imageSol = assetsManager.images[worldState.arenaFloor];
-            isNewFloor = (worldState.arenaFloor !== 'sol_base');
+        let floorKey = 'sol_base';
+        if (currentRoomId === 999 && worldState && worldState.arenaFloor) {
+            floorKey = worldState.arenaFloor;
+        } else if (worldState && worldState.roomFloors && worldState.roomFloors[currentRoomId]) {
+            floorKey = worldState.roomFloors[currentRoomId];
         }
-        else if (currentRoomId === 114 && assetsManager.images['floor2']) { imageSol = assetsManager.images['floor2']; isNewFloor = true; }
-        else if (currentRoomId >= 107 && currentRoomId <= 110 && assetsManager.images['floor3']) { imageSol = assetsManager.images['floor3']; isNewFloor = true; }
-        else if (currentRoomId === 103 && assetsManager.images['floor4']) { imageSol = assetsManager.images['floor4']; isNewFloor = true; }
-        else if (currentRoomId === 102 && assetsManager.images['floor5']) { imageSol = assetsManager.images['floor5']; isNewFloor = true; }
+        
+        if (assetsManager.images[floorKey]) {
+            imageSol = assetsManager.images[floorKey];
+            isNewFloor = (floorKey !== 'sol_base');
+        }
     }
 
     ctx.fillStyle = '#2c251f'; 
@@ -154,7 +157,6 @@ window.renderGameView = function() {
         ctx.save();
         if (sImg && sImg.complete && sImg.naturalWidth > 0) {
             if (currentRoomId === 101) {
-                // Rotation 180 degrés pour la salle 101
                 ctx.translate(sx + sw/2, sy + sh/2);
                 ctx.rotate(Math.PI);
                 ctx.drawImage(sImg, -sw/2, -sh/2, sw, sh);
@@ -425,7 +427,6 @@ window.renderGameView = function() {
             ctx.shadowColor = 'transparent'; 
             ctx.shadowBlur = 0;
             
-            // ANIMATION DES FLAMMES SUR LE CORPS DE L'ENNEMI
             if (enemy.isBurning) {
                 ctx.rotate(Math.sin(Date.now() / 150) * 0.2); 
                 let fireImgName = (Date.now() % 400 < 200) ? 'burned_ennemy_view1' : 'burned_ennemy_view2';
@@ -466,7 +467,6 @@ window.renderGameView = function() {
                 
                 if (p.type === 'fire_mage') {
                     let fbSize = p.size * 5.0; 
-                    // BOULE DE FEU ÉTIRÉE (TRAÎNÉE)
                     ctx.drawImage(pImg, -fbSize/2, -fbSize, fbSize, fbSize * 2.5);
                 } else {
                     if (p.type === 'fire_necromancien') { drawSize = drawSize / 2; }
@@ -606,7 +606,6 @@ window.renderGameView = function() {
             
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
-            // ATTAQUE DU CHEVALIER (VISÉE PARFAITE & PLUS RAPIDE)
             if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
                 let swordImg = window.getAsset('Attack_sword_knight');
                 if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
@@ -672,7 +671,6 @@ window.renderGameView = function() {
     
     let isElfUlt = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf');
     
-    // VISION TOTALE DE L'ELFE SOUS ULTI
     if (isElfUlt) {
         lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
     } else if (player.heroClass === 'Mage') {
