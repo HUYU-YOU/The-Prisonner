@@ -449,7 +449,8 @@ window.renderGameView = function() {
                 
                 if (p.type === 'fire_mage') {
                     let fbSize = p.size * 5.0; 
-                    ctx.drawImage(pImg, -fbSize/2, -fbSize/2, fbSize, fbSize);
+                    // BOULE DE FEU ÉTIRÉE (TRAÎNÉE)
+                    ctx.drawImage(pImg, -fbSize/2, -fbSize, fbSize, fbSize * 2.5);
                 } else {
                     if (p.type === 'fire_necromancien') { drawSize = drawSize / 2; }
                     ctx.drawImage(pImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
@@ -588,30 +589,35 @@ window.renderGameView = function() {
             
             ctx.drawImage(pImg, -displaySize/2, -displaySize/2, displaySize, displaySize);
             
+            // ATTAQUE DU CHEVALIER (SLASH FLUIDE ET DIRECTIONNEL)
             if (prefixP === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown > 0) {
+                let progress = (40 - attackCooldown) / 40;
+                ctx.save();
+                ctx.rotate(-tilt); // Annule le tilt pour avoir un angle parfait
+                ctx.rotate(player.faceAngle); // S'aligne sur la souris
+                
+                let startArc = -Math.PI / 2.5;
+                let endArc = startArc + progress * Math.PI;
+                
+                // Dessine la traînée de l'épée
+                ctx.beginPath();
+                ctx.arc(0, 0, 70, startArc, endArc);
+                ctx.lineWidth = 25 * (1 - Math.pow(progress, 2));
+                ctx.strokeStyle = `rgba(255, 255, 255, ${1 - progress})`;
+                ctx.shadowColor = '#ecf0f1';
+                ctx.shadowBlur = 20;
+                ctx.stroke();
+
                 let swordImg = window.getAsset('Attack_sword_knight');
                 if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
                     ctx.save();
-                    let progress = (40 - attackCooldown) / 40;
-                    let swingAngle = -Math.PI / 4 + progress * (Math.PI / 2);
-                    
-                    ctx.translate(25, 0); 
-                    ctx.rotate(swingAngle); 
-                    ctx.globalAlpha = 1 - progress; 
-                    ctx.shadowColor = '#ecf0f1'; 
-                    ctx.shadowBlur = 15; 
-                    ctx.drawImage(swordImg, -60, -60, 120, 120);
+                    ctx.rotate(endArc);
+                    ctx.translate(70, 0);
+                    ctx.rotate(Math.PI / 4);
+                    ctx.globalAlpha = 1 - progress;
+                    ctx.drawImage(swordImg, -30, -30, 60, 60);
                     ctx.restore();
                 }
-                ctx.save();
-                let progress = (40 - attackCooldown) / 40;
-                ctx.beginPath();
-                ctx.arc(0, 0, 110, -Math.PI/1.2, Math.PI/1.2);
-                ctx.lineWidth = 20 * (1 - progress);
-                ctx.strokeStyle = `rgba(236, 240, 241, ${1 - progress})`;
-                ctx.shadowColor = '#fff';
-                ctx.shadowBlur = 10;
-                ctx.stroke();
                 ctx.restore();
             }
         } else {
@@ -657,7 +663,12 @@ window.renderGameView = function() {
     
     lctx.globalCompositeOperation = 'source-over';
     
-    if (player.heroClass === 'Mage') {
+    let isElfUlt = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf');
+    
+    // VISION DE L'ELFE (ULTI)
+    if (isElfUlt) {
+        lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
+    } else if (player.heroClass === 'Mage') {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
     } else {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; 
