@@ -17,7 +17,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
     currentObstacles = []; currentDoors = []; currentItems = []; currentEnemies = [];
     
-    playerInvulnerableTimer = 30; // 0.5 seconde d'invincibilité
+    playerInvulnerableTimer = 30; 
     
     if (!worldState.bloodStains) worldState.bloodStains = {}; 
     if (!worldState.visitedRooms) worldState.visitedRooms = {};
@@ -32,7 +32,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     bloodStains = worldState.bloodStains[roomId];
     worldState.visitedRooms[roomId] = true; 
     
-    // GÉNÉRATION DES SOLS ALÉATOIRES
     if (!worldState.roomFloors) worldState.roomFloors = {};
     if (!worldState.roomFloors[roomId]) {
         if (roomId === 1) worldState.roomFloors[roomId] = 'sol_base';
@@ -184,7 +183,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
         }
         arenaState = "WAITING";
-        arenaTimer = 180; // 3 secondes d'attente
+        arenaTimer = 180;
         
         currentDoors = []; 
         currentItems = []; 
