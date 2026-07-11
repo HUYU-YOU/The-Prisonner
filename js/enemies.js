@@ -298,7 +298,6 @@ window.updateEnemies = function() {
             }
         }
 
-        // VITESSE DES PROJECTILES AUGMENTÉE DE 30% (* 1.3)
         let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille'].includes(enemy.type);
         if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
             let pSpeed = 6 * 1.3, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
@@ -368,7 +367,8 @@ window.updateEnemies = function() {
             }
         }
         
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) { 
+        // CORRECTION COLLISION ESCALIERS (LES MOB SONT BLOQUÉS PAR L'ESCALIER)
+        if ((currentRoomId === 8 || currentRoomId === 101) && window.checkCollision(enemy, centerStairs)) { 
             enemy.x = oldEx; hitX = true; 
             enemy.y += (enemy.y < centerStairs.y + centerStairs.height/2) ? -2 : 2; 
         }
@@ -384,7 +384,7 @@ window.updateEnemies = function() {
                 }
             }
         }
-        if (currentRoomId === 8 && window.checkCollision(enemy, centerStairs)) { 
+        if ((currentRoomId === 8 || currentRoomId === 101) && window.checkCollision(enemy, centerStairs)) { 
             enemy.y = oldEy; hitY = true; 
             enemy.x += (enemy.x < centerStairs.x + centerStairs.width/2) ? -2 : 2; 
         }
@@ -583,12 +583,6 @@ window.updateEnemies = function() {
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
             
             currentEnemies.splice(i, 1);
-            
-            if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
-                currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-                currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
-                arenaState = "DOOR_OPEN"; 
-            }
             
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
                 worldState.clearedRooms[currentRoomId] = true;
