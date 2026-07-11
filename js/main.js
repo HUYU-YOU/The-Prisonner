@@ -1,6 +1,9 @@
 // ============================================================================
 // js/main.js - MOTEUR PRINCIPAL ET BOUCLE DE JEU
 // ============================================================================
+
+document.addEventListener('contextmenu', event => event.preventDefault());
+
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
@@ -127,7 +130,7 @@ window.update = function() {
     if (player.dashCooldown === undefined) player.dashCooldown = 0;
     if (player.dashCooldown > 0) player.dashCooldown--;
     if (typeof attackCooldown !== 'undefined' && attackCooldown > 0) attackCooldown--;
-    if (player.heroClass === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown < 15) isAttacking = false; // Ajusté pour CD 25
+    if (player.heroClass === 'Knight' && typeof attackCooldown !== 'undefined' && attackCooldown < 15) isAttacking = false;
 
     if (typeof isUltimateActive !== 'undefined' && isUltimateActive) {
         if (typeof ultimateTimer !== 'undefined') {
@@ -297,3 +300,6 @@ window.update = function() {
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
+
+// LA LIGNE MAGIQUE POUR DÉMARRER LE JEU
+window.update();
