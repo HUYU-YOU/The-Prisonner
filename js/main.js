@@ -60,34 +60,45 @@ window.update = function() {
             }
         }
 
+        // --- NOUVEAU SYSTÈME D'ARÈNE 100% SÉCURISÉ ---
         if (currentRoomId === 999) {
             if (typeof arenaState !== 'undefined' && arenaState === "WAITING") {
                 arenaTimer--;
                 if (arenaTimer <= 0) {
                     arenaState = "PLAYING";
-                    window.arenaEnemiesToSpawn = 5 + Math.floor(arenaWave * 1.5);
-                }
-            } 
-            else if (typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
-                if (window.arenaEnemiesToSpawn > 0 && currentEnemies.length < 20) {
-                    if (Math.random() < 0.02) {
-                        let pool = [];
+                    window.arenaQueue = [];
+                    // Vagues 1 à 5 faciles et codées en dur
+                    if (arenaWave === 1) window.arenaQueue = ['goblin', 'goblin'];
+                    else if (arenaWave === 2) window.arenaQueue = ['goblin', 'goblin', 'skeleton'];
+                    else if (arenaWave === 3) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton'];
+                    else if (arenaWave === 4) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton'];
+                    else if (arenaWave === 5) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton', 'skeleton'];
+                    else {
+                        let total = 5 + Math.floor(arenaWave * 1.5);
+                        let pool = ['goblin'];
                         if (arenaWave <= 10) pool.push('goblin', 'skeleton');
                         if (arenaWave >= 9 && arenaWave <= 15) pool.push('spider');
                         if (arenaWave >= 16) pool.push('orc', 'skeleton'); 
                         if (arenaWave >= 21) { pool = pool.filter(e => e !== 'skeleton'); pool.push('golem'); } 
                         if (arenaWave >= 25) { pool = pool.filter(e => e !== 'orc'); pool.push('minotaure'); } 
                         if (arenaWave >= 31) { pool = pool.filter(e => e !== 'golem'); pool.push('gargouille', 'wolf'); } 
-
-                        if (pool.length === 0) pool = ['goblin']; 
-                        let t = pool[Math.floor(Math.random() * pool.length)];
-                        if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
-                        window.arenaEnemiesToSpawn--;
+                        for (let i = 0; i < total; i++) window.arenaQueue.push(pool[Math.floor(Math.random() * pool.length)]);
                     }
-                } else if (window.arenaEnemiesToSpawn <= 0 && currentEnemies.length === 0) {
-                    currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-                    currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
-                    arenaState = "DOOR_OPEN"; 
+                }
+            } 
+            else if (typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
+                if (window.arenaQueue && window.arenaQueue.length > 0 && currentEnemies.length < 20) {
+                    if (Math.random() < 0.05) { 
+                        let t = window.arenaQueue.shift();
+                        if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
+                    }
+                } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
+                    // Sécurité Absolue: Ne spawn la porte qu'une seule fois
+                    if (currentDoors.length === 0) {
+                        currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
+                        arenaState = "DOOR_OPEN"; 
+                    }
                 }
             }
         }
