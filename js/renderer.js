@@ -205,11 +205,21 @@ window.renderGameView = function() {
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
             if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.level2Unlocked && door.face === 'south') { stateStr = '_close'; }
             
-            // Logique de porte d'égout pour le Niveau 3
+            // Logique intelligente pour charger water_door (Tient compte de tes noms personnalisés)
             if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900) {
-                if (isOpen) doorImg = assetsManager.images['water_door'];
-                else if (door.requiresKey && door.locked) doorImg = assetsManager.images['water_door_key'];
-                else doorImg = assetsManager.images['water_door'];
+                let faceKey = door.face; 
+                if (faceKey === 'north') faceKey = 'back';
+                if (faceKey === 'south') faceKey = 'front';
+                if (faceKey === 'west') faceKey = 'left';
+                if (faceKey === 'east') faceKey = 'right';
+                
+                let waterState = isOpen ? '_open' : '_close'; 
+                let assetName = faceKey + '_water_door' + waterState;
+                doorImg = assetsManager.images[assetName];
+                
+                if (!doorImg || !doorImg.complete || doorImg.naturalWidth === 0) {
+                    doorImg = assetsManager.images['water_door']; 
+                }
             } else {
                 if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
                 else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
@@ -607,11 +617,19 @@ window.renderGameView = function() {
             pImg = window.getAsset(fallbackNameP);
         }
 
+        // --- MAGIE DU PIVOT FLUIDE ET SKINS 8 DIRS ---
         if (is8DirP) {
+            let dirAngles = { 'east': 0, 'southeast': Math.PI/4, 'south': Math.PI/2, 'southwest': 3*Math.PI/4, 'west': Math.PI, 'northwest': -3*Math.PI/4, 'north': -Math.PI/2, 'northeast': -Math.PI/4 };
+            let baseAngle = dirAngles[dirP] !== undefined ? dirAngles[dirP] : 0;
+            let pivot = player.faceAngle - baseAngle;
+            
+            while (pivot < -Math.PI) pivot += Math.PI * 2;
+            while (pivot > Math.PI) pivot -= Math.PI * 2;
+            
             if (isSwimming && skinNameP.indexOf('swim') === -1) {
                 ctx.rotate(player.faceAngle + Math.PI/2);
             } else {
-                ctx.rotate(tilt); 
+                ctx.rotate(pivot + tilt); // On applique le micro-pivot en + de l'image 8 directions
             }
         } else {
             if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
@@ -838,14 +856,14 @@ window.renderGameView = function() {
         ctx.textAlign = 'left';
     }
 
-    // Affichage par dessus la lumière du dialogue actif
+    // Affichage par dessus la lumière du dialogue actif (Océan)
     if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
         ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.strokeStyle = '#3498db';
         ctx.lineWidth = 4;
         let dw = 700, dh = 150;
-        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 30;
+        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 30; // Positionné tout en bas
         
         ctx.fillRect(dx, dy, dw, dh);
         ctx.strokeRect(dx, dy, dw, dh);
