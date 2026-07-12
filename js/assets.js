@@ -293,3 +293,28 @@ assetsManager.load('Attack_rock_golem', 'assets/skins/Attack/Attack_rock_golem.j
 assetsManager.load('Attack_rock_gargouille', 'assets/skins/Attack/Attack_rock_gargouille.jpeg');
 assetsManager.load('Attack_meteorites_elysia', 'assets/skins/Attack/Attack_meteorites_elysia.jpeg');
 assetsManager.load('Attack_meteorites_dragon', 'assets/skins/Attack/Attack_meteorites_dragon.jpeg');
+
+//NIVEAU 3
+
+assetsManager.load('floor_water1', 'assets/tiles/floor_water1.png');
+assetsManager.load('floor_water2', 'assets/tiles/floor_water2.png');
+assetsManager.load('floor_water3', 'assets/tiles/floor_water3.png');
+assetsManager.load('floor_water4', 'assets/tiles/floor_water4.png');
+assetsManager.load('floor_water5', 'assets/tiles/floor_water5.png');
+
+assetsManager.load('Attack_water_ball', 'assets/skins/Attack/Attack_water_ball.jpeg');
+assetsManager.load('Attack_ink_ball', 'assets/skins/Attack/Attack_ink_ball.jpeg');
+
+const dirs = ['south', 'north', 'east', 'west', 'northeast', 'northwest', 'southeast', 'southwest'];
+dirs.forEach(d => {
+    assetsManager.load(`Siren_${d}_view`, `assets/skins/siren/siren_${d}_view.png`);
+    assetsManager.load(`Anglerfish_${d}_view`, `assets/skins/anglerfish/anglerfish_${d}_view.png`);
+    assetsManager.load(`Kraken_${d}_view`, `assets/skins/kraken/kraken_${d}_view.png`);
+    
+    assetsManager.load(`Knight_swim1_${d}_view`, `assets/skins/Knight/Knight_swim1_${d}_view.png`);
+    assetsManager.load(`Knight_swim2_${d}_view`, `assets/skins/Knight/Knight_swim2_${d}_view.png`);
+    assetsManager.load(`Elf_swim1_${d}_view`, `assets/skins/Elf/Elf_swim1_${d}_view.png`);
+    assetsManager.load(`Elf_swim2_${d}_view`, `assets/skins/Elf/Elf_swim2_${d}_view.png`);
+
+    assetsManager.load(`Necromancer_swim1_${d}_view`, `assets/skins/Necromancien/Necromancien_swim1_${d}_view.png`);
+    assetsManager.load(`Necromancer_swim2_${d}_view`, `assets/skins/Necromancien/Necromancien_swim2_${d}_view.png`);
