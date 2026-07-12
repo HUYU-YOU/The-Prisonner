@@ -318,3 +318,14 @@ dirs.forEach(d => {
 
     assetsManager.load(`Necromancer_swim1_${d}_view`, `assets/skins/Necromancien/Necromancien_swim1_${d}_view.png`);
     assetsManager.load(`Necromancer_swim2_${d}_view`, `assets/skins/Necromancien/Necromancien_swim2_${d}_view.png`);
+}); // <--- C'EST CETTE LIGNE QUI MANQUAIT ET FAISAIT TOUT CRASHER !
+
+
+assetsManager.load('left_water_door_open', 'assets/decors/left_water_door_open.png');
+assetsManager.load('right_water_door_open', 'assets/decors/right_water_door_open.png');
+assetsManager.load('east_water_door_open', 'assets/decors/east_water_door_open.png');
+assetsManager.load('west_water_door_open', 'assets/decors/west_water_door_open.png');
+assetsManager.load('left_water_door_close', 'assets/decors/left_water_door_close.png');
+assetsManager.load('right_water_door_close', 'assets/decors/right_water_door_close.png');
+assetsManager.load('east_water_door_close', 'assets/decors/east_water_door_close.png');
+assetsManager.load('west_water_door_close', 'assets/decors/west_water_door_close.png');
