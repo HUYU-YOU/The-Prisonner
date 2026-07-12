@@ -620,12 +620,6 @@ window.updateEnemies = function() {
             
             currentEnemies.splice(i, 1);
             
-            if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
-                currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-                currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
-                arenaState = "DOOR_OPEN"; 
-            }
-            
             if (currentEnemies.length === 0 && currentRoomId !== 999) {
                 worldState.clearedRooms[currentRoomId] = true;
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
