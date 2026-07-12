@@ -580,10 +580,14 @@ window.renderGameView = function() {
         let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         
-        // --- NOUVEAU SYSTÈME DE SKINS POUR LA NAGE ---
+        // CORRECTIF: Skin Elfe Nageur Forcé et Dimension normale
         if (isSwimming) {
             let animFrame = (Math.floor(Date.now() / 250) % 2 === 0) ? '1' : '2';
-            skinNameP = `${prefixP}_swim${animFrame}_south_view`; 
+            if (player.heroClass === 'Elf') {
+                skinNameP = `${prefixP}_swim${animFrame}_southwest_view`; 
+            } else {
+                skinNameP = `${prefixP}_swim${animFrame}_south_view`; 
+            }
         } 
         
         let pImg = window.getAsset(skinNameP);
@@ -613,9 +617,13 @@ window.renderGameView = function() {
             pImg = window.getAsset(fallbackNameP);
         }
 
-        // --- ROTATION FLUIDE SPÉCIALE NAGE ET FIX ---
         if (isSwimming) {
-            ctx.rotate(player.faceAngle + Math.PI/2);
+            // CORRECTIF: Calcul du pivot parfait (-135° pour le southwest de l'elfe)
+            if (player.heroClass === 'Elf') {
+                ctx.rotate(player.faceAngle - (3 * Math.PI / 4) + tilt); 
+            } else {
+                ctx.rotate(player.faceAngle + Math.PI/2 + tilt); 
+            }
         } else if (is8DirP) {
             let dirAngles = { 'east': 0, 'southeast': Math.PI/4, 'south': Math.PI/2, 'southwest': 3*Math.PI/4, 'west': Math.PI, 'northwest': -3*Math.PI/4, 'north': -Math.PI/2, 'northeast': -Math.PI/4 };
             let baseAngle = dirAngles[dirP] !== undefined ? dirAngles[dirP] : 0;
@@ -632,9 +640,10 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             let displaySize = player.size * 3.75; 
             
+            // CORRECTIF: On garde la petite taille si l'Elfe nage
             if (player.heroClass === 'Elf') {
-                displaySize = is8DirP ? (player.size * 1.875) : (player.size * 4.5); 
-            } else if (player.heroClass === 'Mage' && !is8DirP) {
+                displaySize = (is8DirP || isSwimming) ? (player.size * 1.875) : (player.size * 4.5); 
+            } else if (player.heroClass === 'Mage' && !is8DirP && !isSwimming) {
                 displaySize = player.size * 5.25;
             }
             
@@ -855,7 +864,7 @@ window.renderGameView = function() {
         ctx.strokeStyle = '#3498db';
         ctx.lineWidth = 4;
         let dw = 700, dh = 150;
-        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 30;
+        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 30; 
         
         ctx.fillRect(dx, dy, dw, dh);
         ctx.strokeRect(dx, dy, dw, dh);
@@ -865,7 +874,7 @@ window.renderGameView = function() {
         ctx.textAlign = 'center';
         let lines = window.activeDialogue.text.split('\n');
         for (let i = 0; i < lines.length; i++) {
-            if (i === lines.length - 1) ctx.fillStyle = '#f1c40f';
+            if (i === lines.length - 1) ctx.fillStyle = '#f1c40f'; 
             ctx.fillText(lines[i], canvas.width/2, dy + 45 + (i * 35));
         }
         ctx.restore();
