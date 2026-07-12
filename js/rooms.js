@@ -120,7 +120,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { x: canvas.width/2 + 100, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_102_105', dest: 105, spawnX: canvas.width/2 + 100, spawnY: spawnS.y },
             { ...doorW, id: 'door_102_106', requiresKey: false, locked: false, dest: 106, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
-        currentObstacles.push({ x: canvas.width/2 - 120, y: wallMargin, width: 240, height: canvas.height - wallMargin*2, type: 'hole' });
+        // Extension des Hitbox du trou (Gauche)
+        currentObstacles.push({ x: wallMargin, y: wallMargin, width: 250, height: 250, type: 'hole' });
+        currentObstacles.push({ x: wallMargin, y: canvas.height - wallMargin - 250, width: 250, height: 250, type: 'hole' });
         if (!worldState.collectedItems['key_room102']) {
             currentItems.push({ id: 'key_room102', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
         }
@@ -130,7 +132,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorW, id: 'door_103_101', requiresKey: false, locked: false, dest: 101, spawnX: spawnE.x, spawnY: spawnE.y },
             { ...doorN, id: 'door_103_111', requiresKey: false, locked: false, dest: 111, spawnX: spawnS.x, spawnY: spawnS.y }
         ]; 
-        // Hitbox élargies pour empêcher de marcher sur les bords visuels du trou
+        // Extension des Hitbox du trou (Droite) pour correspondre à la ligne verte
         currentObstacles.push({ x: canvas.width - wallMargin - 250, y: wallMargin, width: 250, height: 250, type: 'hole' });
         currentObstacles.push({ x: canvas.width - wallMargin - 250, y: canvas.height - wallMargin - 250, width: 250, height: 250, type: 'hole' });
     }
@@ -206,7 +208,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId])); 
         } 
         else if (!worldState.clearedRooms[roomId]) {
-            // Spawn calculé à l'opposé pour le niveau 3
+            // Spawn calculé à l'opposé pour le niveau 3 (Sirènes éloignées de l'entrée)
             let spawnOppositeX = canvas.width/2;
             let spawnOppositeY = canvas.height/2;
             if (entryFace === 'south') spawnOppositeY = wallMargin + 100;
