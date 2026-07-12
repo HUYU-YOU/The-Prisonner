@@ -94,15 +94,6 @@ window.renderGameView = function() {
         } 
     }
 
-    if (typeof currentObstacles !== 'undefined') {
-        currentObstacles.forEach(obs => {
-            if (obs.type === 'water_visual') {
-                ctx.fillStyle = 'rgba(41, 128, 185, 0.4)'; 
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-            }
-        });
-    }
-
     let isVertCorridor = (typeof currentRoomId !== 'undefined' && (currentRoomId === 5 || currentRoomId === 6 || currentRoomId === 111 || currentRoomId === 112 || currentRoomId === 113 || currentRoomId === 205 || currentRoomId === 206));
     if (isVertCorridor) {
         ctx.fillStyle = '#0a0a0a'; 
@@ -214,10 +205,17 @@ window.renderGameView = function() {
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
             if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.level2Unlocked && door.face === 'south') { stateStr = '_close'; }
             
-            if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
-            else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
-            else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; 
-            else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
+            // Logique de porte d'égout pour le Niveau 3
+            if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900) {
+                if (isOpen) doorImg = assetsManager.images['water_door'];
+                else if (door.requiresKey && door.locked) doorImg = assetsManager.images['water_door_key'];
+                else doorImg = assetsManager.images['water_door'];
+            } else {
+                if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
+                else if (door.face === 'south') doorImg = assetsManager.images['front_door' + stateStr]; 
+                else if (door.face === 'west') doorImg = assetsManager.images['left_door' + stateStr]; 
+                else if (door.face === 'east') doorImg = assetsManager.images['right_door' + stateStr];
+            }
             
             if (doorImg && doorImg.complete && doorImg.naturalWidth > 0) { ctx.drawImage(doorImg, door.x, door.y, door.width, door.height); } 
             else { ctx.fillStyle = isOpen ? '#1a110c' : '#3e2a1d'; ctx.fillRect(door.x, door.y, door.width, door.height); }
@@ -838,6 +836,29 @@ window.renderGameView = function() {
             ctx.fillText("VAGUE " + displayWave, canvas.width/2, wallMargin + 40);
         }
         ctx.textAlign = 'left';
+    }
+
+    // Affichage par dessus la lumière du dialogue actif
+    if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 4;
+        let dw = 700, dh = 150;
+        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 30;
+        
+        ctx.fillRect(dx, dy, dw, dh);
+        ctx.strokeRect(dx, dy, dw, dh);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        let lines = window.activeDialogue.text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            if (i === lines.length - 1) ctx.fillStyle = '#f1c40f'; // Met en évidence les touches
+            ctx.fillText(lines[i], canvas.width/2, dy + 45 + (i * 35));
+        }
+        ctx.restore();
     }
 
     ctx.restore(); 
