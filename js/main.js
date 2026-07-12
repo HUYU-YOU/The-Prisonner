@@ -3,7 +3,6 @@
 // ============================================================================
 
 document.addEventListener('contextmenu', event => event.preventDefault());
-
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
@@ -35,8 +34,9 @@ window.update = function() {
     if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
     if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
     
-    if (currentRoomId >= 200 && currentRoomId < 900) {
-        if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000;
+    // GESTION OXYGÈNE (NIVEAU 3)
+    if (currentRoomId >= 200) {
+        if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000; // 10 minutes (60 fps * 600 s)
         worldState.oxygen--;
         if (worldState.oxygen <= 0) {
             playerStats.health = 0;
@@ -66,7 +66,7 @@ window.update = function() {
 
                     if (pool.length === 0) pool = ['goblin']; 
                     let t = pool[Math.floor(Math.random() * pool.length)];
-                    if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
+                    if (typeof spawnEnemy === 'function') spawnEnemy(t, 1);
                     window.arenaEnemiesToSpawn--;
                 }
             } else if (window.arenaEnemiesToSpawn <= 0 && currentEnemies.length === 0) {
@@ -195,7 +195,9 @@ window.update = function() {
     if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
     let currentSpeedPlayer = (typeof playerSlowTimer !== 'undefined' && playerSlowTimer > 0) ? player.speed / 2 : player.speed;
-    if (currentRoomId >= 200 && currentRoomId < 900) currentSpeedPlayer *= 0.65;
+    
+    // NIVEAU 3 : VITESSE RÉDUITE DANS L'EAU (-35%)
+    if (currentRoomId >= 200) currentSpeedPlayer *= 0.65;
     
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
@@ -204,7 +206,7 @@ window.update = function() {
     
     if (typeof currentObstacles !== 'undefined') {
         for (let obs of currentObstacles) {
-            if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { insideHole = true; break; }
+            if (obs.type === 'hole' && window.checkCollision(player, obs)) { insideHole = true; break; }
         }
     }
 
@@ -231,9 +233,9 @@ window.update = function() {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
-                if (obs.type === 'water_trigger') {
+                if (obs.type === 'water') {
                     if (currentRoomId === 114) {
-                        keys = {}; player.dashTimer = 0; player.x = oldPx;
+                        keys = {}; player.dashTimer = 0;
                         if (confirm("L'eau est sombre et glaciale... Devrais-je plonger dans les abysses ?")) {
                             worldState.oxygen = 36000;
                             if (typeof window.saveRoomState === 'function') window.saveRoomState();
@@ -241,11 +243,12 @@ window.update = function() {
                             player.x = canvas.width / 2 - player.size / 2;
                             player.y = canvas.height - wallMargin - 150;
                         } else {
-                            player.x += (player.x < canvas.width/2) ? -40 : 40;
+                            player.x = oldPx;
+                            player.y += 80;
                         }
                     }
                     break;
-                } else if (obs.type !== 'water_visual') {
+                } else {
                     player.x = oldPx; player.dashTimer = 0; break;
                 }
             }
@@ -266,9 +269,9 @@ window.update = function() {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
-                if (obs.type === 'water_trigger') {
+                if (obs.type === 'water') {
                     if (currentRoomId === 114) {
-                        keys = {}; player.dashTimer = 0; player.y = oldPy;
+                        keys = {}; player.dashTimer = 0;
                         if (confirm("L'eau est sombre et glaciale... Devrais-je plonger dans les abysses ?")) {
                             worldState.oxygen = 36000;
                             if (typeof window.saveRoomState === 'function') window.saveRoomState();
@@ -276,11 +279,11 @@ window.update = function() {
                             player.x = canvas.width / 2 - player.size / 2;
                             player.y = canvas.height - wallMargin - 150;
                         } else {
-                            player.y += (player.y < canvas.height/2) ? -40 : 40;
+                            player.y = oldPy - 80;
                         }
                     }
                     break;
-                } else if (obs.type !== 'water_visual') {
+                } else {
                     player.y = oldPy; player.dashTimer = 0; break;
                 }
             }
@@ -372,5 +375,5 @@ window.update = function() {
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
-// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
+
 window.update();
