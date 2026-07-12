@@ -577,19 +577,20 @@ window.renderGameView = function() {
             else actionP = 'attack2';
         }
         
-        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200);
+        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         
+        // --- NOUVEAU SYSTÈME DE SKINS POUR LA NAGE ---
         if (isSwimming) {
             let animFrame = (Math.floor(Date.now() / 250) % 2 === 0) ? '1' : '2';
-            skinNameP = `${prefixP}_swim${animFrame}_${dirP}_${actionP}`;
+            skinNameP = `${prefixP}_swim${animFrame}_south_view`; 
         } 
         
         let pImg = window.getAsset(skinNameP);
-        let is8DirP = true;
+        let is8DirP = !isSwimming; 
 
         if (!pImg || !pImg.complete || pImg.naturalWidth === 0) {
-            let pSkinName = isSwimming ? `${prefixP}_swim1_${dirP}_view` : `${prefixP}_${dirP}_view`;
+            let pSkinName = isSwimming ? `${prefixP}_swim1_south_view` : `${prefixP}_${dirP}_view`;
             pImg = window.getAsset(pSkinName);
         }
 
@@ -612,19 +613,17 @@ window.renderGameView = function() {
             pImg = window.getAsset(fallbackNameP);
         }
 
-        if (is8DirP) {
+        // --- ROTATION FLUIDE SPÉCIALE NAGE ET FIX ---
+        if (isSwimming) {
+            ctx.rotate(player.faceAngle + Math.PI/2);
+        } else if (is8DirP) {
             let dirAngles = { 'east': 0, 'southeast': Math.PI/4, 'south': Math.PI/2, 'southwest': 3*Math.PI/4, 'west': Math.PI, 'northwest': -3*Math.PI/4, 'north': -Math.PI/2, 'northeast': -Math.PI/4 };
             let baseAngle = dirAngles[dirP] !== undefined ? dirAngles[dirP] : 0;
             let pivot = player.faceAngle - baseAngle;
             
             while (pivot < -Math.PI) pivot += Math.PI * 2;
             while (pivot > Math.PI) pivot -= Math.PI * 2;
-            
-            if (isSwimming && skinNameP.indexOf('swim') === -1) {
-                ctx.rotate(player.faceAngle + Math.PI/2);
-            } else {
-                ctx.rotate(pivot + tilt); 
-            }
+            ctx.rotate(pivot + tilt); 
         } else {
             if (player.heroClass === 'Mage') ctx.rotate(player.faceAngle + tilt + (Math.PI / 2)); 
             else ctx.rotate(player.faceAngle + tilt); 
@@ -649,7 +648,7 @@ window.renderGameView = function() {
                     let progress = (maxCd - attackCooldown) / maxCd; 
                     let swingAngle = -Math.PI / 2 + progress * Math.PI; 
                     
-                    if (is8DirP && !(isSwimming && skinNameP.indexOf('swim') === -1)) ctx.rotate(-tilt); 
+                    if (is8DirP && !isSwimming) ctx.rotate(-tilt); 
                     ctx.rotate(player.faceAngle); 
                     ctx.rotate(swingAngle); 
                     
@@ -706,7 +705,7 @@ window.renderGameView = function() {
     if (isElfUlt) {
         lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
     } 
-    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200) {
+    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900) {
         lctx.fillStyle = 'rgba(5, 20, 35, 0.85)'; 
     }
     else if (player.heroClass === 'Mage') {
@@ -795,7 +794,7 @@ window.renderGameView = function() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
-    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && typeof worldState.oxygen !== 'undefined') {
+    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900 && typeof worldState.oxygen !== 'undefined') {
         let oxyPercent = Math.max(0, worldState.oxygen / 36000);
         let boxWidth = 300; let boxX = canvas.width - boxWidth - wallMargin;
         ctx.fillStyle = '#111'; ctx.fillRect(boxX, 20, boxWidth, 20);
