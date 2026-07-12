@@ -44,13 +44,13 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
     
-    // MÉTHODE BLINDÉE ANTI-ÉCRAN NOIR : RÉINITIALISATION FORCÉE DU CANVAS
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1.0;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    
+    ctx.save(); 
     
     if (typeof shakeTimer !== 'undefined' && shakeTimer > 0) {
         let dx = (Math.random() - 0.5) * shakeIntensity * 2; 
@@ -677,9 +677,6 @@ window.renderGameView = function() {
         ctx.globalAlpha = 1.0; 
     }
     
-    // =========================================================================
-    // 1. DESSINER LA LUMIÈRE AVANT L'UI !
-    // =========================================================================
     if (!window.lightCanvas) {
         window.lightCanvas = document.createElement('canvas');
     }
@@ -698,9 +695,11 @@ window.renderGameView = function() {
     
     if (isElfUlt) {
         lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
-    } else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200) {
+    } 
+    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200) {
         lctx.fillStyle = 'rgba(5, 20, 35, 0.85)'; 
-    } else if (player.heroClass === 'Mage') {
+    }
+    else if (player.heroClass === 'Mage') {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
     } else {
         lctx.fillStyle = 'rgba(0, 0, 0, 0.70)'; 
@@ -768,12 +767,11 @@ window.renderGameView = function() {
         });
     }
 
+    ctx.save();
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(window.lightCanvas, 0, 0);
+    ctx.restore();
     
-    // =========================================================================
-    // 2. DESSINER L'UI PAR DESSUS L'OMBRE POUR QU'ELLE SOIT 100% VISIBLE
-    // =========================================================================
     if (typeof playerStats !== 'undefined' && playerStats.inventory && playerStats.inventory.coins !== undefined) {
         let coinImg = window.getAsset('gold_coin');
         if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
@@ -841,4 +839,6 @@ window.renderGameView = function() {
         }
         ctx.textAlign = 'left';
     }
+
+    ctx.restore(); 
 };
