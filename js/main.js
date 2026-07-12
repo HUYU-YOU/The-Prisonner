@@ -60,14 +60,12 @@ window.update = function() {
             }
         }
 
-        // --- NOUVEAU SYSTÈME D'ARÈNE 100% SÉCURISÉ ---
         if (currentRoomId === 999) {
             if (typeof arenaState !== 'undefined' && arenaState === "WAITING") {
                 arenaTimer--;
                 if (arenaTimer <= 0) {
                     arenaState = "PLAYING";
                     window.arenaQueue = [];
-                    // Vagues 1 à 5 faciles et codées en dur
                     if (arenaWave === 1) window.arenaQueue = ['goblin', 'goblin'];
                     else if (arenaWave === 2) window.arenaQueue = ['goblin', 'goblin', 'skeleton'];
                     else if (arenaWave === 3) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton'];
@@ -93,7 +91,6 @@ window.update = function() {
                         if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     }
                 } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
-                    // Sécurité Absolue: Ne spawn la porte qu'une seule fois
                     if (currentDoors.length === 0) {
                         currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
                         currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
@@ -271,8 +268,10 @@ window.update = function() {
                                         player.y = canvas.height - wallMargin - 150;
                                     },
                                     onCancel: function() { 
-                                        let dxP = player.x + player.size/2 - canvas.width/2;
-                                        player.x += dxP > 0 ? 50 : -50; 
+                                        // CORRECTIF: Rebond mathématique parfait vers l'extérieur du bassin
+                                        let cx = canvas.width / 2; let cy = canvas.height / 2;
+                                        let angleOut = Math.atan2((player.y + player.size/2) - cy, (player.x + player.size/2) - cx);
+                                        player.x += Math.cos(angleOut) * 80; player.y += Math.sin(angleOut) * 80; 
                                     }
                                 };
                             }
@@ -313,8 +312,9 @@ window.update = function() {
                                         player.y = canvas.height - wallMargin - 150;
                                     },
                                     onCancel: function() { 
-                                        let dyP = player.y + player.size/2 - canvas.height/2;
-                                        player.y += dyP > 0 ? 50 : -50; 
+                                        let cx = canvas.width / 2; let cy = canvas.height / 2;
+                                        let angleOut = Math.atan2((player.y + player.size/2) - cy, (player.x + player.size/2) - cx);
+                                        player.x += Math.cos(angleOut) * 80; player.y += Math.sin(angleOut) * 80; 
                                     }
                                 };
                             }
@@ -431,4 +431,3 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
-window.update();
