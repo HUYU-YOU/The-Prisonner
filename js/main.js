@@ -35,7 +35,7 @@ window.update = function() {
     if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
     if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
     
-    if (currentRoomId >= 200) {
+    if (currentRoomId >= 200 && currentRoomId < 900) {
         if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000;
         worldState.oxygen--;
         if (worldState.oxygen <= 0) {
@@ -195,7 +195,7 @@ window.update = function() {
     if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
     let currentSpeedPlayer = (typeof playerSlowTimer !== 'undefined' && playerSlowTimer > 0) ? player.speed / 2 : player.speed;
-    if (currentRoomId >= 200) currentSpeedPlayer *= 0.65;
+    if (currentRoomId >= 200 && currentRoomId < 900) currentSpeedPlayer *= 0.65;
     
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
@@ -372,6 +372,5 @@ window.update = function() {
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
-
 // C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
 window.update();
