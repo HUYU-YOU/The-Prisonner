@@ -10,6 +10,7 @@ window.saveRoomState = function() {
         if (currentEnemies.length === 0) { worldState.clearedRooms[currentRoomId] = true; }
     }
 };
+
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
@@ -129,7 +130,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorW, id: 'door_103_101', requiresKey: false, locked: false, dest: 101, spawnX: spawnE.x, spawnY: spawnE.y },
             { ...doorN, id: 'door_103_111', requiresKey: false, locked: false, dest: 111, spawnX: spawnS.x, spawnY: spawnS.y }
         ]; 
-        // SALLE 103 : TROUS PLUS PETITS ET COLLÉS DANS LES COINS DROITS
         currentObstacles.push({ x: canvas.width - wallMargin - 150, y: wallMargin, width: 150, height: 150, type: 'hole' });
         currentObstacles.push({ x: canvas.width - wallMargin - 150, y: canvas.height - wallMargin - 150, width: 150, height: 150, type: 'hole' });
     }
@@ -168,7 +168,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     else if (roomId === 113) { currentDoors = [ { ...doorS, id: 'door_113_112', dest: 112, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
     else if (roomId === 114) { 
         currentDoors = [ { ...doorS, id: 'door_114_101', requiresKey: true, locked: !worldState.unlockedDoors['door_114_101'], dest: 101, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorE, id: 'door_114_111', requiresKey: true, locked: !worldState.unlockedDoors['door_114_111'], dest: 111, spawnX: spawnW.x, spawnY: spawnW.y } ]; 
-        // SÉPARATION : UN GRAND TRIGGER INVISIBLE, ET UN PETIT VISUEL D'EAU
         currentObstacles.push({ x: canvas.width/2 - 160, y: canvas.height/2 - 160, width: 320, height: 320, type: 'water_trigger' });
         currentObstacles.push({ x: canvas.width/2 - 120, y: canvas.height/2 - 120, width: 240, height: 240, type: 'water_visual' });
     }
@@ -223,7 +222,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             }
             else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
             else if (roomId === 103) { 
-                // LES SQUELETTES SONT PLACÉS DANS LES HITBOXES ET BLOQUÉS
                 window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 100, wallMargin + 50); 
                 window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 100, canvas.height - wallMargin - 100); 
                 currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); 
