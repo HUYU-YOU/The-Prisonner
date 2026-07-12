@@ -3,6 +3,7 @@
 // ============================================================================
 
 document.addEventListener('contextmenu', event => event.preventDefault());
+
 window.update = function() {
     if (typeof arenaShrink === 'undefined') arenaShrink = 0;
     if (typeof waveStartDelay === 'undefined') waveStartDelay = 0;
@@ -65,7 +66,7 @@ window.update = function() {
 
                     if (pool.length === 0) pool = ['goblin']; 
                     let t = pool[Math.floor(Math.random() * pool.length)];
-                    if (typeof spawnEnemy === 'function') spawnEnemy(t, 1);
+                    if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     window.arenaEnemiesToSpawn--;
                 }
             } else if (window.arenaEnemiesToSpawn <= 0 && currentEnemies.length === 0) {
@@ -203,7 +204,7 @@ window.update = function() {
     
     if (typeof currentObstacles !== 'undefined') {
         for (let obs of currentObstacles) {
-            if (obs.type === 'hole' && window.checkCollision(player, obs)) { insideHole = true; break; }
+            if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { insideHole = true; break; }
         }
     }
 
@@ -371,3 +372,6 @@ window.update = function() {
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
+
+// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
+window.update();
