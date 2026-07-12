@@ -2,7 +2,7 @@
 // ASSETS MANAGER - CHARGEMENT DES IMAGES (js/assets.js)
 // ============================================================================
 
-const assetsManager = {
+window.assetsManager = {
     images: {},
     load(name, path) {
         let img = new Image();
