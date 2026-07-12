@@ -328,3 +328,4 @@ assetsManager.load('left_water_door_close', 'assets/decors/left_water_door_close
 assetsManager.load('right_water_door_close', 'assets/decors/right_water_door_close.png');
 assetsManager.load('front_water_door_close', 'assets/decors/front_water_door_close.png');
 assetsManager.load('back_water_door_close', 'assets/decors/back_water_door_close.png');
+assetsManager.load('water_door', 'assets/decors/water_door.png');
