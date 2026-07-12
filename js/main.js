@@ -29,14 +29,29 @@ window.update = function() {
         requestAnimationFrame(window.update); return; 
     }
 
+    // Gestion de l'UI de Dialogue Asynchrone
+    if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
+        if (keys['space'] || keys['enter']) {
+            window.activeDialogue.onConfirm();
+            window.activeDialogue = null;
+            keys['space'] = false; keys['enter'] = false;
+        } else if (keys['escape']) {
+            window.activeDialogue.onCancel();
+            window.activeDialogue = null;
+            keys['escape'] = false;
+        }
+        if (typeof window.renderGameView === 'function') window.renderGameView(); 
+        requestAnimationFrame(window.update);
+        return;
+    }
+
     if (!worldState.openedDoors) worldState.openedDoors = {};
     if (!worldState.droppedItems) worldState.droppedItems = {};
     if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
     if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
     
-    // GESTION OXYGÈNE (NIVEAU 3)
-    if (currentRoomId >= 200) {
-        if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000; // 10 minutes (60 fps * 600 s)
+    if (currentRoomId >= 200 && currentRoomId < 900) {
+        if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000;
         worldState.oxygen--;
         if (worldState.oxygen <= 0) {
             playerStats.health = 0;
@@ -66,7 +81,7 @@ window.update = function() {
 
                     if (pool.length === 0) pool = ['goblin']; 
                     let t = pool[Math.floor(Math.random() * pool.length)];
-                    if (typeof spawnEnemy === 'function') spawnEnemy(t, 1);
+                    if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     window.arenaEnemiesToSpawn--;
                 }
             } else if (window.arenaEnemiesToSpawn <= 0 && currentEnemies.length === 0) {
@@ -195,9 +210,7 @@ window.update = function() {
     if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
     
     let currentSpeedPlayer = (typeof playerSlowTimer !== 'undefined' && playerSlowTimer > 0) ? player.speed / 2 : player.speed;
-    
-    // NIVEAU 3 : VITESSE RÉDUITE DANS L'EAU (-35%)
-    if (currentRoomId >= 200) currentSpeedPlayer *= 0.65;
+    if (currentRoomId >= 200 && currentRoomId < 900) currentSpeedPlayer *= 0.65;
     
     let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
     
@@ -206,7 +219,7 @@ window.update = function() {
     
     if (typeof currentObstacles !== 'undefined') {
         for (let obs of currentObstacles) {
-            if (obs.type === 'hole' && window.checkCollision(player, obs)) { insideHole = true; break; }
+            if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { insideHole = true; break; }
         }
     }
 
@@ -233,18 +246,21 @@ window.update = function() {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
-                if (obs.type === 'water') {
+                if (obs.type === 'water_trigger') {
                     if (currentRoomId === 114) {
-                        keys = {}; player.dashTimer = 0;
-                        if (confirm("L'eau est sombre et glaciale... Devrais-je plonger dans les abysses ?")) {
-                            worldState.oxygen = 36000;
-                            if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                            if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
-                            player.x = canvas.width / 2 - player.size / 2;
-                            player.y = canvas.height - wallMargin - 150;
-                        } else {
-                            player.x = oldPx;
-                            player.y += 80;
+                        keys = {}; player.dashTimer = 0; player.x = oldPx;
+                        if (!window.activeDialogue) {
+                            window.activeDialogue = {
+                                text: "L'eau est sombre et glaciale...\nPlonger dans les abysses ?\n\n[ESPACE] Plonger   -   [ECHAP] Reculer",
+                                onConfirm: function() {
+                                    worldState.oxygen = 36000;
+                                    if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                                    if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
+                                    player.x = canvas.width / 2 - player.size / 2;
+                                    player.y = canvas.height - wallMargin - 150;
+                                },
+                                onCancel: function() { player.y += 60; }
+                            };
                         }
                     }
                     break;
@@ -269,17 +285,21 @@ window.update = function() {
         for (let i = 0; i < currentObstacles.length; i++) {
             let obs = currentObstacles[i];
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
-                if (obs.type === 'water') {
+                if (obs.type === 'water_trigger') {
                     if (currentRoomId === 114) {
-                        keys = {}; player.dashTimer = 0;
-                        if (confirm("L'eau est sombre et glaciale... Devrais-je plonger dans les abysses ?")) {
-                            worldState.oxygen = 36000;
-                            if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                            if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
-                            player.x = canvas.width / 2 - player.size / 2;
-                            player.y = canvas.height - wallMargin - 150;
-                        } else {
-                            player.y = oldPy - 80;
+                        keys = {}; player.dashTimer = 0; player.y = oldPy;
+                        if (!window.activeDialogue) {
+                            window.activeDialogue = {
+                                text: "L'eau est sombre et glaciale...\nPlonger dans les abysses ?\n\n[ESPACE] Plonger   -   [ECHAP] Reculer",
+                                onConfirm: function() {
+                                    worldState.oxygen = 36000;
+                                    if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                                    if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
+                                    player.x = canvas.width / 2 - player.size / 2;
+                                    player.y = canvas.height - wallMargin - 150;
+                                },
+                                onCancel: function() { player.y += 60; }
+                            };
                         }
                     }
                     break;
@@ -313,8 +333,14 @@ window.update = function() {
     if (currentRoomId === 1 && typeof bookshelf !== 'undefined' && player.x + player.size > bookshelf.x && player.y + player.size > bookshelf.y && player.y < bookshelf.y + bookshelf.height) {
         player.x = bookshelf.x - player.size;
     }
+    
+    // Rotation fluide du personnage par interpolation mathématique
     if (player.dashTimer <= 0) {
-        player.faceAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
+        let targetAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
+        let diff = targetAngle - player.faceAngle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        player.faceAngle += diff * 0.2; 
     }
     
     if (typeof particles !== 'undefined') {
@@ -375,5 +401,4 @@ window.update = function() {
     if (typeof window.renderGameView === 'function') window.renderGameView(); 
     requestAnimationFrame(window.update);
 };
-
 window.update();
