@@ -120,8 +120,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { x: canvas.width/2 + 100, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_102_105', dest: 105, spawnX: canvas.width/2 + 100, spawnY: spawnS.y },
             { ...doorW, id: 'door_102_106', requiresKey: false, locked: false, dest: 106, spawnX: spawnE.x, spawnY: spawnE.y }
         ]; 
-        currentObstacles.push({ x: wallMargin, y: wallMargin, width: 250, height: 250, type: 'hole' });
-        currentObstacles.push({ x: wallMargin, y: canvas.height - wallMargin - 250, width: 250, height: 250, type: 'hole' });
+        // CORRECTIF: Trou central complet comme la salle 3
+        currentObstacles.push({ x: canvas.width/2 - 120, y: wallMargin, width: 240, height: canvas.height - wallMargin*2, type: 'hole' });
         if (!worldState.collectedItems['key_room102']) {
             currentItems.push({ id: 'key_room102', type: 'key', x: wallMargin + 100, y: canvas.height/2, size: 20, collected: false });
         }
@@ -131,8 +131,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             { ...doorW, id: 'door_103_101', requiresKey: false, locked: false, dest: 101, spawnX: spawnE.x, spawnY: spawnE.y },
             { ...doorN, id: 'door_103_111', requiresKey: false, locked: false, dest: 111, spawnX: spawnS.x, spawnY: spawnS.y }
         ]; 
-        currentObstacles.push({ x: canvas.width - wallMargin - 250, y: wallMargin, width: 250, height: 250, type: 'hole' });
-        currentObstacles.push({ x: canvas.width - wallMargin - 250, y: canvas.height - wallMargin - 250, width: 250, height: 250, type: 'hole' });
+        // CORRECTIF: Hitboxes parfaites pour les gouffres de droite (Haut et Bas)
+        currentObstacles.push({ x: canvas.width - 300, y: 0, width: 300, height: 300, type: 'hole' });
+        currentObstacles.push({ x: canvas.width - 300, y: canvas.height - 300, width: 300, height: 300, type: 'hole' });
     }
     else if (roomId === 104) { 
         let dW1 = { x: -15, y: 150, width: wallMargin + 15, height: 150, face: 'west' };
@@ -169,7 +170,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     else if (roomId === 113) { currentDoors = [ { ...doorS, id: 'door_113_112', dest: 112, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
     else if (roomId === 114) { 
         currentDoors = [ { ...doorS, id: 'door_114_101', requiresKey: true, locked: !worldState.unlockedDoors['door_114_101'], dest: 101, spawnX: spawnN.x, spawnY: spawnN.y }, { ...doorE, id: 'door_114_111', requiresKey: true, locked: !worldState.unlockedDoors['door_114_111'], dest: 111, spawnX: spawnW.x, spawnY: spawnW.y } ]; 
-        currentObstacles.push({ x: canvas.width/2 - 200, y: canvas.height/2 - 200, width: 400, height: 400, type: 'water_trigger' });
+        // CORRECTIF: Trigger plus petit pour ne pas gêner les portes
+        currentObstacles.push({ x: canvas.width/2 - 150, y: canvas.height/2 - 150, width: 300, height: 300, type: 'water_trigger' });
     }
 
     else if (roomId === 201) { currentDoors = [ { ...doorN, id: 'door_201_202', requiresKey: false, locked: false, dest: 202, spawnX: spawnS.x, spawnY: spawnS.y } ]; }
@@ -206,14 +208,14 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId])); 
         } 
         else if (!worldState.clearedRooms[roomId]) {
-            // --- SYSTÈME DE SPAWN OPPOSÉ (SPÉCIAL SIRÈNES ET ABYSSES) ---
+            // CORRECTIF : Inversion de la logique de spawn opposé
+            // Si le joueur entre par la porte Nord (il spawn au SUD), les monstres poppent au NORD.
             let spawnOppositeX = canvas.width/2;
             let spawnOppositeY = canvas.height/2;
-            // Si le joueur entre par la porte "south" (sud de la salle = en bas), il pop en bas, donc les sirènes popent en HAUT.
-            if (entryFace === 'south') spawnOppositeY = wallMargin + 100;
-            else if (entryFace === 'north') spawnOppositeY = canvas.height - wallMargin - 100;
-            else if (entryFace === 'east') spawnOppositeX = wallMargin + 100;
-            else if (entryFace === 'west') spawnOppositeX = canvas.width - wallMargin - 100;
+            if (entryFace === 'north') spawnOppositeY = wallMargin + 100;
+            else if (entryFace === 'south') spawnOppositeY = canvas.height - wallMargin - 100;
+            else if (entryFace === 'west') spawnOppositeX = wallMargin + 100;
+            else if (entryFace === 'east') spawnOppositeX = canvas.width - wallMargin - 100;
 
             if (roomId === 2) { window.spawnEnemy('goblin', 1, canvas.width/2 - 150, canvas.height/2 - 150); window.spawnEnemy('goblin', 1, canvas.width/2 + 150, canvas.height/2 + 150); }
             else if (roomId === 3) window.spawnEnemy('goblin', 2, canvas.width/2, canvas.height/2);
@@ -231,8 +233,8 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             }
             else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
             else if (roomId === 103) { 
-                window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 100, wallMargin + 50); 
-                window.spawnEnemy('skeleton', 1, canvas.width - wallMargin - 100, canvas.height - wallMargin - 100); 
+                // Décalage pour ne pas spawner dans les trous de droite
+                window.spawnEnemy('skeleton', 2, canvas.width/2, canvas.height/2);
                 currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); 
             }
             else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
