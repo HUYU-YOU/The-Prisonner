@@ -29,7 +29,7 @@ window.update = function() {
         requestAnimationFrame(window.update); return; 
     }
 
-    // Gestion de l'UI de Dialogue Asynchrone
+    // Gestion du Dialogue Asynchrone de Océan (Bloque le jeu et attend l'input)
     if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
         if (keys['space'] || keys['enter']) {
             window.activeDialogue.onConfirm();
@@ -259,7 +259,10 @@ window.update = function() {
                                     player.x = canvas.width / 2 - player.size / 2;
                                     player.y = canvas.height - wallMargin - 150;
                                 },
-                                onCancel: function() { player.y += 60; }
+                                onCancel: function() { 
+                                    let dxP = player.x + player.size/2 - canvas.width/2;
+                                    player.x += dxP > 0 ? 50 : -50; 
+                                }
                             };
                         }
                     }
@@ -298,7 +301,10 @@ window.update = function() {
                                     player.x = canvas.width / 2 - player.size / 2;
                                     player.y = canvas.height - wallMargin - 150;
                                 },
-                                onCancel: function() { player.y += 60; }
+                                onCancel: function() { 
+                                    let dyP = player.y + player.size/2 - canvas.height/2;
+                                    player.y += dyP > 0 ? 50 : -50; 
+                                }
                             };
                         }
                     }
@@ -334,13 +340,15 @@ window.update = function() {
         player.x = bookshelf.x - player.size;
     }
     
-    // Rotation fluide du personnage par interpolation mathématique
-    if (player.dashTimer <= 0) {
+    // --- GESTION ULTRA-FLUIDE DU PIVOT DU JOUEUR ---
+    if (player.dashTimer <= 0 && typeof mouse !== 'undefined' && mouse.x !== undefined) {
         let targetAngle = Math.atan2(mouse.y - (player.y + player.size / 2), mouse.x - (player.x + player.size / 2));
-        let diff = targetAngle - player.faceAngle;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        player.faceAngle += diff * 0.2; 
+        if (!isNaN(targetAngle)) {
+            let diff = targetAngle - player.faceAngle;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            player.faceAngle += diff * 0.25; // Vitesse d'interpolation
+        }
     }
     
     if (typeof particles !== 'undefined') {
