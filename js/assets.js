@@ -312,14 +312,12 @@ dirs.forEach(d => {
     assetsManager.load(`Siren_${d}_view`, `assets/skins/siren/siren_${d}_view.png`);
     assetsManager.load(`Anglerfish_${d}_view`, `assets/skins/anglerfish/anglerfish_${d}_view.png`);
     assetsManager.load(`Kraken_${d}_view`, `assets/skins/kraken/kraken_${d}_view.png`);
-    
     assetsManager.load(`Knight_swim1_${d}_view`, `assets/skins/Knight/Knight_swim1_${d}_view.png`);
-    assetsManager.load(`Knight_swim2_${d}_view`, `assets/skins/Knight/Knight_swim2_${d}_view.png`);
+    // assetsManager.load(`Knight_swim2_${d}_view`, `assets/skins/Knight/Knight_swim2_${d}_view.png`);
     assetsManager.load(`Elf_swim1_${d}_view`, `assets/skins/Elf/Elf_swim1_${d}_view.png`);
-    assetsManager.load(`Elf_swim2_${d}_view`, `assets/skins/Elf/Elf_swim2_${d}_view.png`);
-
+    // assetsManager.load(`Elf_swim2_${d}_view`, `assets/skins/Elf/Elf_swim2_${d}_view.png`);
     assetsManager.load(`Necromancer_swim1_${d}_view`, `assets/skins/Necromancien/Necromancien_swim1_${d}_view.png`);
-    assetsManager.load(`Necromancer_swim2_${d}_view`, `assets/skins/Necromancien/Necromancien_swim2_${d}_view.png`);
+    // assetsManager.load(`Necromancer_swim2_${d}_view`, `assets/skins/Necromancien/Necromancien_swim2_${d}_view.png`);
 }); 
 
 assetsManager.load('left_water_door_open', 'assets/decors/left_water_door_open.png');
