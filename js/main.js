@@ -114,8 +114,14 @@ window.update = function() {
                 
                 if (!doorToPass && typeof window.checkCollision === 'function' && window.checkCollision(player, door)) {
                     if (door.locked) {
-                        if (playerStats.inventory.keys.gold > 0 || (currentRoomId === 999 && playerStats.inventory.keys.skull > 0)) {
-                            if (currentRoomId === 999) playerStats.inventory.keys.skull--; else playerStats.inventory.keys.gold--;
+                        let hasKey = false;
+                        if ((door.requiresKeySkull || currentRoomId === 999) && playerStats.inventory.keys.skull > 0) {
+                            playerStats.inventory.keys.skull--; hasKey = true;
+                        } else if (!door.requiresKeySkull && currentRoomId !== 999 && playerStats.inventory.keys.gold > 0) {
+                            playerStats.inventory.keys.gold--; hasKey = true;
+                        }
+                        
+                        if (hasKey) {
                             door.locked = false; 
                             worldState.unlockedDoors[door.id] = true;
                             if (typeof window.updateHUD === 'function') window.updateHUD();
@@ -227,18 +233,15 @@ window.update = function() {
         
         if (typeof currentObstacles !== 'undefined') {
             for (let obs of currentObstacles) {
-                if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { insideHole = true; break; }
+                if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { 
+                    if (player.dashTimer <= 0) insideHole = true; 
+                    break; 
+                }
             }
         }
 
-        if (player.dashTimer > 0 || insideHole) {
-            if (insideHole && player.dashTimer <= 0) { player.dashTimer = 2; }
+        if (player.dashTimer > 0) {
             player.dashTimer--; 
-            
-            if (player.dashVx === 0 && player.dashVy === 0 && insideHole) {
-                player.dashVx = Math.cos(player.faceAngle) * player.speed * 2;
-                player.dashVy = Math.sin(player.faceAngle) * player.speed * 2;
-            }
             dx_mov = player.dashVx; dy_mov = player.dashVy;
         } else {
             if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
@@ -421,7 +424,7 @@ window.update = function() {
     } catch (err) {
         console.error("CRASH FATAL DANS LA BOUCLE:", err);
         if (ctx) {
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // SÉCURITÉ: On reset la caméra pour forcer le texte à être visible !
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0, canvas.width, canvas.height);
             ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
             ctx.fillText("CRASH DU JEU : Regarde la console (F12)", canvas.width/2, canvas.height/2);
@@ -431,5 +434,3 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
-// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
-window.update();
