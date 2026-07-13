@@ -6,6 +6,19 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
 
+// --- GESTIONNAIRE D'ASSETS (SÉCURITÉ ANTI-CRASH GLOBALE) ---
+window.assetsManager = {
+    images: {},
+    load: function(name, path) {
+        let img = new Image();
+        img.src = path;
+        this.images[name] = img;
+        img.onload = () => console.log("Chargé : " + name);
+        img.onerror = () => console.error("Erreur de chargement : " + path);
+    }
+};
+var assetsManager = window.assetsManager; // Sécurité pour portée globale absolue
+
 // --- ETATS GENERAUX DU JEU ---
 let gameState = "MENU";
 const wallMargin = 50; 
@@ -47,6 +60,7 @@ let currentDoors = [];
 let currentItems = [];
 let currentEnemies = [];
 let currentCrates = [];
+let currentObstacles = [];
 
 let worldState = {
     unlockedDoors: {},
@@ -88,11 +102,12 @@ let playerStats = {
 window.checkCollision = function(rect1, rect2) {
     let w1 = rect1.width || rect1.size; let h1 = rect1.height || rect1.size;
     let w2 = rect2.width || rect2.size; let h2 = rect2.height || rect2.size;
-    // L'utilisation de <= et >= permet de glisser contre les murs sans bloquer
     return (rect1.x <= rect2.x + w2 && rect1.x + w1 >= rect2.x && rect1.y <= rect2.y + h2 && rect1.y + h1 >= rect2.y);
 };
 
 window.saveRoomState = function() {
     if (!worldState.enemyStates) worldState.enemyStates = {};
-    worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
+    if (typeof currentEnemies !== 'undefined') {
+        worldState.enemyStates[currentRoomId] = JSON.parse(JSON.stringify(currentEnemies));
+    }
 };
