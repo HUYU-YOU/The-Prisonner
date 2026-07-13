@@ -268,7 +268,6 @@ window.update = function() {
                                         player.y = canvas.height - wallMargin - 150;
                                     },
                                     onCancel: function() { 
-                                        // CORRECTIF: Rebond mathématique parfait vers l'extérieur du bassin
                                         let cx = canvas.width / 2; let cy = canvas.height / 2;
                                         let angleOut = Math.atan2((player.y + player.size/2) - cy, (player.x + player.size/2) - cx);
                                         player.x += Math.cos(angleOut) * 80; player.y += Math.sin(angleOut) * 80; 
@@ -422,6 +421,7 @@ window.update = function() {
     } catch (err) {
         console.error("CRASH FATAL DANS LA BOUCLE:", err);
         if (ctx) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // SÉCURITÉ: On reset la caméra pour forcer le texte à être visible !
             ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0, canvas.width, canvas.height);
             ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
             ctx.fillText("CRASH DU JEU : Regarde la console (F12)", canvas.width/2, canvas.height/2);
@@ -431,3 +431,5 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
+// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
+window.update();
