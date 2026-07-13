@@ -241,7 +241,16 @@ window.updateItemsAndCrates = function() {
             
             if (item.type === 'key') playerStats.inventory.keys.gold++; 
             else if (item.type === 'key_skull') playerStats.inventory.keys.skull++; 
-            else if (item.type === 'key_orb') playerStats.inventory.keys.orb++; 
+            else if (item.type === 'key_orb') {
+                playerStats.inventory.keys.orb++; 
+                if (item.id === 'final_sphere') {
+                    window.activeDialogue = {
+                        text: "Félicitations !\nLes abysses se taisent... Niveau 4 débloqué prochainement.\n\n[ESPACE] Continuer",
+                        onConfirm: function() {}, 
+                        onCancel: function() {}
+                    };
+                }
+            }
             else if (item.type === 'potion_green') playerStats.inventory.potions.green++; 
             else if (item.type === 'potion_yellow') playerStats.inventory.potions.yellow++; 
             else if (item.type === 'potion_blue') playerStats.inventory.potions.blue++; 
