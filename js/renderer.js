@@ -552,10 +552,16 @@ window.renderGameView = function() {
         else ctx.globalAlpha = 1.0;
         
         let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
-        let bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
-        let tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
+        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
         
-        if (player.dashTimer > 0) tilt = Math.PI / 8; 
+        // Retrait de la respiration et bobbing sous l'eau
+        let bobbingY = 0;
+        let tilt = 0;
+        if (!isSwimming) {
+            bobbingY = isMoving ? Math.sin(Date.now() / 80) * 4 : Math.sin(Date.now() / 300) * 1.5;
+            tilt = isMoving ? Math.sin(Date.now() / 120) * 0.1 : 0;
+            if (player.dashTimer > 0) tilt = Math.PI / 8; 
+        }
         
         ctx.save(); 
         ctx.translate(player.x + player.size / 2, player.y + player.size / 2 + bobbingY); 
@@ -577,17 +583,11 @@ window.renderGameView = function() {
             else actionP = 'attack2';
         }
         
-        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         
-        // CORRECTIF: Skin Elfe Nageur Forcé et Dimension normale
+        // Force Skin Nage (SouthWest) et taille normale
         if (isSwimming) {
-            let animFrame = (Math.floor(Date.now() / 250) % 2 === 0) ? '1' : '2';
-            if (player.heroClass === 'Elf') {
-                skinNameP = `${prefixP}_swim${animFrame}_southwest_view`; 
-            } else {
-                skinNameP = `${prefixP}_swim${animFrame}_south_view`; 
-            }
+            skinNameP = `${prefixP}_swim1_southwest_view`; 
         } 
         
         let pImg = window.getAsset(skinNameP);
@@ -617,13 +617,10 @@ window.renderGameView = function() {
             pImg = window.getAsset(fallbackNameP);
         }
 
+        // Système de rotation libre sous l'eau
         if (isSwimming) {
-            // CORRECTIF: Calcul du pivot parfait (-135° pour le southwest de l'elfe)
-            if (player.heroClass === 'Elf') {
-                ctx.rotate(player.faceAngle - (3 * Math.PI / 4) + tilt); 
-            } else {
-                ctx.rotate(player.faceAngle + Math.PI/2 + tilt); 
-            }
+            let baseAngle = skinNameP.includes('southwest') ? (3 * Math.PI / 4) : (Math.PI / 2);
+            ctx.rotate(player.faceAngle - baseAngle); 
         } else if (is8DirP) {
             let dirAngles = { 'east': 0, 'southeast': Math.PI/4, 'south': Math.PI/2, 'southwest': 3*Math.PI/4, 'west': Math.PI, 'northwest': -3*Math.PI/4, 'north': -Math.PI/2, 'northeast': -Math.PI/4 };
             let baseAngle = dirAngles[dirP] !== undefined ? dirAngles[dirP] : 0;
@@ -640,7 +637,6 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             let displaySize = player.size * 3.75; 
             
-            // CORRECTIF: On garde la petite taille si l'Elfe nage
             if (player.heroClass === 'Elf') {
                 displaySize = (is8DirP || isSwimming) ? (player.size * 1.875) : (player.size * 4.5); 
             } else if (player.heroClass === 'Mage' && !is8DirP && !isSwimming) {
