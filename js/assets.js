@@ -4,7 +4,7 @@
 
 window.assetsManager = {
     images: {},
-    load(name, path) {
+    load: function(name, path) {
         let img = new Image();
         img.src = path;
         this.images[name] = img;
@@ -12,6 +12,9 @@ window.assetsManager = {
         img.onerror = () => console.error("Erreur de chargement : " + path);
     }
 };
+
+// SÉCURITÉ ABSOLUE pour que les autres fichiers aient accès sans plantage
+var assetsManager = window.assetsManager; 
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
 assetsManager.load('floor2', 'assets/tiles/floor2.png');
@@ -295,7 +298,6 @@ assetsManager.load('Attack_meteorites_elysia', 'assets/skins/Attack/Attack_meteo
 assetsManager.load('Attack_meteorites_dragon', 'assets/skins/Attack/Attack_meteorites_dragon.jpeg');
 
 //NIVEAU 3
-
 assetsManager.load('floor_water1', 'assets/tiles/floor_water1.png');
 assetsManager.load('floor_water2', 'assets/tiles/floor_water2.png');
 assetsManager.load('floor_water3', 'assets/tiles/floor_water3.png');
