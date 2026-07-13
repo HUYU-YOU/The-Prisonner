@@ -234,14 +234,20 @@ window.update = function() {
         if (typeof currentObstacles !== 'undefined') {
             for (let obs of currentObstacles) {
                 if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { 
-                    if (player.dashTimer <= 0) insideHole = true; 
+                    if (player.dashTimer <= 0) { insideHole = true; }
                     break; 
                 }
             }
         }
 
-        if (player.dashTimer > 0) {
+        if (player.dashTimer > 0 || insideHole) {
+            if (insideHole && player.dashTimer <= 0) { player.dashTimer = 2; }
             player.dashTimer--; 
+            
+            if (player.dashVx === 0 && player.dashVy === 0 && insideHole) {
+                player.dashVx = Math.cos(player.faceAngle) * player.speed * 2;
+                player.dashVy = Math.sin(player.faceAngle) * player.speed * 2;
+            }
             dx_mov = player.dashVx; dy_mov = player.dashVy;
         } else {
             if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
