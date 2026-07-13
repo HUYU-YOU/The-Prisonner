@@ -139,12 +139,7 @@ window.updateEnemies = function() {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.speed = 1.5;
             }
-            if (enemy.summonTimer === undefined) enemy.summonTimer = 120;
-            enemy.summonTimer--;
-            if (enemy.summonTimer <= 0) {
-                if (typeof window.spawnEnemy === 'function') { window.spawnEnemy('siren', 1, enemy.x - 40, enemy.y - 40); }
-                enemy.summonTimer = enemy.phase === 2 ? 180 : 300; 
-            }
+            // Retrait de la fonction d'invocation des sirènes pour le Kraken !
             if (enemy.shootCooldown <= 0 && !isElfInvuln) {
                 let pSpeed = 6;
                 for(let k = -3; k <= 3; k++) {
@@ -576,7 +571,13 @@ window.updateEnemies = function() {
             if (['troll', 'deathgod', 'elysia', 'kraken'].includes(e.type) && (currentRoomId === 8 || currentRoomId === 208) && !worldState.bossDefeated) { 
                 worldState.bossDefeated = true; 
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
-                currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
+                
+                // CADEAU DU KRAKEN (ORBE DU NIVEAU 4) OU CADEAU DU TROLL (CLE SQUELETTE)
+                if (e.type === 'kraken') {
+                    currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
+                } else {
+                    currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
+                }
             }
 
             if (e.type === 'minotaure' && currentRoomId >= 107 && currentRoomId <= 110) {
