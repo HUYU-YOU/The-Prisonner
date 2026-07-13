@@ -289,7 +289,7 @@ assetsManager.load('Attack_fire_dragon', 'assets/skins/Attack/Attack_fire_dragon
 assetsManager.load('Attack_fire_deathgod', 'assets/skins/Attack/Attack_fire_deathgod.jpeg');
 assetsManager.load('Attack_bone_skeleton', 'assets/skins/Attack/Attack_bone_skeleton.jpeg');
 assetsManager.load('Attack_sword_armor', 'assets/skins/Attack/Attack_sword_armor.jpeg');
-assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
+//assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
 assetsManager.load('Attack_sword_knight', 'assets/skins/Attack/Attack_sword_knight.jpeg');
 assetsManager.load('Attack_mage_corompue', 'assets/skins/Attack/Attack_mage_corompue.jpeg');
 assetsManager.load('Attack_rock_golem', 'assets/skins/Attack/Attack_rock_golem.jpeg');
