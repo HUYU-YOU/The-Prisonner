@@ -430,13 +430,19 @@ window.update = function() {
     } catch (err) {
         console.error("CRASH FATAL DANS LA BOUCLE:", err);
         if (ctx) {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0, canvas.width, canvas.height);
-            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+            ctx.setTransform(1, 0, 0, 1, 0, 0); 
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; 
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.fillStyle = '#e74c3c'; 
+            ctx.font = 'bold 24px Arial'; 
+            ctx.textAlign = 'center';
             ctx.fillText("CRASH DU JEU : Regarde la console (F12)", canvas.width/2, canvas.height/2);
-            ctx.fillStyle = '#fff'; ctx.font = '16px Arial';
+            ctx.fillStyle = '#fff'; 
+            ctx.font = '16px Arial';
             ctx.fillText(err.message, canvas.width/2, canvas.height/2 + 40);
         }
         requestAnimationFrame(window.update);
     }
 };
+// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
+window.update();
