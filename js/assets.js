@@ -2,19 +2,7 @@
 // ASSETS MANAGER - CHARGEMENT DES IMAGES (js/assets.js)
 // ============================================================================
 
-window.assetsManager = {
-    images: {},
-    load: function(name, path) {
-        let img = new Image();
-        img.src = path;
-        this.images[name] = img;
-        img.onload = () => console.log("Chargé : " + name);
-        img.onerror = () => console.error("Erreur de chargement : " + path);
-    }
-};
-
-// SÉCURITÉ ABSOLUE pour que les autres fichiers aient accès sans plantage
-var assetsManager = window.assetsManager; 
+// (Le gestionnaire est maintenant sécurisé dans globals.js)
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
 assetsManager.load('floor2', 'assets/tiles/floor2.png');
@@ -289,7 +277,7 @@ assetsManager.load('Attack_fire_dragon', 'assets/skins/Attack/Attack_fire_dragon
 assetsManager.load('Attack_fire_deathgod', 'assets/skins/Attack/Attack_fire_deathgod.jpeg');
 assetsManager.load('Attack_bone_skeleton', 'assets/skins/Attack/Attack_bone_skeleton.jpeg');
 assetsManager.load('Attack_sword_armor', 'assets/skins/Attack/Attack_sword_armor.jpeg');
-//assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
+// assetsManager.load('Attack_arrow_elf', 'assets/skins/Attack/Attack_arrow_elf.jpeg');
 assetsManager.load('Attack_sword_knight', 'assets/skins/Attack/Attack_sword_knight.jpeg');
 assetsManager.load('Attack_mage_corompue', 'assets/skins/Attack/Attack_mage_corompue.jpeg');
 assetsManager.load('Attack_rock_golem', 'assets/skins/Attack/Attack_rock_golem.jpeg');
@@ -312,12 +300,14 @@ dirs.forEach(d => {
     assetsManager.load(`Siren_${d}_view`, `assets/skins/siren/siren_${d}_view.png`);
     assetsManager.load(`Anglerfish_${d}_view`, `assets/skins/anglerfish/anglerfish_${d}_view.png`);
     assetsManager.load(`Kraken_${d}_view`, `assets/skins/kraken/kraken_${d}_view.png`);
+    
     assetsManager.load(`Knight_swim1_${d}_view`, `assets/skins/Knight/Knight_swim1_${d}_view.png`);
-    // assetsManager.load(`Knight_swim2_${d}_view`, `assets/skins/Knight/Knight_swim2_${d}_view.png`);
+ // assetsManager.load(`Knight_swim2_${d}_view`, `assets/skins/Knight/Knight_swim2_${d}_view.png`);
     assetsManager.load(`Elf_swim1_${d}_view`, `assets/skins/Elf/Elf_swim1_${d}_view.png`);
-    // assetsManager.load(`Elf_swim2_${d}_view`, `assets/skins/Elf/Elf_swim2_${d}_view.png`);
+ //  assetsManager.load(`Elf_swim2_${d}_view`, `assets/skins/Elf/Elf_swim2_${d}_view.png`);
+
     assetsManager.load(`Necromancer_swim1_${d}_view`, `assets/skins/Necromancien/Necromancien_swim1_${d}_view.png`);
-    // assetsManager.load(`Necromancer_swim2_${d}_view`, `assets/skins/Necromancien/Necromancien_swim2_${d}_view.png`);
+ //assetsManager.load(`Necromancer_swim2_${d}_view`, `assets/skins/Necromancien/Necromancien_swim2_${d}_view.png`);
 }); 
 
 assetsManager.load('left_water_door_open', 'assets/decors/left_water_door_open.png');
