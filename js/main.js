@@ -109,9 +109,9 @@ window.update = function() {
                 if (!doorToPass && typeof window.checkCollision === 'function' && window.checkCollision(player, door)) {
                     if (door.locked) {
                         let hasKey = false;
-                        if (door.requiresKeySkull && playerStats.inventory.keys.skull > 0) {
+                        if ((door.requiresKeySkull || currentRoomId === 999) && playerStats.inventory.keys.skull > 0) {
                             playerStats.inventory.keys.skull--; hasKey = true;
-                        } else if (!door.requiresKeySkull && playerStats.inventory.keys.gold > 0) {
+                        } else if (!door.requiresKeySkull && currentRoomId !== 999 && playerStats.inventory.keys.gold > 0) {
                             playerStats.inventory.keys.gold--; hasKey = true;
                         }
                         
@@ -119,7 +119,7 @@ window.update = function() {
                             door.locked = false; 
                             worldState.unlockedDoors[door.id] = true;
                             if (typeof window.updateHUD === 'function') window.updateHUD();
-                            if (door.dest !== null) doorToPass = door;
+                            if (door.dest !== null) { doorToPass = door; break; }
                         } else {
                             if (door.face === 'north') player.y = door.y + door.height;
                             else if (door.face === 'south') player.y = door.y - player.size;
@@ -128,20 +128,16 @@ window.update = function() {
                         }
                     } else if (door.dest !== null) {
                         doorToPass = door;
+                        break;
                     }
                 }
             }
         }
 
         if (doorToPass) {
+            let oldRoomId = currentRoomId;
             worldState.droppedItems[currentRoomId] = currentItems.map(item => ({...item}));
             worldState.openedDoors[doorToPass.id] = true;
-
-            let returnFace = 'south';
-            if (doorToPass.face === 'north') returnFace = 'south';
-            else if (doorToPass.face === 'south') returnFace = 'north';
-            else if (doorToPass.face === 'east') returnFace = 'west';
-            else if (doorToPass.face === 'west') returnFace = 'east';
 
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
@@ -152,7 +148,7 @@ window.update = function() {
 
             if (typeof currentDoors !== 'undefined') {
                 currentDoors.forEach(d => {
-                    if (d.face === returnFace) {
+                    if (d.dest === oldRoomId) { // Sécurité Minotaure : Ouvre uniquement la porte d'où l'on vient
                         worldState.openedDoors[d.id] = true;
                         d.locked = false;
                     }
