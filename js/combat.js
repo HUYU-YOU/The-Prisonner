@@ -232,7 +232,6 @@ window.updateProjectiles = function() {
         }
     }
 };
-
 window.updateItemsAndCrates = function() {
     for (let i = currentItems.length - 1; i >= 0; i--) {
         let item = currentItems[i];
@@ -245,11 +244,27 @@ window.updateItemsAndCrates = function() {
                 playerStats.inventory.keys.orb++; 
                 if (item.id === 'final_sphere') {
                     window.activeDialogue = {
-                        text: "Félicitations !\nLes abysses se taisent... Niveau 4 débloqué prochainement.\n\n[ESPACE] Continuer",
-                        onConfirm: function() {}, 
+                        text: "Félicitations !\nVous avez purifié les abysses...\nLe Niveau 4 arrive bientôt.\n\n[ESPACE] Continuer",
+                        onConfirm: function() {
+                            player.x = 150; player.y = 150; 
+                            window.loadRoom(1);
+                        }, 
                         onCancel: function() {}
                     };
                 }
+            }
+            else if (item.type === 'scroll') {
+                playerStats.attackMultiplier = (playerStats.attackMultiplier || 1.0) + 0.10;
+                
+                if (player.heroClass === 'Elf') playerStats.weapon = "ARC DE MINORLING";
+                else if (player.heroClass === 'Knight') playerStats.weapon = "ÉPÉE DU MINOTAURE";
+                else if (player.heroClass === 'Mage') playerStats.weapon = "BOULES DE FEU (ÉVOLUÉ)";
+                else if (player.heroClass === 'Necromancer') playerStats.weapon = "FAUX DES ÂMES (ÉVOLUÉ)";
+                
+                window.activeDialogue = {
+                    text: "Vous trouvez un parchemin ancien...\nPuissance d'attaque +10% !\n\n[ESPACE] Continuer",
+                    onConfirm: function() {}, onCancel: function() {}
+                };
             }
             else if (item.type === 'potion_green') playerStats.inventory.potions.green++; 
             else if (item.type === 'potion_yellow') playerStats.inventory.potions.yellow++; 
