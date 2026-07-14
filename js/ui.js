@@ -52,7 +52,6 @@ window.drawMiniMap = function() {
     let mapCanvas = document.getElementById('map-canvas');
     if (!mapCanvas) return;
     
-    // OPTIMISATION VISUELLE DE LA CARTE
     mapCanvas.width = 400;
     mapCanvas.height = 400;
     mapCanvas.style.width = "100%";
@@ -65,20 +64,20 @@ window.drawMiniMap = function() {
     mctx.fillStyle = '#111';
     mctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
     
-    // NOUVELLE GRILLE INCLUANT LE NIVEAU 1 ET LE NIVEAU 2
-    const mapGrid = { 
-        1: {x: 2, y: 9}, 2: {x: 2, y: 8}, 3: {x: 1, y: 8}, 4: {x: 3, y: 8}, 
-        5: {x: 1, y: 7}, 6: {x: 3, y: 7}, 7: {x: 2, y: 6}, 8: {x: 2, y: 5},
-        101: {x: 2, y: 4}, 102: {x: 1, y: 4}, 103: {x: 3, y: 4}, 104: {x: 2, y: 5}, 
-        114: {x: 2, y: 3}, 111: {x: 3, y: 3}, 112: {x: 3, y: 2}, 113: {x: 3, y: 1},
-        105: {x: 1, y: 3}, 106: {x: 0, y: 4}, 107: {x: 1, y: 5}, 108: {x: 1, y: 6},
-        109: {x: 3, y: 5}, 110: {x: 3, y: 6}, 999: {x: 4, y: 4}
-    };
+    let mapGrid = {};
+    if (currentRoomId === 999) {
+        mapGrid = { 999: {x: 2, y: 2} };
+    } else if (currentRoomId >= 200) {
+        mapGrid = { 201: {x:2, y:4}, 202: {x:2, y:3}, 203: {x:3, y:3}, 204: {x:1, y:3}, 205: {x:1, y:2}, 206: {x:1, y:1}, 207: {x:2, y:1}, 208: {x:2, y:0} };
+    } else if (currentRoomId >= 100) {
+        mapGrid = { 101: {x:2, y:4}, 102: {x:1, y:4}, 103: {x:3, y:4}, 104: {x:2, y:5}, 105: {x:1, y:3}, 106: {x:0, y:4}, 107: {x:1, y:5}, 108: {x:1, y:6}, 109: {x:3, y:5}, 110: {x:3, y:6}, 111: {x:3, y:3}, 112: {x:3, y:2}, 113:{x:3,y:1}, 114:{x:2,y:3} };
+    } else {
+        mapGrid = { 1: {x: 2, y: 9}, 2: {x: 2, y: 8}, 3: {x: 1, y: 8}, 4: {x: 3, y: 8}, 5: {x: 1, y: 7}, 6: {x: 3, y: 7}, 7: {x: 2, y: 6}, 8: {x: 2, y: 5} };
+    }
     
     let boxSize = 35; 
     let currPos = mapGrid[currentRoomId] || {x: 2, y: 4};
     
-    // CENTRAGE DYNAMIQUE SUR LA POSITION DU JOUEUR
     let offsetX = (mapCanvas.width / 2) - (currPos.x * boxSize) - (boxSize / 2);
     let offsetY = (mapCanvas.height / 2) - (currPos.y * boxSize) - (boxSize / 2);
 
@@ -89,10 +88,10 @@ window.drawMiniMap = function() {
             let py = offsetY + mapGrid[roomId].y * boxSize;
             let width = boxSize; let height = boxSize;
 
-            if (roomId === 2) width = boxSize * 1.5; // Ajustement visuel mineur
+            if (roomId === 2 || roomId === 202) width = boxSize * 1.5;
 
             if (roomId === currentRoomId) mctx.fillStyle = '#f1c40f'; 
-            else if (roomId === 8 || roomId === 108 || roomId === 110 || roomId === 113) mctx.fillStyle = '#e74c3c'; 
+            else if (roomId === 8 || roomId === 108 || roomId === 110 || roomId === 113 || roomId === 208) mctx.fillStyle = '#e74c3c'; 
             else mctx.fillStyle = '#7f8c8d'; 
 
             mctx.fillRect(px, py, width - 4, height - 4);
