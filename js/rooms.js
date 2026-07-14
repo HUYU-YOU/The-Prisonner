@@ -14,7 +14,7 @@ window.saveRoomState = function() {
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
-    projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; necroSummons = []; necroKills = []; 
+    projectiles = []; enemyProjectiles = []; hazards = []; particles = []; currentCrates = []; 
     currentObstacles = []; currentDoors = []; currentItems = []; currentEnemies = [];
     
     playerInvulnerableTimer = 30; 
@@ -209,13 +209,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             currentEnemies = JSON.parse(JSON.stringify(worldState.enemyStates[roomId])); 
         } 
         else if (!worldState.clearedRooms[roomId]) {
-            let spawnOppositeX = canvas.width/2;
-            let spawnOppositeY = canvas.height/2;
-            if (entryFace === 'north') spawnOppositeY = wallMargin + 100;
-            else if (entryFace === 'south') spawnOppositeY = canvas.height - wallMargin - 100;
-            else if (entryFace === 'west') spawnOppositeX = canvas.width - wallMargin - 100;
-            else if (entryFace === 'east') spawnOppositeX = wallMargin + 100;
-
             if (roomId === 2) { window.spawnEnemy('goblin', 1, canvas.width/2 - 150, canvas.height/2 - 150); window.spawnEnemy('goblin', 1, canvas.width/2 + 150, canvas.height/2 + 150); }
             else if (roomId === 3) window.spawnEnemy('goblin', 2, canvas.width - wallMargin - 150, wallMargin + 100);
             else if (roomId === 4) window.spawnEnemy('goblin', 2, 800, 400);
@@ -232,25 +225,25 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             }
             else if (roomId === 102) window.spawnEnemy('skeleton', 2, wallMargin + 50, canvas.height/2);
             else if (roomId === 103) { 
-                window.spawnEnemy('skeleton', 1, canvas.width - 350, 150); 
-                window.spawnEnemy('skeleton', 1, canvas.width - 350, canvas.height - 150); 
+                window.spawnEnemy('skeleton', 2, canvas.width/2, canvas.height/2); 
                 currentEnemies.forEach(e => { if (e.type === 'skeleton') e.speed = 0; }); 
             }
             else if (roomId === 104) { window.spawnEnemy('goblin', 3, canvas.width/2, canvas.height/2); window.spawnEnemy('skeleton', 1, canvas.width/2, canvas.height/2); }
-            else if (roomId === 105) window.spawnEnemy('troll', 3, canvas.width/2, 300);
+            else if (roomId === 105) window.spawnEnemy('orc', 3, canvas.width/2, 300);
             else if (roomId === 106) window.spawnEnemy('orc', 3, canvas.width/2, 300); 
             else if (roomId >= 107 && roomId <= 110) window.spawnEnemy('minotaure', 1, canvas.width/2, canvas.height/2);
             else if (roomId === 111) window.spawnEnemy('goblin', 2, canvas.width/2, canvas.height/2);
             else if (roomId === 112) window.spawnEnemy('skeleton', 3, canvas.width/2, canvas.height/2);
             else if (roomId === 113) { window.spawnEnemy('troll', 1, canvas.width/2 - 100, canvas.height/2); window.spawnEnemy('troll', 1, canvas.width/2 + 100, canvas.height/2); }
 
-            else if (roomId === 202) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('siren', 1, spawnOppositeX + 50, spawnOppositeY); }
-            else if (roomId === 203) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('anglerfish', 1, canvas.width/2, canvas.height/2); }
-            else if (roomId === 204) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('anglerfish', 2, canvas.width/2, canvas.height/2); }
-            else if (roomId === 205) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('siren', 1, spawnOppositeX + 50, spawnOppositeY); }
+            // Spawns centrés pour les Sirènes au niveau 3
+            else if (roomId === 202) { window.spawnEnemy('siren', 1, canvas.width/2 - 50, canvas.height/2); window.spawnEnemy('siren', 1, canvas.width/2 + 50, canvas.height/2); }
+            else if (roomId === 203) { window.spawnEnemy('siren', 1, canvas.width/2 - 50, canvas.height/2); window.spawnEnemy('anglerfish', 1, canvas.width/2 + 50, canvas.height/2); }
+            else if (roomId === 204) { window.spawnEnemy('siren', 1, canvas.width/2 - 50, canvas.height/2); window.spawnEnemy('anglerfish', 2, canvas.width/2 + 50, canvas.height/2); }
+            else if (roomId === 205) { window.spawnEnemy('siren', 1, canvas.width/2 - 60, canvas.height/2); window.spawnEnemy('siren', 1, canvas.width/2 + 60, canvas.height/2); window.spawnEnemy('siren', 1, canvas.width/2, canvas.height/2 + 60); }
             else if (roomId === 206) { window.spawnEnemy('anglerfish', 3, canvas.width/2, canvas.height/2); }
-            else if (roomId === 207) { window.spawnEnemy('siren', 1, spawnOppositeX - 60, spawnOppositeY); window.spawnEnemy('siren', 1, spawnOppositeX + 60, spawnOppositeY); window.spawnEnemy('siren', 1, spawnOppositeX, spawnOppositeY + 60); }
-            else if (roomId === 208) { window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 90); window.spawnEnemy('siren', 1, canvas.width/2 - 150, canvas.height/2); window.spawnEnemy('siren', 1, canvas.width/2 + 150, canvas.height/2); }
+            else if (roomId === 207) { window.spawnEnemy('siren', 1, canvas.width/2 - 60, canvas.height/2); window.spawnEnemy('siren', 1, canvas.width/2 + 60, canvas.height/2); window.spawnEnemy('siren', 1, canvas.width/2, canvas.height/2 + 60); window.spawnEnemy('siren', 1, canvas.width/2, canvas.height/2 - 60); }
+            else if (roomId === 208) { window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 90); }
         }
     }
 };
