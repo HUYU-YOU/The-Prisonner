@@ -456,12 +456,15 @@ window.updateEnemies = function() {
                 playerStats.health -= dmg; 
                 enemy.attackAnimTimer = 30;
                 
-                let randHit = Math.floor(Math.random() * 3) + 1;
-                let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                let bSize = player.size * 1.5;
-                if (player.heroClass === 'Elf') bSize /= 2;
-                
-                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                if (!isSwimming) {
+                    let randHit = Math.floor(Math.random() * 3) + 1;
+                    let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                    let bSize = player.size * 1.5;
+                    if (player.heroClass === 'Elf') bSize /= 2;
+                    
+                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + randHit, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                }
                 
                 playerInvulnerableTimer = 60; 
                 if (typeof window.updateHUD === 'function') window.updateHUD(); 
@@ -538,10 +541,13 @@ window.updateEnemies = function() {
                             currentEnemies.forEach(e => {
                                 if (!e.invulnerable && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
-                                    let hitNum = Math.floor(Math.random() * 3) + 1;
-                                    let bSize = e.size * 1.5;
-                                    if (['elf', 'troll', 'dragon', 'goblin'].includes(e.type.toLowerCase())) bSize /= 2;
-                                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                                    let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                                    if (!isSwimming) {
+                                        let hitNum = Math.floor(Math.random() * 3) + 1;
+                                        let bSize = e.size * 1.5;
+                                        if (['elf', 'troll', 'dragon', 'goblin'].includes(e.type.toLowerCase())) bSize /= 2;
+                                        bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: e.x + e.size/2, y: e.y + e.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                                    }
                                 }
                             });
                             summon.attackCooldown = 30; summon.attackAnimTimer = 20;
@@ -549,10 +555,13 @@ window.updateEnemies = function() {
                     } else if (summon.type === 'soul') {
                         if (minDist < 50) { 
                             nearestEnemy.health -= summon.damage; summon.attackCooldown = 60; summon.attackAnimTimer = 20;
-                            let hitNum = Math.floor(Math.random() * 3) + 1;
-                            let bSize = nearestEnemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin'].includes(nearestEnemy.type.toLowerCase())) bSize /= 2;
-                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                            let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                            if (!isSwimming) {
+                                let hitNum = Math.floor(Math.random() * 3) + 1;
+                                let bSize = nearestEnemy.size * 1.5;
+                                if (['elf', 'troll', 'dragon', 'goblin'].includes(nearestEnemy.type.toLowerCase())) bSize /= 2;
+                                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: nearestEnemy.x + nearestEnemy.size/2, y: nearestEnemy.y + nearestEnemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: 1200 });
+                            }
                         }
                     }
                 }
@@ -561,7 +570,6 @@ window.updateEnemies = function() {
         }
     }
 
-    // Gestion du clean d'arène par VAGUE CLASSIC
     if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
         let isBeforeBoss = (arenaWave % 5 === 4); 
         let keyType = isBeforeBoss ? 'key_skull' : 'key';
@@ -581,7 +589,7 @@ window.updateEnemies = function() {
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
                 
                 if (e.type === 'kraken') {
-                    currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
+                    currentItems.push({ id: 'final_sphere', type: 'key_orb', x: canvas.width/2 - 15, y: canvas.height/2 - 15, size: 30, collected: false });
                 } else {
                     currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
                 }
@@ -614,15 +622,18 @@ window.updateEnemies = function() {
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
             }
             
-            let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
-            let killNum = Math.floor(Math.random() * 3) + 1;
-            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            
-            let killSize = e.size * 3.75; 
-            if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille', 'anglerfish', 'siren'].includes(e.type.toLowerCase())) killSize /= 2;
-            if (e.type === 'skeleton') killSize = (e.size * 3.75) / 3;
-            
-            bloodStains.push({ type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2, size: killSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+            let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+            if (!isSwimming) {
+                let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
+                let killNum = Math.floor(Math.random() * 3) + 1;
+                let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                
+                let killSize = e.size * 3.75; 
+                if (['elf', 'troll', 'dragon', 'goblin', 'wolf', 'small_golem', 'orc', 'golem', 'gargouille', 'anglerfish', 'siren'].includes(e.type.toLowerCase())) killSize /= 2;
+                if (e.type === 'skeleton') killSize = (e.size * 3.75) / 3;
+                
+                bloodStains.push({ type: 'kill', imgId: imgPrefix + killNum, x: e.x + e.size/2, y: e.y + e.size/2, size: killSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+            }
             
             playerStats.mana = Math.min(100, playerStats.mana + 5); 
             
