@@ -139,7 +139,6 @@ window.updateEnemies = function() {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
                 enemy.phase = 2; enemy.speed = 1.5;
             }
-            // Retrait de la fonction d'invocation des sirènes pour le Kraken !
             if (enemy.shootCooldown <= 0 && !isElfInvuln) {
                 let pSpeed = 6;
                 for(let k = -3; k <= 3; k++) {
@@ -562,6 +561,15 @@ window.updateEnemies = function() {
         }
     }
 
+    // Gestion du clean d'arène par VAGUE CLASSIC
+    if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
+        let isBeforeBoss = (arenaWave % 5 === 4); 
+        let keyType = isBeforeBoss ? 'key_skull' : 'key';
+        currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, requiresKeySkull: isBeforeBoss, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
+        arenaState = "DOOR_OPEN"; 
+    }
+
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
@@ -572,7 +580,6 @@ window.updateEnemies = function() {
                 worldState.bossDefeated = true; 
                 if (typeof hazards !== 'undefined') hazards.length = 0; 
                 
-                // CADEAU DU KRAKEN (ORBE DU NIVEAU 4) OU CADEAU DU TROLL (CLE SQUELETTE)
                 if (e.type === 'kraken') {
                     currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
                 } else {
