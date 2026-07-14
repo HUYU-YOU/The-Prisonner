@@ -148,7 +148,7 @@ window.update = function() {
 
             if (typeof currentDoors !== 'undefined') {
                 currentDoors.forEach(d => {
-                    if (d.dest === oldRoomId) { // Sécurité Minotaure : Ouvre uniquement la porte d'où l'on vient
+                    if (d.dest === oldRoomId) {
                         worldState.openedDoors[d.id] = true;
                         d.locked = false;
                     }
@@ -434,3 +434,5 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
+
+window.update();
