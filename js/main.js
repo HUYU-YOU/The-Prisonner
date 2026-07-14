@@ -219,25 +219,9 @@ window.update = function() {
         let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
         
         let dx_mov = 0; let dy_mov = 0;
-        let insideHole = false;
         
-        if (typeof currentObstacles !== 'undefined') {
-            for (let obs of currentObstacles) {
-                if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { 
-                    if (player.dashTimer <= 0) { insideHole = true; }
-                    break; 
-                }
-            }
-        }
-
-        if (player.dashTimer > 0 || insideHole) {
-            if (insideHole && player.dashTimer <= 0) { player.dashTimer = 2; }
+        if (player.dashTimer > 0) {
             player.dashTimer--; 
-            
-            if (player.dashVx === 0 && player.dashVy === 0 && insideHole) {
-                player.dashVx = Math.cos(player.faceAngle) * player.speed * 2;
-                player.dashVy = Math.sin(player.faceAngle) * player.speed * 2;
-            }
             dx_mov = player.dashVx; dy_mov = player.dashVy;
         } else {
             if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
@@ -246,10 +230,11 @@ window.update = function() {
             if (keys['s'] || keys['arrowdown'])               dy_mov += currentSpeedPlayer;
         }
         
+        // MOUVEMENT ET COLLISIONS GOUFFRES
         let oldPx = player.x; player.x += dx_mov;
         if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || (!worldState.level2Unlocked && playerStats.inventory.keys.skull <= 0))) { player.x = oldPx; player.dashTimer = 0; } 
         
-        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0 && !insideHole) {
+        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0) {
             for (let i = 0; i < currentObstacles.length; i++) {
                 let obs = currentObstacles[i];
                 if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
@@ -292,7 +277,7 @@ window.update = function() {
         let oldPy = player.y; player.y += dy_mov;
         if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || (!worldState.level2Unlocked && playerStats.inventory.keys.skull <= 0))) { player.y = oldPy; player.dashTimer = 0; } 
         
-        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0 && !insideHole) {
+        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0) {
             for (let i = 0; i < currentObstacles.length; i++) {
                 let obs = currentObstacles[i];
                 if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
@@ -434,5 +419,3 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
-
-window.update();
