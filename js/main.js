@@ -419,3 +419,4 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
+window.update();
