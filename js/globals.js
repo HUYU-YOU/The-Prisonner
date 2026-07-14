@@ -6,18 +6,6 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
 
-// --- GESTIONNAIRE D'ASSETS (SÉCURITÉ ANTI-CRASH GLOBALE) ---
-window.assetsManager = {
-    images: {},
-    load: function(name, path) {
-        let img = new Image();
-        img.src = path;
-        this.images[name] = img;
-        img.onload = () => console.log("Chargé : " + name);
-        img.onerror = () => console.error("Erreur de chargement : " + path);
-    }
-};
-var assetsManager = window.assetsManager; // Sécurité pour portée globale absolue
 
 // --- ETATS GENERAUX DU JEU ---
 let gameState = "MENU";
