@@ -585,8 +585,7 @@ window.renderGameView = function() {
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         
         if (isSwimming) {
-            let animFrame = (Math.floor(Date.now() / 250) % 2 === 0) ? '1' : '2';
-            skinNameP = `${prefixP}_swim${animFrame}_southwest_view`; 
+            skinNameP = `${prefixP}_swim1_southwest_view`; 
         } 
         
         let pImg = window.getAsset(skinNameP);
