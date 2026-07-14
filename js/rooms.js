@@ -10,7 +10,6 @@ window.saveRoomState = function() {
         if (currentEnemies.length === 0) { worldState.clearedRooms[currentRoomId] = true; }
     }
 };
-
 window.loadRoom = function(roomId, entryFace = 'south') {
     currentRoomId = roomId; 
     
@@ -244,6 +243,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 113) { window.spawnEnemy('troll', 1, canvas.width/2 - 100, canvas.height/2); window.spawnEnemy('troll', 1, canvas.width/2 + 100, canvas.height/2); }
 
             else if (roomId === 202) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('siren', 1, spawnOppositeX + 50, spawnOppositeY); }
+            else if (roomId === 203) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('anglerfish', 1, canvas.width/2, canvas.height/2); }
             else if (roomId === 204) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('anglerfish', 2, canvas.width/2, canvas.height/2); }
             else if (roomId === 205) { window.spawnEnemy('siren', 1, spawnOppositeX - 50, spawnOppositeY); window.spawnEnemy('siren', 1, spawnOppositeX + 50, spawnOppositeY); }
             else if (roomId === 206) { window.spawnEnemy('anglerfish', 3, canvas.width/2, canvas.height/2); }
