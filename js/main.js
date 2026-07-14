@@ -90,13 +90,7 @@ window.update = function() {
                         let t = window.arenaQueue.shift();
                         if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     }
-                } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
-                    if (currentDoors.length === 0) {
-                        currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
-                        arenaState = "DOOR_OPEN"; 
-                    }
-                }
+                } 
             }
         }
 
@@ -115,9 +109,9 @@ window.update = function() {
                 if (!doorToPass && typeof window.checkCollision === 'function' && window.checkCollision(player, door)) {
                     if (door.locked) {
                         let hasKey = false;
-                        if ((door.requiresKeySkull || currentRoomId === 999) && playerStats.inventory.keys.skull > 0) {
+                        if (door.requiresKeySkull && playerStats.inventory.keys.skull > 0) {
                             playerStats.inventory.keys.skull--; hasKey = true;
-                        } else if (!door.requiresKeySkull && currentRoomId !== 999 && playerStats.inventory.keys.gold > 0) {
+                        } else if (!door.requiresKeySkull && playerStats.inventory.keys.gold > 0) {
                             playerStats.inventory.keys.gold--; hasKey = true;
                         }
                         
@@ -444,5 +438,3 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
-// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
-window.update();
