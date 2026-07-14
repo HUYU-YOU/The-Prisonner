@@ -2,7 +2,19 @@
 // ASSETS MANAGER - CHARGEMENT DES IMAGES (js/assets.js)
 // ============================================================================
 
-// (Le gestionnaire est maintenant sécurisé dans globals.js)
+window.assetsManager = {
+    images: {},
+    load: function(name, path) {
+        let img = new Image();
+        img.src = path;
+        this.images[name] = img;
+        img.onload = () => console.log("Chargé : " + name);
+        img.onerror = () => console.error("Erreur de chargement : " + path);
+    }
+};
+
+const assetsManager = window.assetsManager;
+window.getAsset = function(name) { return window.assetsManager.images[name]; };
 
 assetsManager.load('sol_base', 'assets/tiles/floor.png'); 
 assetsManager.load('floor2', 'assets/tiles/floor2.png');
