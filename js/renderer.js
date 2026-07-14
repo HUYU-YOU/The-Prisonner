@@ -554,7 +554,6 @@ window.renderGameView = function() {
         let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
         let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
         
-        // Retrait de la respiration et bobbing sous l'eau
         let bobbingY = 0;
         let tilt = 0;
         if (!isSwimming) {
@@ -585,9 +584,9 @@ window.renderGameView = function() {
         
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         
-        // Force Skin Nage (SouthWest) et taille normale
         if (isSwimming) {
-            skinNameP = `${prefixP}_swim1_southwest_view`; 
+            let animFrame = (Math.floor(Date.now() / 250) % 2 === 0) ? '1' : '2';
+            skinNameP = `${prefixP}_swim${animFrame}_southwest_view`; 
         } 
         
         let pImg = window.getAsset(skinNameP);
@@ -617,7 +616,6 @@ window.renderGameView = function() {
             pImg = window.getAsset(fallbackNameP);
         }
 
-        // Système de rotation libre sous l'eau
         if (isSwimming) {
             let baseAngle = skinNameP.includes('southwest') ? (3 * Math.PI / 4) : (Math.PI / 2);
             ctx.rotate(player.faceAngle - baseAngle); 
