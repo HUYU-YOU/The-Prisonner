@@ -65,14 +65,25 @@ window.drawMiniMap = function() {
     mctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
     
     let mapGrid = {};
-    if (currentRoomId === 999) {
-        mapGrid = { 999: {x: 2, y: 2} };
-    } else if (currentRoomId >= 200) {
-        mapGrid = { 201: {x:2, y:4}, 202: {x:2, y:3}, 203: {x:3, y:3}, 204: {x:1, y:3}, 205: {x:1, y:2}, 206: {x:1, y:1}, 207: {x:2, y:1}, 208: {x:2, y:0} };
-    } else if (currentRoomId >= 100) {
-        mapGrid = { 101: {x:2, y:4}, 102: {x:1, y:4}, 103: {x:3, y:4}, 104: {x:2, y:5}, 105: {x:1, y:3}, 106: {x:0, y:4}, 107: {x:1, y:5}, 108: {x:1, y:6}, 109: {x:3, y:5}, 110: {x:3, y:6}, 111: {x:3, y:3}, 112: {x:3, y:2}, 113:{x:3,y:1}, 114:{x:2,y:3} };
-    } else {
-        mapGrid = { 1: {x: 2, y: 9}, 2: {x: 2, y: 8}, 3: {x: 1, y: 8}, 4: {x: 3, y: 8}, 5: {x: 1, y: 7}, 6: {x: 3, y: 7}, 7: {x: 2, y: 6}, 8: {x: 2, y: 5} };
+    let fMin = 1, fMax = 99;
+    if (currentRoomId === 999) { fMin = 999; fMax = 999; }
+    else if (currentRoomId >= 200) { fMin = 200; fMax = 299; }
+    else if (currentRoomId >= 100) { fMin = 100; fMax = 199; }
+
+    const fullGrid = {
+        1: {x: 2, y: 9}, 2: {x: 2, y: 8}, 3: {x: 1, y: 8}, 4: {x: 3, y: 8}, 
+        5: {x: 1, y: 7}, 6: {x: 3, y: 7}, 7: {x: 2, y: 6}, 8: {x: 2, y: 5},
+        101: {x: 2, y: 4}, 102: {x: 1, y: 4}, 103: {x: 3, y: 4}, 104: {x: 2, y: 5}, 
+        105: {x: 1, y: 3}, 106: {x: 0, y: 4}, 107: {x: 1, y: 5}, 108: {x: 1, y: 6},
+        109: {x: 3, y: 5}, 110: {x: 3, y: 6}, 111: {x: 3, y: 3}, 112: {x: 3, y: 2}, 
+        113: {x: 3, y: 1}, 114: {x: 2, y: 3},
+        201: {x: 2, y: 4}, 202: {x: 2, y: 3}, 203: {x: 3, y: 3}, 204: {x: 1, y: 3}, 
+        205: {x: 1, y: 2}, 206: {x: 1, y: 1}, 207: {x: 2, y: 1}, 208: {x: 2, y: 0},
+        999: {x: 2, y: 2}
+    };
+
+    for(let id in fullGrid) {
+        if (id >= fMin && id <= fMax) mapGrid[id] = fullGrid[id];
     }
     
     let boxSize = 35; 
