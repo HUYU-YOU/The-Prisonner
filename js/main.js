@@ -90,7 +90,13 @@ window.update = function() {
                         let t = window.arenaQueue.shift();
                         if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     }
-                } 
+                } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
+                    if (currentDoors.length === 0) {
+                        currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
+                        arenaState = "DOOR_OPEN"; 
+                    }
+                }
             }
         }
 
@@ -119,7 +125,7 @@ window.update = function() {
                             door.locked = false; 
                             worldState.unlockedDoors[door.id] = true;
                             if (typeof window.updateHUD === 'function') window.updateHUD();
-                            if (door.dest !== null) { doorToPass = door; break; }
+                            if (door.dest !== null) doorToPass = door;
                         } else {
                             if (door.face === 'north') player.y = door.y + door.height;
                             else if (door.face === 'south') player.y = door.y - player.size;
@@ -128,16 +134,20 @@ window.update = function() {
                         }
                     } else if (door.dest !== null) {
                         doorToPass = door;
-                        break;
                     }
                 }
             }
         }
 
         if (doorToPass) {
-            let oldRoomId = currentRoomId;
             worldState.droppedItems[currentRoomId] = currentItems.map(item => ({...item}));
             worldState.openedDoors[doorToPass.id] = true;
+
+            let returnFace = 'south';
+            if (doorToPass.face === 'north') returnFace = 'south';
+            else if (doorToPass.face === 'south') returnFace = 'north';
+            else if (doorToPass.face === 'east') returnFace = 'west';
+            else if (doorToPass.face === 'west') returnFace = 'east';
 
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
@@ -148,7 +158,7 @@ window.update = function() {
 
             if (typeof currentDoors !== 'undefined') {
                 currentDoors.forEach(d => {
-                    if (d.dest === oldRoomId) {
+                    if (d.face === returnFace) {
                         worldState.openedDoors[d.id] = true;
                         d.locked = false;
                     }
@@ -219,9 +229,25 @@ window.update = function() {
         let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
         
         let dx_mov = 0; let dy_mov = 0;
+        let insideHole = false;
         
-        if (player.dashTimer > 0) {
+        if (typeof currentObstacles !== 'undefined') {
+            for (let obs of currentObstacles) {
+                if (obs.type === 'hole' && typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) { 
+                    if (player.dashTimer <= 0) { insideHole = true; }
+                    break; 
+                }
+            }
+        }
+
+        if (player.dashTimer > 0 || insideHole) {
+            if (insideHole && player.dashTimer <= 0) { player.dashTimer = 2; }
             player.dashTimer--; 
+            
+            if (player.dashVx === 0 && player.dashVy === 0 && insideHole) {
+                player.dashVx = Math.cos(player.faceAngle) * player.speed * 2;
+                player.dashVy = Math.sin(player.faceAngle) * player.speed * 2;
+            }
             dx_mov = player.dashVx; dy_mov = player.dashVy;
         } else {
             if (keys['q'] || keys['a'] || keys['arrowleft'])  dx_mov -= currentSpeedPlayer;
@@ -230,11 +256,10 @@ window.update = function() {
             if (keys['s'] || keys['arrowdown'])               dy_mov += currentSpeedPlayer;
         }
         
-        // MOUVEMENT ET COLLISIONS GOUFFRES
         let oldPx = player.x; player.x += dx_mov;
         if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || (!worldState.level2Unlocked && playerStats.inventory.keys.skull <= 0))) { player.x = oldPx; player.dashTimer = 0; } 
         
-        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0) {
+        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0 && !insideHole) {
             for (let i = 0; i < currentObstacles.length; i++) {
                 let obs = currentObstacles[i];
                 if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
@@ -277,7 +302,7 @@ window.update = function() {
         let oldPy = player.y; player.y += dy_mov;
         if (currentRoomId === 8 && typeof window.checkCollision === 'function' && window.checkCollision(player, centerStairs) && (!worldState.bossDefeated || (!worldState.level2Unlocked && playerStats.inventory.keys.skull <= 0))) { player.y = oldPy; player.dashTimer = 0; } 
         
-        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0) {
+        if (typeof currentObstacles !== 'undefined' && player.dashTimer <= 0 && !insideHole) {
             for (let i = 0; i < currentObstacles.length; i++) {
                 let obs = currentObstacles[i];
                 if (typeof window.checkCollision === 'function' && window.checkCollision(player, obs)) {
@@ -419,4 +444,5 @@ window.update = function() {
         requestAnimationFrame(window.update);
     }
 };
+// C'EST CETTE LIGNE QUI DÉMARRE TOUT LE JEU !
 window.update();
