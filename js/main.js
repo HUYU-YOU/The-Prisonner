@@ -60,6 +60,22 @@ window.update = function() {
             }
         }
 
+        if (currentRoomId === 301 && worldState.level4Timer > 0) {
+            worldState.level4Timer--;
+            
+            if (worldState.level4Timer % 90 === 0) {
+                let mx = wallMargin + Math.random() * (canvas.width - wallMargin*2);
+                let my = wallMargin + Math.random() * (canvas.height - wallMargin*2);
+                if (typeof hazards !== 'undefined') hazards.push({ x: mx, y: my, radius: 50, timer: 60, maxTimer: 60, damage: 40, isElysia: true });
+            }
+            
+            if (worldState.level4Timer <= 0) {
+                currentEnemies = []; 
+                if (typeof hazards !== 'undefined') hazards.length = 0;
+                if (typeof window.spawnEnemy === 'function') window.spawnEnemy('mage', 1, canvas.width/2, 100);
+            }
+        }
+
         if (typeof window.playerRedPotionActive !== 'undefined' && window.playerRedPotionActive) {
             if (playerStats.health < playerStats.maxHealth) {
                 playerStats.health += 1; 
@@ -79,34 +95,44 @@ window.update = function() {
                 if (arenaTimer <= 0) {
                     arenaState = "PLAYING";
                     window.arenaQueue = [];
-                    if (arenaWave === 1) window.arenaQueue = ['goblin', 'goblin'];
-                    else if (arenaWave === 2) window.arenaQueue = ['goblin', 'goblin', 'skeleton'];
-                    else if (arenaWave === 3) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton'];
-                    else if (arenaWave === 4) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton'];
-                    else if (arenaWave === 5) window.arenaQueue = ['goblin', 'goblin', 'goblin', 'goblin', 'skeleton', 'skeleton', 'skeleton', 'skeleton'];
-                    else {
+                    if (arenaWave % 10 === 0) {
+                        let bossType = 'troll';
+                        if (arenaWave === 20) bossType = 'mage';
+                        else if (arenaWave === 30) bossType = 'dragon';
+                        else if (arenaWave === 40) bossType = 'deathgod';
+                        else if (arenaWave >= 50) bossType = 'elysia';
+                        window.arenaQueue = [bossType];
+                    } else if (arenaWave % 5 === 0) {
+                        window.arenaQueue = ['armor', 'armor'];
+                    } else {
                         let total = 5 + Math.floor(arenaWave * 1.5);
                         let pool = ['goblin'];
-                        if (arenaWave <= 10) pool.push('goblin', 'skeleton');
-                        if (arenaWave >= 9 && arenaWave <= 15) pool.push('spider');
-                        if (arenaWave >= 16) pool.push('orc', 'skeleton'); 
-                        if (arenaWave >= 21) { pool = pool.filter(e => e !== 'skeleton'); pool.push('golem'); } 
-                        if (arenaWave >= 25) { pool = pool.filter(e => e !== 'orc'); pool.push('minotaure'); } 
-                        if (arenaWave >= 31) { pool = pool.filter(e => e !== 'golem'); pool.push('gargouille', 'wolf'); } 
+                        if (arenaWave > 2) pool.push('skeleton');
+                        if (arenaWave > 6) pool.push('spider');
+                        if (arenaWave > 11) pool.push('orc');
+                        if (arenaWave > 16) pool.push('wolf');
+                        if (arenaWave > 21) pool.push('golem');
+                        if (arenaWave > 26) pool.push('small_golem');
+                        if (arenaWave > 31) pool.push('minotaure');
+                        if (arenaWave > 36) pool.push('gargouille');
+                        if (arenaWave > 41) pool.push('siren');
+                        
                         for (let i = 0; i < total; i++) window.arenaQueue.push(pool[Math.floor(Math.random() * pool.length)]);
                     }
                 }
             } 
             else if (typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
-                if (window.arenaQueue && window.arenaQueue.length > 0 && currentEnemies.length < 20) {
-                    if (Math.random() < 0.05) { 
+                if (window.arenaQueue && window.arenaQueue.length > 0 && currentEnemies.length < 15) {
+                    if (Math.random() < 0.08) { 
                         let t = window.arenaQueue.shift();
                         if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     }
                 } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
                     if (currentDoors.length === 0) {
-                        currentItems.push({ id: 'arena_key_'+arenaWave, type: 'key_skull', x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
+                        let isBeforeBoss = (arenaWave % 5 === 4); 
+                        let keyType = isBeforeBoss ? 'key_skull' : 'key';
+                        currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, requiresKeySkull: isBeforeBoss, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
                         arenaState = "DOOR_OPEN"; 
                     }
                 }
