@@ -12,13 +12,11 @@ window.startHeroHold = function(heroClass) {
 };
 window.setGameMode = function(mode) {
     currentGameMode = mode;
-    let btnStory = document.getElementById('btn-story');
-    let btnWave = document.getElementById('btn-wave');
-    if (btnStory && btnWave) {
-        btnStory.style.background = mode === 'story' ? '#27ae60' : '#2c3e50';
-        btnStory.style.borderColor = mode === 'story' ? '#2ecc71' : '#34495e';
-        btnWave.style.background = mode === 'wave' ? '#c0392b' : '#2c3e50';
-        btnWave.style.borderColor = mode === 'wave' ? '#e74c3c' : '#34495e';
+    let imgStory = document.getElementById('img-story');
+    let imgWave = document.getElementById('img-wave');
+    if (imgStory && imgWave) {
+        imgStory.style.borderColor = mode === 'story' ? '#2ecc71' : 'transparent';
+        imgWave.style.borderColor = mode === 'wave' ? '#e74c3c' : 'transparent';
     }
 };
 window.endHeroHold = function(heroClass) {
@@ -88,7 +86,7 @@ window.usePotion = function(color) {
             potionUsed = true; 
         } 
         else if (color === 'red' && playerStats.health < playerStats.maxHealth) { 
-            playerStats.health = Math.min(playerStats.maxHealth, playerStats.health + (playerStats.maxHealth * 0.5)); 
+            window.playerRedPotionActive = true; 
             potionUsed = true; 
         } 
         else if (color === 'blue' && playerStats.mana < 100) { 
