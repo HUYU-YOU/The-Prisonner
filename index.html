@@ -10,10 +10,14 @@
 
     <div id="game-container">
         
-       <div id="menu-screen">
+      <div id="menu-screen">
             <div id="mode-selector" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 10;">
-                <button id="btn-story" onclick="if(typeof setGameMode==='function') setGameMode('story')" style="padding: 10px 20px; font-size: 18px; font-weight: bold; background: #27ae60; color: white; border: 2px solid #2ecc71; border-radius: 5px; cursor: pointer;">MODE STORY</button>
-                <button id="btn-wave" onclick="if(typeof setGameMode==='function') setGameMode('wave')" style="padding: 10px 20px; font-size: 18px; font-weight: bold; background: #2c3e50; color: white; border: 2px solid #34495e; border-radius: 5px; cursor: pointer;">MODE WAVE</button>
+                <button id="btn-story" onclick="if(typeof setGameMode==='function') setGameMode('story')" style="background: none; border: none; cursor: pointer; padding: 0;">
+                    <img src="assets/card/story.png" alt="Mode Story" style="width: 150px; border-radius: 8px; border: 2px solid #2ecc71;" id="img-story">
+                </button>
+                <button id="btn-wave" onclick="if(typeof setGameMode==='function') setGameMode('wave')" style="background: none; border: none; cursor: pointer; padding: 0;">
+                    <img src="assets/card/wave.png" alt="Mode Wave" style="width: 150px; border-radius: 8px; border: 2px solid transparent;" id="img-wave">
+                </button>
             </div>
             <h1>THE PRISONER</h1>
             <div class="character-select">
@@ -23,7 +27,9 @@
                 <button class="hero-btn" onmousedown="if(typeof startHeroHold==='function') startHeroHold('Elf')" onmouseup="if(typeof endHeroHold==='function') endHeroHold('Elf')" onmouseleave="if(typeof endHeroHold==='function') endHeroHold('Elf')">
                     <img src="assets/card/Elf.png" alt="Elfe">
                 </button>
-                <button onmousedown="if(typeof startHeroHold==='function') startHeroHold('Mage')" onmouseup="if(typeof endHeroHold==='function') endHeroHold('Mage')" onmouseleave="if(typeof endHeroHold==='function') endHeroHold('Mage')">🔒Le brulé </button>
+                <button class="hero-btn" onmousedown="if(typeof startHeroHold==='function') startHeroHold('Mage')" onmouseup="if(typeof endHeroHold==='function') endHeroHold('Mage')" onmouseleave="if(typeof endHeroHold==='function') endHeroHold('Mage')">
+                    <img src="assets/card/Burned.png" alt="Le Brûlé">
+                </button>
             </div>
         </div>
         <aside id="hud">
