@@ -141,9 +141,9 @@ window.updateEnemies = function() {
             }
             if (enemy.shootCooldown <= 0 && !isElfInvuln) {
                 let pSpeed = 6;
-                for(let k = -3; k <= 3; k++) {
+                for(let k = -2; k <= 2; k++) {
                     let spreadAngle = angleToPlayer + (k * 0.15);
-                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 15, type: 'ink_ball', color: '#111', damage: 30 });
+                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 10.5, type: 'ink_ball', color: '#111', damage: 30 });
                 }
                 enemy.shootCooldown = 90; enemy.attackAnimTimer = 30; 
             }
@@ -600,7 +600,7 @@ window.updateEnemies = function() {
                 if (worldState.minotaursKilled < 4) {
                     currentItems.push({ id: 'key_mino_'+Date.now(), type: 'key', x: e.x, y: e.y, size: 15, collected: false });
                 } else {
-                    currentItems.push({ id: 'scroll_power', type: 'scroll', x: e.x, y: e.y, size: 15, collected: false });
+                    currentItems.push({ id: 'potion_mino_red', type: 'potion_red', x: e.x, y: e.y, size: 15, collected: false });
                 }
             }
             
