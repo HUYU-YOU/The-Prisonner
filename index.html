@@ -10,13 +10,13 @@
 
     <div id="game-container">
         
-      <div id="menu-screen">
-            <div id="mode-selector" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 10;">
+   <div id="menu-screen">
+            <div id="mode-selector" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; z-index: 10;">
                 <button id="btn-story" onclick="if(typeof setGameMode==='function') setGameMode('story')" style="background: none; border: none; cursor: pointer; padding: 0;">
-                    <img src="assets/card/story.png" alt="Mode Story" style="width: 150px; border-radius: 8px; border: 2px solid #2ecc71;" id="img-story">
+                    <img src="assets/card/story.png" alt="Mode Story" style="width: 150px; border-radius: 8px; transform: scale(1.15); opacity: 1; transition: all 0.3s ease;" id="img-story">
                 </button>
                 <button id="btn-wave" onclick="if(typeof setGameMode==='function') setGameMode('wave')" style="background: none; border: none; cursor: pointer; padding: 0;">
-                    <img src="assets/card/wave.png" alt="Mode Wave" style="width: 150px; border-radius: 8px; border: 2px solid transparent;" id="img-wave">
+                    <img src="assets/card/wave.png" alt="Mode Wave" style="width: 150px; border-radius: 8px; transform: scale(0.85); opacity: 0.5; transition: all 0.3s ease;" id="img-wave">
                 </button>
             </div>
             <h1>THE PRISONER</h1>
