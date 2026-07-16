@@ -15,8 +15,13 @@ window.setGameMode = function(mode) {
     let imgStory = document.getElementById('img-story');
     let imgWave = document.getElementById('img-wave');
     if (imgStory && imgWave) {
-        imgStory.style.borderColor = mode === 'story' ? '#2ecc71' : 'transparent';
-        imgWave.style.borderColor = mode === 'wave' ? '#e74c3c' : 'transparent';
+        imgStory.style.transform = mode === 'story' ? 'scale(1.15)' : 'scale(0.85)';
+        imgStory.style.opacity = mode === 'story' ? '1' : '0.5';
+        imgStory.style.border = 'none';
+        
+        imgWave.style.transform = mode === 'wave' ? 'scale(1.15)' : 'scale(0.85)';
+        imgWave.style.opacity = mode === 'wave' ? '1' : '0.5';
+        imgWave.style.border = 'none';
     }
 };
 window.endHeroHold = function(heroClass) {
