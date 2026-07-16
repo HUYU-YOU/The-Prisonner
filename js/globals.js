@@ -15,6 +15,7 @@ let keys = {};
 let mouse = { x: 0, y: 0 };
 let leftClickHeld = false;
 let leftClickHoldTime = 0;
+let currentGameMode = 'story';
 
 // --- NÉCROMANCIEN & VAGUES ---
 let spaceHoldTimer = 0;
