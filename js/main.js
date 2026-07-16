@@ -121,9 +121,11 @@ window.update = function() {
                     let isBossWave = [10, 20, 30, 40, 45, 50].includes(relativeWave);
                     if (isBossWave) {
                         worldState.arenaFloor = 'floor6';
+                        arenaShrink = 150;
                     } else {
                         let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
                         worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
+                        arenaShrink = 0;
                     }
                 }
             } 
