@@ -10,12 +10,28 @@ window.startHeroHold = function(heroClass) {
         if (typeof window.startArenaMode === 'function') window.startArenaMode(heroClass); 
     }, 10000); 
 };
-
+window.setGameMode = function(mode) {
+    currentGameMode = mode;
+    let btnStory = document.getElementById('btn-story');
+    let btnWave = document.getElementById('btn-wave');
+    if (btnStory && btnWave) {
+        btnStory.style.background = mode === 'story' ? '#27ae60' : '#2c3e50';
+        btnStory.style.borderColor = mode === 'story' ? '#2ecc71' : '#34495e';
+        btnWave.style.background = mode === 'wave' ? '#c0392b' : '#2c3e50';
+        btnWave.style.borderColor = mode === 'wave' ? '#e74c3c' : '#34495e';
+    }
+};
 window.endHeroHold = function(heroClass) {
     if (isHolding) { 
         clearTimeout(holdTimer); 
         isHolding = false; 
-        if (!holdCompleted && typeof window.selectHero === 'function') window.selectHero(heroClass); 
+        if (!holdCompleted) {
+            if (typeof currentGameMode !== 'undefined' && currentGameMode === 'wave') {
+                if (typeof window.startArenaMode === 'function') window.startArenaMode(heroClass); 
+            } else {
+                if (typeof window.selectHero === 'function') window.selectHero(heroClass); 
+            }
+        } 
     }
 };
 
