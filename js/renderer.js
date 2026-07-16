@@ -294,6 +294,9 @@ window.renderGameView = function() {
                 ctx.shadowColor = isElysia ? '#e84393' : '#e74c3c'; 
                 ctx.shadowBlur = 30; 
                 ctx.drawImage(metImg, h.x - h.radius*1.5, h.y - fallH - h.radius*1.5, h.radius*3, h.radius*3);
+            } else {
+                ctx.fillStyle = '#c0392b';
+                ctx.beginPath(); ctx.arc(h.x, h.y - fallH, h.radius, 0, Math.PI*2); ctx.fill();
             }
             ctx.restore();
         });
@@ -336,6 +339,16 @@ window.renderGameView = function() {
             
             let prefix = enemy.type.charAt(0).toUpperCase() + enemy.type.slice(1);
             let eTypeLow = enemy.type.toLowerCase();
+            
+            if (eTypeLow === 'boulder') {
+                ctx.rotate(Date.now() / 100);
+                ctx.fillStyle = '#7f8c8d';
+                ctx.beginPath(); ctx.arc(0, 0, enemy.size/2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#34495e';
+                ctx.beginPath(); ctx.arc(0, 0, enemy.size/2.5, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+                return;
+            }
             
             let action = 'view';
             let skinName = '';
@@ -447,7 +460,7 @@ window.renderGameView = function() {
             }
             ctx.restore(); 
             
-            if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille', 'kraken'].includes(enemy.type)) { 
+            if (!['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'minotaure', 'gargouille', 'kraken', 'boulder'].includes(enemy.type)) { 
                 ctx.fillStyle = '#111'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size, 4); 
                 ctx.fillStyle = '#e74c3c'; ctx.fillRect(enemy.x, enemy.y - 12, enemy.size * (enemy.health / enemy.maxHealth), 4); 
             } 
@@ -554,7 +567,6 @@ window.renderGameView = function() {
         let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
         let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
         
-        // Retrait de la respiration et bobbing sous l'eau
         let bobbingY = 0;
         let tilt = 0;
         if (!isSwimming) {
@@ -585,7 +597,6 @@ window.renderGameView = function() {
         
         let skinNameP = `${prefixP}_${dirP}_${actionP}`;
         
-        // Force Skin Nage (SouthWest) et taille normale
         if (isSwimming) {
             skinNameP = `${prefixP}_swim1_southwest_view`; 
         } 
@@ -617,7 +628,6 @@ window.renderGameView = function() {
             pImg = window.getAsset(fallbackNameP);
         }
 
-        // Système de rotation libre sous l'eau
         if (isSwimming) {
             let baseAngle = skinNameP.includes('southwest') ? (3 * Math.PI / 4) : (Math.PI / 2);
             ctx.rotate(player.faceAngle - baseAngle); 
@@ -806,6 +816,16 @@ window.renderGameView = function() {
         ctx.fillStyle = '#3498db'; ctx.fillRect(boxX + 2, 22, (boxWidth - 4) * oxyPercent, 16);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
         ctx.fillText("OXYGÈNE : " + Math.ceil(worldState.oxygen / 60) + " s", boxX + boxWidth/2, 36);
+        ctx.textAlign = 'left';
+    }
+
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === 301 && typeof worldState.level4Timer !== 'undefined') {
+        let boxWidth = 400; let boxX = canvas.width/2 - boxWidth/2;
+        let timePercent = Math.max(0, worldState.level4Timer / 3600);
+        ctx.fillStyle = '#111'; ctx.fillRect(boxX, wallMargin + 10, boxWidth, 20);
+        ctx.fillStyle = '#e67e22'; ctx.fillRect(boxX + 2, wallMargin + 12, (boxWidth - 4) * timePercent, 16);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+        ctx.fillText("SURVIVRE : " + Math.ceil(worldState.level4Timer / 60) + " s", canvas.width/2, wallMargin + 26);
         ctx.textAlign = 'left';
     }
 
