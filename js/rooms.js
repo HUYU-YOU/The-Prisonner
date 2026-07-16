@@ -40,10 +40,11 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         else if (roomId >= 107 && roomId <= 110) worldState.roomFloors[roomId] = 'floor3';
         else if (roomId === 103) worldState.roomFloors[roomId] = 'floor4';
         else if (roomId === 102) worldState.roomFloors[roomId] = 'floor5';
-        else if (roomId >= 200) {
+        else if (roomId >= 200 && roomId < 300) {
             let waterFloors = ['floor_water1', 'floor_water2', 'floor_water3'];
             worldState.roomFloors[roomId] = waterFloors[Math.floor(Math.random() * waterFloors.length)];
         }
+        else if (roomId === 301) worldState.roomFloors[roomId] = 'floor12';
         else if (roomId !== 999) {
             let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
             worldState.roomFloors[roomId] = randomFloors[Math.floor(Math.random() * randomFloors.length)];
@@ -184,7 +185,13 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     else if (roomId === 207) { currentDoors = [ { ...doorS, id: 'door_207_206', requiresKey: false, locked: false, dest: 206, spawnX: spawnN.x, spawnY: spawnN.y } ]; if (!worldState.collectedItems['key_boss3']) currentItems.push({ id: 'key_boss3', type: 'key_skull', x: canvas.width/2, y: canvas.height/2, size: 20, collected: false }); }
     else if (roomId === 208) { currentDoors = [ { ...doorS, id: 'door_208_202', requiresKey: false, locked: false, dest: 202, spawnX: spawnN.x, spawnY: spawnN.y } ]; }
 
-    if (roomId !== 1 && roomId !== 8 && roomId !== 999 && roomId < 100) {
+    else if (roomId === 301) {
+        currentDoors = []; 
+        worldState.level4Timer = 3600; 
+        if (typeof window.spawnEnemy === 'function') window.spawnEnemy('boulder', 1, canvas.width/2 - 75, 80);
+    }
+
+    if (roomId !== 1 && roomId !== 8 && roomId !== 999 && roomId !== 301 && roomId < 100) {
         let broken0 = worldState.brokenCrates[roomId + "_0"]; currentCrates.push({ id: roomId + "_0", type: 'barrel', x: bLeft + 50, y: wallMargin + 50, size: 45, health: broken0 ? 0 : 30, isBroken: broken0 });
         let broken1 = worldState.brokenCrates[roomId + "_1"]; currentCrates.push({ id: roomId + "_1", type: 'box', x: bRight - 90, y: canvas.height - 150, size: 45, health: broken1 ? 0 : 30, isBroken: broken1 });
     }
