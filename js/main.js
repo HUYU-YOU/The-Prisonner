@@ -60,6 +60,19 @@ window.update = function() {
             }
         }
 
+        if (typeof window.playerRedPotionActive !== 'undefined' && window.playerRedPotionActive) {
+            if (playerStats.health < playerStats.maxHealth) {
+                playerStats.health += 1; 
+                if (playerStats.health >= playerStats.maxHealth) {
+                    playerStats.health = playerStats.maxHealth;
+                    window.playerRedPotionActive = false;
+                }
+                if (Date.now() % 5 === 0 && typeof window.updateHUD === 'function') window.updateHUD();
+            } else {
+                window.playerRedPotionActive = false;
+            }
+        }
+
         if (currentRoomId === 999) {
             if (typeof arenaState !== 'undefined' && arenaState === "WAITING") {
                 arenaTimer--;
@@ -115,9 +128,9 @@ window.update = function() {
                 if (!doorToPass && typeof window.checkCollision === 'function' && window.checkCollision(player, door)) {
                     if (door.locked) {
                         let hasKey = false;
-                        if ((door.requiresKeySkull || currentRoomId === 999) && playerStats.inventory.keys.skull > 0) {
+                        if (door.requiresKeySkull && playerStats.inventory.keys.skull > 0) {
                             playerStats.inventory.keys.skull--; hasKey = true;
-                        } else if (!door.requiresKeySkull && currentRoomId !== 999 && playerStats.inventory.keys.gold > 0) {
+                        } else if (!door.requiresKeySkull && playerStats.inventory.keys.gold > 0) {
                             playerStats.inventory.keys.gold--; hasKey = true;
                         }
                         
