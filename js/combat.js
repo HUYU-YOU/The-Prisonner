@@ -29,7 +29,7 @@ window.handlePlayerAttack = function() {
     } 
     else if (player.heroClass === 'Knight') {
         isAttacking = true; 
-        attackCooldown = 25; // PLUS RAPIDE
+        attackCooldown = 25;
         let hitBox = { x: player.x + player.size / 2 + Math.cos(angle) * 80 - 90, y: player.y + player.size / 2 + Math.sin(angle) * 80 - 90, size: 180 };
         
         currentEnemies.forEach(enemy => { 
@@ -45,11 +45,14 @@ window.handlePlayerAttack = function() {
                         enemy.y += Math.sin(angle) * 35;
                         
                         if (enemy.type !== 'skeleton') {
-                            let hitNum = Math.floor(Math.random() * 3) + 1;
-                            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                            let bSize = enemy.size * 1.5;
-                            if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
-                            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                            let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                            if (!isSwimming) {
+                                let hitNum = Math.floor(Math.random() * 3) + 1;
+                                let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                                let bSize = enemy.size * 1.5;
+                                if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                            }
                         }
                         if (typeof window.triggerShake === 'function') window.triggerShake(5, 8); 
                     }
@@ -117,11 +120,14 @@ window.updateProjectiles = function() {
                 }
                 
                 if (enemy.type !== 'skeleton') {
-                    let hitNum = Math.floor(Math.random() * 3) + 1;
-                    let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-                    let bSize = enemy.size * 1.5;
-                    if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
-                    bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                    let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                    if (!isSwimming) {
+                        let hitNum = Math.floor(Math.random() * 3) + 1;
+                        let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                        let bSize = enemy.size * 1.5;
+                        if (['elf', 'troll', 'dragon', 'goblin'].includes(enemy.type.toLowerCase())) bSize /= 2;
+                        bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+                    }
                 }
                 
                 let isPiercingElf = (isUltimateActive && player.heroClass === 'Elf');
@@ -189,11 +195,14 @@ window.updateProjectiles = function() {
             if (ep.type === 'bat_web') { playerSlowTimer = 120; } 
             if (typeof window.triggerShake === 'function') window.triggerShake(8, 15);
             
-            let hitNum = Math.floor(Math.random() * 3) + 1;
-            let maxLife = (currentRoomId === 999) ? 1200 : 3600;
-            let bSize = player.size * 1.5;
-            if (player.heroClass === 'Elf') bSize /= 2;
-            bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+            let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+            if (!isSwimming) {
+                let hitNum = Math.floor(Math.random() * 3) + 1;
+                let maxLife = (currentRoomId === 999) ? 1200 : 3600;
+                let bSize = player.size * 1.5;
+                if (player.heroClass === 'Elf') bSize /= 2;
+                bloodStains.push({ type: 'hit', imgId: 'bloods_hit_view' + hitNum, x: player.x + player.size/2, y: player.y + player.size/2, size: bSize, rotation: Math.random() * Math.PI * 2, life: maxLife });
+            }
             
             playerInvulnerableTimer = 45;
             if (typeof window.updateHUD === 'function') window.updateHUD();
