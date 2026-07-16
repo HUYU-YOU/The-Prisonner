@@ -45,8 +45,15 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'kraken') { size = 180; hp = 5000; spd = 0.5; col = '#2c3e50'; }
         else if (type === 'boulder') { size = 180; hp = 999999; spd = 3.5; col = '#7f8c8d'; }
 
-        if (typeof isArenaMode !== 'undefined' && isArenaMode && typeof arenaWave !== 'undefined' && arenaWave >= 25 && !['spider', 'wolf', 'dragon', 'deathgod', 'elysia', 'armor'].includes(type)) {
-            hp += (arenaWave - 24) * 30;
+        if (typeof currentGameMode !== 'undefined' && currentGameMode === 'story' && type === 'minotaure') {
+            hp *= 5;
+        }
+
+        if (typeof isArenaMode !== 'undefined' && isArenaMode && typeof arenaWave !== 'undefined') {
+            let cycle = Math.floor((arenaWave - 1) / 50);
+            if (cycle > 0) {
+                hp *= Math.pow(3, cycle);
+            }
         }
 
         let vx = 0, vy = 0;
@@ -56,7 +63,7 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         }
 
         currentEnemies.push({ 
-            x: ex, y: ey, vx: vx, vy: vy, size: size, health: hp, maxHealth: hp, speed: spd, color: col, type: type, 
+            x: ex, y: ey, vx: vx, vy: vy, size: size, baseSize: size, health: hp, maxHealth: hp, speed: spd, color: col, type: type, 
             shootCooldown: Math.random() * 60 + 60, summonTimer: 180, wobble: Math.random() * Math.PI * 2,
             timeAlive: 0, phase: 1, invulnerable: false, isBurning: false, burnTimer: 0,
             slowTimer: 0, isPermanentlySlowed: false, killedBySummon: false, killedByNecro: false,
