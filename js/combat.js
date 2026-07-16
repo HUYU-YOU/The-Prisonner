@@ -253,12 +253,17 @@ window.updateItemsAndCrates = function() {
                 playerStats.inventory.keys.orb++; 
                 if (item.id === 'final_sphere') {
                     window.activeDialogue = {
-                        text: "Félicitations !\nVous avez purifié les abysses...\nLe Niveau 4 arrive bientôt.\n\n[ESPACE] Continuer",
+                        text: "Les abysses s'effondrent...\nVous fuyez vers l'enceinte du château !\nSurvivez jusqu'à l'arrivée du Mage !\n\n[ESPACE] S'échapper",
                         onConfirm: function() {
-                            player.x = 150; player.y = 150; 
-                            window.loadRoom(1);
+                            player.x = canvas.width / 2 - player.size / 2; 
+                            player.y = canvas.height - wallMargin - 100; 
+                            window.loadRoom(301, 'south');
                         }, 
-                        onCancel: function() {}
+                        onCancel: function() {
+                            player.x = canvas.width / 2 - player.size / 2; 
+                            player.y = canvas.height - wallMargin - 100; 
+                            window.loadRoom(301, 'south');
+                        }
                     };
                 }
             }
