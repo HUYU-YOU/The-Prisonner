@@ -10,7 +10,11 @@
 
     <div id="game-container">
         
-        <div id="menu-screen">
+       <div id="menu-screen">
+            <div id="mode-selector" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 10;">
+                <button id="btn-story" onclick="if(typeof setGameMode==='function') setGameMode('story')" style="padding: 10px 20px; font-size: 18px; font-weight: bold; background: #27ae60; color: white; border: 2px solid #2ecc71; border-radius: 5px; cursor: pointer;">MODE STORY</button>
+                <button id="btn-wave" onclick="if(typeof setGameMode==='function') setGameMode('wave')" style="padding: 10px 20px; font-size: 18px; font-weight: bold; background: #2c3e50; color: white; border: 2px solid #34495e; border-radius: 5px; cursor: pointer;">MODE WAVE</button>
+            </div>
             <h1>THE PRISONER</h1>
             <div class="character-select">
                 <button class="hero-btn" onmousedown="if(typeof startHeroHold==='function') startHeroHold('Knight')" onmouseup="if(typeof endHeroHold==='function') endHeroHold('Knight')" onmouseleave="if(typeof endHeroHold==='function') endHeroHold('Knight')">
@@ -22,7 +26,6 @@
                 <button onmousedown="if(typeof startHeroHold==='function') startHeroHold('Mage')" onmouseup="if(typeof endHeroHold==='function') endHeroHold('Mage')" onmouseleave="if(typeof endHeroHold==='function') endHeroHold('Mage')">🔒Le brulé </button>
             </div>
         </div>
-
         <aside id="hud">
             <h1 class="title">THE PRISONER</h1>
             <div id="portrait"></div>
