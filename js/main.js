@@ -95,29 +95,35 @@ window.update = function() {
                 if (arenaTimer <= 0) {
                     arenaState = "PLAYING";
                     window.arenaQueue = [];
-                    if (arenaWave % 10 === 0) {
-                        let bossType = 'troll';
-                        if (arenaWave === 20) bossType = 'mage';
-                        else if (arenaWave === 30) bossType = 'dragon';
-                        else if (arenaWave === 40) bossType = 'deathgod';
-                        else if (arenaWave >= 50) bossType = 'elysia';
-                        window.arenaQueue = [bossType];
-                    } else if (arenaWave % 5 === 0) {
-                        window.arenaQueue = ['armor', 'armor'];
-                    } else {
-                        let total = 5 + Math.floor(arenaWave * 1.5);
-                        let pool = ['goblin'];
-                        if (arenaWave > 2) pool.push('skeleton');
-                        if (arenaWave > 6) pool.push('spider');
-                        if (arenaWave > 11) pool.push('orc');
-                        if (arenaWave > 16) pool.push('wolf');
-                        if (arenaWave > 21) pool.push('golem');
-                        if (arenaWave > 26) pool.push('small_golem');
-                        if (arenaWave > 31) pool.push('minotaure');
-                        if (arenaWave > 36) pool.push('gargouille');
-                        if (arenaWave > 41) pool.push('siren');
-                        
+                    let relativeWave = ((arenaWave - 1) % 50) + 1;
+
+                    if (relativeWave === 10) window.arenaQueue = ['troll'];
+                    else if (relativeWave === 20) window.arenaQueue = ['mage'];
+                    else if (relativeWave === 30) window.arenaQueue = ['dragon'];
+                    else if (relativeWave === 40) window.arenaQueue = ['deathgod'];
+                    else if (relativeWave === 45) window.arenaQueue = ['mage', 'dragon'];
+                    else if (relativeWave === 50) window.arenaQueue = ['elysia'];
+                    else {
+                        let total = 5 + Math.floor(relativeWave * 1.5);
+                        let pool = [];
+                        if (relativeWave >= 1 && relativeWave <= 9) pool = ['goblin', 'skeleton'];
+                        else if (relativeWave >= 11 && relativeWave <= 14) pool = ['goblin', 'skeleton', 'spider'];
+                        else if (relativeWave >= 15 && relativeWave <= 19) pool = ['orc', 'skeleton', 'spider'];
+                        else if (relativeWave >= 21 && relativeWave <= 29) pool = ['orc', 'golem', 'spider'];
+                        else if (relativeWave >= 31 && relativeWave <= 34) pool = ['minotaure', 'golem', 'spider'];
+                        else if (relativeWave >= 35 && relativeWave <= 39) pool = ['minotaure', 'gargouille', 'spider'];
+                        else if (relativeWave >= 41 && relativeWave <= 44) pool = ['minotaure'];
+                        else if (relativeWave >= 46 && relativeWave <= 49) pool = ['minotaure', 'gargouille'];
+
                         for (let i = 0; i < total; i++) window.arenaQueue.push(pool[Math.floor(Math.random() * pool.length)]);
+                    }
+
+                    let isBossWave = [10, 20, 30, 40, 45, 50].includes(relativeWave);
+                    if (isBossWave) {
+                        worldState.arenaFloor = 'floor6';
+                    } else {
+                        let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
+                        worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
                     }
                 }
             } 
@@ -129,7 +135,8 @@ window.update = function() {
                     }
                 } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
                     if (currentDoors.length === 0) {
-                        let isBeforeBoss = (arenaWave % 5 === 4); 
+                        let relativeWave = ((arenaWave - 1) % 50) + 1;
+                        let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
                         let keyType = isBeforeBoss ? 'key_skull' : 'key';
                         currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
                         currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, requiresKeySkull: isBeforeBoss, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
