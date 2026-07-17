@@ -43,6 +43,15 @@ window.getAsset = function(name) {
 
 window.renderGameView = function() {
     if (!ctx) return;
+
+    // --- HOOK NIVEAU 4 ---
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
+        if (typeof window.renderLevel4 === 'function') {
+            window.renderLevel4();
+            return; // On coupe le rendu classique, le niveau 4 gère ses propres visuels
+        }
+    }
+    // ---------------------
     
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
@@ -816,16 +825,6 @@ window.renderGameView = function() {
         ctx.fillStyle = '#3498db'; ctx.fillRect(boxX + 2, 22, (boxWidth - 4) * oxyPercent, 16);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
         ctx.fillText("OXYGÈNE : " + Math.ceil(worldState.oxygen / 60) + " s", boxX + boxWidth/2, 36);
-        ctx.textAlign = 'left';
-    }
-
-    if (typeof currentRoomId !== 'undefined' && currentRoomId === 301 && typeof worldState.level4Timer !== 'undefined') {
-        let boxWidth = 400; let boxX = canvas.width/2 - boxWidth/2;
-        let timePercent = Math.max(0, worldState.level4Timer / 3600);
-        ctx.fillStyle = '#111'; ctx.fillRect(boxX, wallMargin + 10, boxWidth, 20);
-        ctx.fillStyle = '#e67e22'; ctx.fillRect(boxX + 2, wallMargin + 12, (boxWidth - 4) * timePercent, 16);
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText("SURVIVRE : " + Math.ceil(worldState.level4Timer / 60) + " s", canvas.width/2, wallMargin + 26);
         ctx.textAlign = 'left';
     }
 
