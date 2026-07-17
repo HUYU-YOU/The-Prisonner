@@ -606,6 +606,14 @@ window.updateEnemies = function() {
         }
     }
 
+    if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
+        let relativeWave = ((arenaWave - 1) % 50) + 1;
+        let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
+        let keyType = isBeforeBoss ? 'key_skull' : 'key';
+        currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+        arenaState = "DOOR_OPEN"; 
+    }
+
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
@@ -619,7 +627,7 @@ window.updateEnemies = function() {
                     if (typeof hazards !== 'undefined') hazards.length = 0; 
                     
                     if (e.type === 'kraken') {
-                        currentItems.push({ id: 'final_sphere', type: 'key_orb', x: canvas.width/2 - 15, y: canvas.height/2 - 15, size: 30, collected: false });
+                        currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
                     } else {
                         currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
                     }
