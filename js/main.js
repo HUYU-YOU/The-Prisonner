@@ -106,7 +106,7 @@ window.update = function() {
                     else {
                         let total = 5 + Math.floor(relativeWave * 1.5);
                         let pool = [];
-                        if (relativeWave >= 1 && relativeWave <= 9) pool = ['goblin', 'skeleton'];
+                        if (relativeWave >= 1 && relativeWave <= 10) pool = ['goblin', 'skeleton'];
                         else if (relativeWave >= 11 && relativeWave <= 14) pool = ['goblin', 'skeleton', 'spider'];
                         else if (relativeWave >= 15 && relativeWave <= 19) pool = ['orc', 'skeleton', 'spider'];
                         else if (relativeWave >= 21 && relativeWave <= 29) pool = ['orc', 'golem', 'spider'];
@@ -117,16 +117,6 @@ window.update = function() {
 
                         for (let i = 0; i < total; i++) window.arenaQueue.push(pool[Math.floor(Math.random() * pool.length)]);
                     }
-
-                    let isBossWave = [10, 20, 30, 40, 45, 50].includes(relativeWave);
-                    if (isBossWave) {
-                        worldState.arenaFloor = 'floor6';
-                        arenaShrink = 150;
-                    } else {
-                        let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
-                        worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
-                        arenaShrink = 0;
-                    }
                 }
             } 
             else if (typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
@@ -134,15 +124,6 @@ window.update = function() {
                     if (Math.random() < 0.08) { 
                         let t = window.arenaQueue.shift();
                         if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
-                    }
-                } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
-                    if (currentDoors.length === 0) {
-                        let relativeWave = ((arenaWave - 1) % 50) + 1;
-                        let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
-                        let keyType = isBeforeBoss ? 'key_skull' : 'key';
-                        currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, requiresKeySkull: isBeforeBoss, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
-                        arenaState = "DOOR_OPEN"; 
                     }
                 }
             }
@@ -197,6 +178,15 @@ window.update = function() {
             else if (doorToPass.face === 'east') returnFace = 'west';
             else if (doorToPass.face === 'west') returnFace = 'east';
 
+            if (currentRoomId === 999) {
+                arenaWave++; 
+                arenaState = "WAITING";
+                arenaTimer = 180;
+                let relativeWave = ((arenaWave - 1) % 50) + 1;
+                worldState.arenaFloor = [10, 20, 30, 40, 45, 50].includes(relativeWave) ? 'floor6' : 'sol_base';
+                arenaShrink = [10, 20, 30, 40, 45, 50].includes(relativeWave) ? 150 : 0;
+            }
+
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
             if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
 
@@ -215,14 +205,6 @@ window.update = function() {
 
             player.x = doorToPass.spawnX;
             player.y = doorToPass.spawnY;
-            
-            if (currentRoomId === 999) {
-                arenaWave++; 
-                arenaState = "WAITING";
-                arenaTimer = 180;
-                player.x = canvas.width/2 - player.size/2;
-                player.y = canvas.height/2 - player.size/2;
-            }
             
             requestAnimationFrame(window.update);
             return;
