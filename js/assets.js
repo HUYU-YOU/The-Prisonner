@@ -37,11 +37,11 @@ assetsManager.load('floor17', 'assets/tiles/floor17.png');
 assetsManager.load('floor18', 'assets/tiles/floor18.png');
 assetsManager.load('floor19', 'assets/tiles/floor19.png');
 assetsManager.load('floor20', 'assets/tiles/floor20.png');
-assetsManager.load('floor21', 'assets/tiles/OPFLOOR21.png');
-assetsManager.load('floor22', 'assets/tiles/OPFLOOR22.png');
-assetsManager.load('floor23', 'assets/tiles/OPFLOOR23.png');
-assetsManager.load('floor24', 'assets/tiles/OPFLOOR24.png');
-assetsManager.load('floor25', 'assets/tiles/OPFLOOR25.png');
+assetsManager.load('OPFLOOR21', 'assets/tiles/OPFLOOR21.png');
+assetsManager.load('OPFLOOR22', 'assets/tiles/OPFLOOR22.png');
+assetsManager.load('OPFLOOR23', 'assets/tiles/OPFLOOR23.png');
+assetsManager.load('OPFLOOR24', 'assets/tiles/OPFLOOR24.png');
+assetsManager.load('OPFLOOR25', 'assets/tiles/OPFLOOR25.png');
 
 assetsManager.load('left_wall', 'assets/tiles/left_wall.png');
 assetsManager.load('right_wall', 'assets/tiles/right_wall.png');
