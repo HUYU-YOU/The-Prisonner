@@ -34,7 +34,8 @@ window.update = function() {
         if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
             if (typeof window.updateLevel4 === 'function') {
                 window.updateLevel4();
-                return; // On coupe l'update classique, le niveau 4 gère sa propre logique
+                requestAnimationFrame(window.update); // <--- CORRECTION CRUCIALE ICI : Relance la boucle !
+                return; 
             }
         }
         // ---------------------
