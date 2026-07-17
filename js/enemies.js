@@ -606,14 +606,6 @@ window.updateEnemies = function() {
         }
     }
 
-    if (currentEnemies.length === 0 && currentRoomId === 999 && typeof arenaState !== 'undefined' && arenaState === "PLAYING") {
-        let relativeWave = ((arenaWave - 1) % 50) + 1;
-        let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
-        let keyType = isBeforeBoss ? 'key_skull' : 'key';
-        currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
-        arenaState = "DOOR_OPEN"; 
-    }
-
     for (let i = currentEnemies.length - 1; i >= 0; i--) {
         if (currentEnemies[i].health <= 0) {
             let e = currentEnemies[i];
