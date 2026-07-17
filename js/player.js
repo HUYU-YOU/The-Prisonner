@@ -63,6 +63,9 @@ window.selectHero = function(heroClass) {
 window.startArenaMode = function(heroClass) {
     isArenaMode = true; arenaWave = 1; arenaState = "WAITING"; arenaTimer = 300; player.heroClass = heroClass;
     
+    worldState.arenaFloor = 'sol_base';
+    arenaShrink = 0;
+    
     playerStats.inventory.coins = parseInt(localStorage.getItem('kebra_coins')) || 0;
     player.dashCooldown = 0; player.dashTimer = 0;
 
@@ -79,6 +82,10 @@ window.startArenaMode = function(heroClass) {
     
     if (typeof window.updatePortrait === 'function') window.updatePortrait(heroClass); 
     if (typeof window.loadRoom === 'function') window.loadRoom(999); 
+    
+    player.x = canvas.width / 2 - player.size / 2; 
+    player.y = canvas.height / 2 - player.size / 2;
+    
     if (typeof window.updateHUD === 'function') window.updateHUD(); 
     gameState = "PLAYING";
 };
