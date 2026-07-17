@@ -30,6 +30,15 @@ window.update = function() {
             requestAnimationFrame(window.update); return; 
         }
 
+        // --- HOOK NIVEAU 4 ---
+        if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
+            if (typeof window.updateLevel4 === 'function') {
+                window.updateLevel4();
+                return; // On coupe l'update classique, le niveau 4 gère sa propre logique
+            }
+        }
+        // ---------------------
+
         if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
             if (keys['space'] || keys['enter']) {
                 window.activeDialogue.onConfirm();
@@ -57,22 +66,6 @@ window.update = function() {
                 playerStats.health = 0;
                 if (typeof window.updateHUD === 'function') window.updateHUD();
                 if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-            }
-        }
-
-        if (currentRoomId === 301 && worldState.level4Timer > 0) {
-            worldState.level4Timer--;
-            
-            if (worldState.level4Timer % 90 === 0) {
-                let mx = wallMargin + Math.random() * (canvas.width - wallMargin*2);
-                let my = wallMargin + Math.random() * (canvas.height - wallMargin*2);
-                if (typeof hazards !== 'undefined') hazards.push({ x: mx, y: my, radius: 50, timer: 60, maxTimer: 60, damage: 40, isElysia: true });
-            }
-            
-            if (worldState.level4Timer <= 0) {
-                currentEnemies = []; 
-                if (typeof hazards !== 'undefined') hazards.length = 0;
-                if (typeof window.spawnEnemy === 'function') window.spawnEnemy('mage', 1, canvas.width/2, 100);
             }
         }
 
