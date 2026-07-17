@@ -19,7 +19,6 @@ window.level4State = {
         this.imgLoaded = false;
         this.distance = 0;
         
-        // Valeurs par défaut écrasées dès que l'image est chargée
         this.corridorW = 750; 
         this.segH = 1200;     
         
@@ -32,16 +31,24 @@ window.level4State = {
         this.dangerY = -400; 
         this.isFinished = false;
 
-        let pSize = player.size || 40;
-        player.x = canvas.width / 2 - pSize / 2;
-        player.y = canvas.height * 0.25;
+        // ANTI-NAN & POSITIONNEMENT NORD
+        let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
+        player.size = pSize;
+        player.x = (canvas.width / 2) - (pSize / 2);
+        player.y = canvas.height * 0.15; // Pop au Nord (haut de l'écran)
+        player.faceAngle = Math.PI / 2;  // Regarde vers le Sud
         player.dashTimer = 0;
     },
 
     update: function() {
         if (!this.isInit) this.init();
         
-        // --- ADAPTATION DYNAMIQUE À LA VRAIE TAILLE DE L'IMAGE ---
+        // Sécurité anti-NaN en boucle continue
+        let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
+        if (isNaN(player.x) || player.x === undefined) player.x = (canvas.width / 2) - (pSize / 2);
+        if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.15;
+
+        // ADAPTATION DYNAMIQUE À LA VRAIE TAILLE DE L'IMAGE
         if (!this.imgLoaded) {
             let floorImg = typeof assetsManager !== 'undefined' ? assetsManager.images['OPFLOOR21'] : null;
             if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
@@ -54,8 +61,6 @@ window.level4State = {
             }
         }
         
-        let pSize = player.size || 40;
-
         if (!this.hasStarted) {
             if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
                 this.hasStarted = true;
@@ -64,6 +69,12 @@ window.level4State = {
             }
         }
         
+        // Orientation dynamique selon la fuite
+        if (keys['s'] || keys['arrowdown']) player.faceAngle = Math.PI / 2;
+        if (keys['z'] || keys['w'] || keys['arrowup']) player.faceAngle = -Math.PI / 2;
+        if (keys['q'] || keys['a'] || keys['arrowleft']) player.faceAngle = Math.PI;
+        if (keys['d'] || keys['arrowright']) player.faceAngle = 0;
+
         if (player.dashTimer > 0) player.dashTimer--;
         if (player.dashCooldown > 0) player.dashCooldown--;
 
@@ -100,7 +111,6 @@ window.level4State = {
         }
 
         let corridorX = (canvas.width - this.corridorW) / 2;
-        // La zone infranchissable des murs (calculée automatiquement sur ~22% de la largeur de ton image)
         let margin = this.corridorW * 0.22; 
 
         if (!this.isFinished && this.distance > 500) {
@@ -126,7 +136,9 @@ window.level4State = {
             }
         }
 
-        let pSpeed = player.dashTimer > 0 ? player.speed * 2.2 : player.speed * 1.4;
+        let baseSpeed = (player && typeof player.speed === 'number' && !isNaN(player.speed)) ? player.speed : 4;
+        let pSpeed = player.dashTimer > 0 ? baseSpeed * 2.2 : baseSpeed * 1.4;
+        
         let oldPx = player.x;
         let oldPy = player.y;
 
@@ -194,12 +206,18 @@ window.level4State = {
     }
 };
 
+window.updateLevel4 = function() {
+    if (gameState !== "PLAYING") return;
+    window.level4State.update();
+    if (typeof window.renderLevel4 === 'function') window.renderLevel4();
+};
+
 window.renderLevel4 = function() {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
-    let pSize = player.size || 40;
+    let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
 
     // 1. Fond du couloir
     window.level4State.segments.forEach(seg => {
@@ -218,7 +236,7 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 2. Murs pleins sur les côtés pour encadrer le couloir (Noir complet pour le contraste)
+    // 2. Murs pleins sur les côtés pour encadrer le couloir
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
@@ -254,22 +272,42 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 4. Joueur
+    // 4. Joueur (Sécurisé à 100%)
+    let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
+    let py = isNaN(player.y) ? (canvas.height*0.15) : player.y;
+
     ctx.save();
-    ctx.translate((player.x || 0) + pSize/2, (player.y || 0) + pSize/2);
+    ctx.translate(px + pSize/2, py + pSize/2);
     
     let drawPlayer = true;
     if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
     
     if (drawPlayer) {
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
-        let dir = typeof window.getDirectionName === 'function' ? window.getDirectionName(player.faceAngle || Math.PI/2) : 'south'; 
+        
+        let angle = player.faceAngle || (Math.PI/2);
+        let deg = angle * 180 / Math.PI;
+        while(deg < 0) deg += 360;
+        deg = deg % 360;
+        let dir = 'south';
+        if (deg >= 45 && deg < 135) dir = 'south';
+        else if (deg >= 135 && deg < 225) dir = 'west';
+        else if (deg >= 225 && deg < 315) dir = 'north';
+        else dir = 'east';
+
         let pPrefix = player.heroClass ? player.heroClass : 'Knight';
         if (pPrefix === 'Mage') pPrefix = 'Burned';
         else pPrefix = pPrefix.charAt(0).toUpperCase() + pPrefix.slice(1).toLowerCase();
         
-        let skin = pPrefix + '_' + dir + '_view';
-        let img = typeof window.getAsset === 'function' ? window.getAsset(skin) : assetsManager.images[skin];
+        let skin1 = pPrefix + '_' + dir + '_view';
+        let skin2 = skin1.toLowerCase();
+        
+        let img = null;
+        if (typeof window.getAsset === 'function') {
+            img = window.getAsset(skin1) || window.getAsset(skin2);
+        } else if (assetsManager && assetsManager.images) {
+            img = assetsManager.images[skin1] || assetsManager.images[skin2];
+        }
         
         if (img && img.complete && img.naturalWidth > 0) {
             let s = pSize * 3.75;
@@ -277,12 +315,14 @@ window.renderLevel4 = function() {
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
             ctx.fillStyle = '#2ecc71';
-            ctx.beginPath(); ctx.arc(0,0, pSize/2, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0,0, pSize/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
         }
     }
     ctx.restore();
 
-    // 5. Mur de la mort (Fumée) limité au couloir
+    // 5. Mur de la mort (Fumée)
     if (window.level4State.dangerY > 0) {
         ctx.fillStyle = 'rgba(10, 5, 5, 0.95)';
         ctx.fillRect(corridorX, 0, window.level4State.corridorW, window.level4State.dangerY);
@@ -316,7 +356,7 @@ window.renderLevel4 = function() {
         ctx.fillText("LE CHÂTEAU S'EFFONDRE !", canvas.width/2, canvas.height/2 - 10);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText("Déplacez-vous vers le bas pour fuir !", canvas.width/2, canvas.height/2 + 35);
+        ctx.fillText("Déplacez-vous vers le sud (bas) pour fuir !", canvas.width/2, canvas.height/2 + 35);
         ctx.textAlign = 'left';
     }
 };
