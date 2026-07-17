@@ -2,14 +2,16 @@ window.level4State = {
     isInit: false,
     hasStarted: false,
     imgLoaded: false,
-    scrollSpeed: 6,
+    scrollSpeed: 7, 
     distance: 0,
-    maxDistance: 15000, 
+    sequence: ['OPFLOOR21', 'OPFLOOR22', 'OPFLOOR23', 'OPFLOOR24', 'OPFLOOR25'],
+    currentSeqIndex: 0,
     segments: [],
     traps: [], 
     trapSpawnTimer: 0, 
-    dangerY: -400,
-    isFinished: false,
+    dangerY: 0,
+    scrollingStopped: false,
+    portalSpawned: false,
     corridorW: 750, 
     segH: 1200,      
 
@@ -18,45 +20,43 @@ window.level4State = {
         this.hasStarted = false;
         this.imgLoaded = false;
         this.distance = 0;
+        this.currentSeqIndex = 0;
+        this.scrollingStopped = false;
+        this.portalSpawned = false;
         
         this.corridorW = 750; 
         this.segH = 1200;     
         
+        // On commence tout en bas de la map 21
         this.segments = [
-            { id: 'OPFLOOR21', y: 0 },
-            { id: 'OPFLOOR22', y: this.segH }
+            { id: this.sequence[0], y: canvas.height - this.segH } 
         ];
         this.traps = [];
         this.trapSpawnTimer = 0;
-        this.dangerY = -400; 
-        this.isFinished = false;
+        
+        this.dangerY = canvas.height + 300; 
 
-        // ANTI-NAN & POSITIONNEMENT NORD
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         player.size = pSize;
         player.x = (canvas.width / 2) - (pSize / 2);
-        player.y = canvas.height * 0.15; // Pop au Nord (haut de l'écran)
-        player.faceAngle = Math.PI / 2;  // Regarde vers le Sud
+        player.y = canvas.height * 0.75; // Spawn au Sud
+        player.faceAngle = -Math.PI / 2; // Regarde le Nord
         player.dashTimer = 0;
     },
 
     update: function() {
         if (!this.isInit) this.init();
         
-        // Sécurité anti-NaN en boucle continue
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         if (isNaN(player.x) || player.x === undefined) player.x = (canvas.width / 2) - (pSize / 2);
-        if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.15;
+        if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.75;
 
-        // ADAPTATION DYNAMIQUE À LA VRAIE TAILLE DE L'IMAGE
         if (!this.imgLoaded) {
             let floorImg = typeof assetsManager !== 'undefined' ? assetsManager.images['OPFLOOR21'] : null;
             if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
                 this.corridorW = floorImg.naturalWidth;
                 this.segH = floorImg.naturalHeight;
-                if (this.segments.length > 1) {
-                    this.segments[1].y = this.segments[0].y + this.segH;
-                }
+                this.segments[0].y = canvas.height - this.segH; 
                 this.imgLoaded = true;
             }
         }
@@ -69,7 +69,6 @@ window.level4State = {
             }
         }
         
-        // Orientation dynamique selon la fuite
         if (keys['s'] || keys['arrowdown']) player.faceAngle = Math.PI / 2;
         if (keys['z'] || keys['w'] || keys['arrowup']) player.faceAngle = -Math.PI / 2;
         if (keys['q'] || keys['a'] || keys['arrowleft']) player.faceAngle = Math.PI;
@@ -78,42 +77,45 @@ window.level4State = {
         if (player.dashTimer > 0) player.dashTimer--;
         if (player.dashCooldown > 0) player.dashCooldown--;
 
-        let currentSpeed = this.scrollSpeed;
-        if (keys['s'] || keys['arrowdown']) currentSpeed = this.scrollSpeed * 1.5;
-        if (keys['z'] || keys['w'] || keys['arrowup']) currentSpeed = this.scrollSpeed * 0.6;
+        let currentSpeed = 0;
         
-        this.distance += currentSpeed;
-
-        for (let i = 0; i < this.segments.length; i++) {
-            this.segments[i].y -= currentSpeed;
-        }
-
-        if (this.segments[0] && this.segments[0].y <= -this.segH) {
-            this.segments.shift();
-        }
-
-        let lastSegment = this.segments[this.segments.length - 1];
-        if (lastSegment && lastSegment.y <= canvas.height - this.segH) {
-            let nextId = 'OPFLOOR22'; 
+        if (!this.scrollingStopped) {
+            currentSpeed = this.scrollSpeed;
+            if (keys['z'] || keys['w'] || keys['arrowup']) currentSpeed = this.scrollSpeed * 1.5;
+            if (keys['s'] || keys['arrowdown']) currentSpeed = this.scrollSpeed * 0.5;
             
-            if (this.distance >= this.maxDistance) {
-                nextId = 'OPFLOOR25'; 
-                this.isFinished = true;
-            } else if (this.distance > 1000) {
-                let rand = Math.random();
-                if (rand < 0.3) nextId = 'OPFLOOR23';
-                else if (rand < 0.6) nextId = 'OPFLOOR24';
+            this.distance += currentSpeed;
+
+            for (let i = 0; i < this.segments.length; i++) {
+                this.segments[i].y += currentSpeed;
             }
 
-            if (!this.isFinished || nextId === 'OPFLOOR25') {
-                this.segments.push({ id: nextId, y: lastSegment.y + this.segH });
+            let firstSegment = this.segments[0];
+            if (firstSegment.y > -canvas.height && this.currentSeqIndex < this.sequence.length - 1) {
+                this.currentSeqIndex++;
+                this.segments.unshift({ id: this.sequence[this.currentSeqIndex], y: firstSegment.y - this.segH });
+            }
+
+            let lastSegment = this.segments[this.segments.length - 1];
+            if (lastSegment.y > canvas.height) {
+                this.segments.pop();
+            }
+
+            // Stop condition : La Map 25 arrive en haut
+            if (this.currentSeqIndex === this.sequence.length - 1) {
+                if (this.segments[0].y >= 0) {
+                    let diff = this.segments[0].y; 
+                    for (let i = 0; i < this.segments.length; i++) this.segments[i].y -= diff; 
+                    this.scrollingStopped = true;
+                    this.portalSpawned = true;
+                }
             }
         }
 
         let corridorX = (canvas.width - this.corridorW) / 2;
         let margin = this.corridorW * 0.22; 
 
-        if (!this.isFinished && this.distance > 500) {
+        if (!this.scrollingStopped) {
             this.trapSpawnTimer--;
             if (this.trapSpawnTimer <= 0) {
                 let tWidth = 80 + Math.random() * 60;
@@ -126,13 +128,14 @@ window.level4State = {
                 this.traps.push({
                     type: tType,
                     x: trapX,
-                    y: canvas.height + 100,
+                    y: -200, 
                     width: tWidth,
                     height: tHeight,
                     hitCooldown: 0
                 });
                 
-                this.trapSpawnTimer = Math.max(25, 80 - (this.distance / this.maxDistance) * 50);
+                let progress = this.currentSeqIndex / this.sequence.length;
+                this.trapSpawnTimer = Math.max(20, 70 - (progress * 40));
             }
         }
 
@@ -149,7 +152,7 @@ window.level4State = {
 
         for (let i = this.traps.length - 1; i >= 0; i--) {
             let trap = this.traps[i];
-            trap.y -= currentSpeed;
+            trap.y += currentSpeed; 
             if (trap.hitCooldown > 0) trap.hitCooldown--;
 
             let isColliding = false;
@@ -161,13 +164,13 @@ window.level4State = {
                 if (trap.type === 'rock') {
                     player.x = oldPx;
                     player.y = oldPy;
-                    player.y -= currentSpeed; 
+                    player.y += currentSpeed; 
                 } 
                 else if (trap.type === 'hole') {
                     if (player.dashTimer <= 0 && trap.hitCooldown <= 0) {
                         playerStats.health -= 15;
                         trap.hitCooldown = 60; 
-                        player.y -= 40; 
+                        player.y += 40; 
                         if (typeof window.updateHUD === 'function') window.updateHUD();
                     }
                 }
@@ -181,28 +184,45 @@ window.level4State = {
                 }
             }
 
-            if (trap.y < -300) {
+            if (trap.y > canvas.height + 200) {
                 this.traps.splice(i, 1);
+            }
+        }
+
+        if (this.portalSpawned) {
+            let portalZone = { x: canvas.width/2 - 50, y: 50, width: 100, height: 100 };
+            if (typeof window.checkCollision === 'function' && window.checkCollision(player, portalZone)) {
+                if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                // Assure-toi que 302 est bien l'ID de la salle de ton boss Mage Corrompu !
+                if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south'); 
+                player.x = canvas.width / 2 - player.size / 2;
+                player.y = canvas.height - 150;
+                player.dashTimer = 0; 
+                if (typeof window.updateHUD === 'function') window.updateHUD(); 
+                return;
             }
         }
 
         if (player.x < corridorX + margin) player.x = corridorX + margin;
         if (player.x > corridorX + this.corridorW - margin - pSize) player.x = corridorX + this.corridorW - margin - pSize;
         
-        if (player.y < this.dangerY + 30) player.y = this.dangerY + 30; 
+        if (player.y < 20) player.y = 20; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
-        this.dangerY += (currentSpeed * 0.55); 
-        
-        if (this.dangerY > player.y - 15) {
+        if (!this.scrollingStopped) {
+            let targetDangerY = canvas.height - 180; 
+            if (this.dangerY > targetDangerY) {
+                this.dangerY -= 3; 
+            } else {
+                this.dangerY = targetDangerY; 
+            }
+        }
+
+        if (player.y + pSize > this.dangerY + 20) {
             playerStats.health -= 2; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-        } else if (this.dangerY < -400) {
-            this.dangerY = -400; 
         }
-        
-        if (keys['z'] || keys['w'] || keys['arrowup']) this.dangerY += 0.5; 
     }
 };
 
@@ -219,7 +239,6 @@ window.renderLevel4 = function() {
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
     let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
 
-    // 1. Fond du couloir
     window.level4State.segments.forEach(seg => {
         let img = assetsManager.images[seg.id];
         if (img && img.complete && img.naturalWidth > 0) {
@@ -236,12 +255,24 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 2. Murs pleins sur les côtés pour encadrer le couloir
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
 
-    // 3. Pièges
+    if (window.level4State.portalSpawned) {
+        ctx.fillStyle = '#8e44ad';
+        ctx.beginPath();
+        ctx.arc(canvas.width/2, 100, 50, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowColor = '#9b59b6';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#f39c12';
+        ctx.beginPath();
+        ctx.arc(canvas.width/2, 100, 40, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
         if (trap.type === 'hole') imgKey = 'trap_hole';
@@ -272,9 +303,8 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 4. Joueur (Sécurisé à 100%)
     let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
-    let py = isNaN(player.y) ? (canvas.height*0.15) : player.y;
+    let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
 
     ctx.save();
     ctx.translate(px + pSize/2, py + pSize/2);
@@ -285,11 +315,11 @@ window.renderLevel4 = function() {
     if (drawPlayer) {
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
         
-        let angle = player.faceAngle || (Math.PI/2);
+        let angle = player.faceAngle || (-Math.PI/2);
         let deg = angle * 180 / Math.PI;
         while(deg < 0) deg += 360;
         deg = deg % 360;
-        let dir = 'south';
+        let dir = 'north';
         if (deg >= 45 && deg < 135) dir = 'south';
         else if (deg >= 135 && deg < 225) dir = 'west';
         else if (deg >= 225 && deg < 315) dir = 'north';
@@ -322,10 +352,9 @@ window.renderLevel4 = function() {
     }
     ctx.restore();
 
-    // 5. Mur de la mort (Fumée)
-    if (window.level4State.dangerY > 0) {
+    if (window.level4State.dangerY < canvas.height) {
         ctx.fillStyle = 'rgba(10, 5, 5, 0.95)';
-        ctx.fillRect(corridorX, 0, window.level4State.corridorW, window.level4State.dangerY);
+        ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
         
         ctx.shadowColor = '#e74c3c';
         ctx.shadowBlur = 40;
@@ -338,13 +367,18 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
-    // 6. UI
-    let distPercent = Math.min(1, window.level4State.distance / window.level4State.maxDistance);
+    let totalSegments = window.level4State.sequence.length;
+    let distPercent = Math.min(1, window.level4State.currentSeqIndex / (totalSegments - 1));
     let barW = 500;
     ctx.fillStyle = '#111'; ctx.fillRect(canvas.width/2 - barW/2, 20, barW, 20);
     ctx.fillStyle = '#e67e22'; ctx.fillRect(canvas.width/2 - barW/2 + 2, 22, (barW - 4) * distPercent, 16);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-    ctx.fillText("FUITE : " + Math.floor(distPercent * 100) + "%", canvas.width/2, 36);
+    
+    if (window.level4State.portalSpawned) {
+        ctx.fillText("PORTAIL DU BOSS OUVERT !", canvas.width/2, 36);
+    } else {
+        ctx.fillText("FUITE : " + Math.floor(distPercent * 100) + "%", canvas.width/2, 36);
+    }
     ctx.textAlign = 'left';
 
     if (!window.level4State.hasStarted) {
@@ -356,7 +390,7 @@ window.renderLevel4 = function() {
         ctx.fillText("LE CHÂTEAU S'EFFONDRE !", canvas.width/2, canvas.height/2 - 10);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText("Déplacez-vous vers le sud (bas) pour fuir !", canvas.width/2, canvas.height/2 + 35);
+        ctx.fillText("Déplacez-vous vers le NORD (Haut) pour fuir !", canvas.width/2, canvas.height/2 + 35);
         ctx.textAlign = 'left';
     }
 };
