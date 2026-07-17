@@ -90,12 +90,21 @@ window.update = function() {
         }
 
         if (currentRoomId === 999) {
+            let relativeWave = ((arenaWave - 1) % 50) + 1;
+            let isBossWave = [10, 20, 30, 40, 45, 50].includes(relativeWave);
+
+            if (arenaState === "PLAYING" && isBossWave && currentEnemies.length > 0) {
+                if (arenaShrink < 150) arenaShrink += 0.25; 
+            } else {
+                if (arenaShrink > 0) arenaShrink -= 3; 
+                if (arenaShrink < 0) arenaShrink = 0;
+            }
+
             if (typeof arenaState !== 'undefined' && arenaState === "WAITING") {
                 arenaTimer--;
                 if (arenaTimer <= 0) {
                     arenaState = "PLAYING";
                     window.arenaQueue = [];
-                    let relativeWave = ((arenaWave - 1) % 50) + 1;
 
                     if (relativeWave === 10) window.arenaQueue = ['troll'];
                     else if (relativeWave === 20) window.arenaQueue = ['mage'];
@@ -106,7 +115,7 @@ window.update = function() {
                     else {
                         let total = 5 + Math.floor(relativeWave * 1.5);
                         let pool = [];
-                        if (relativeWave >= 1 && relativeWave <= 10) pool = ['goblin', 'skeleton'];
+                        if (relativeWave >= 1 && relativeWave <= 9) pool = ['goblin', 'skeleton'];
                         else if (relativeWave >= 11 && relativeWave <= 14) pool = ['goblin', 'skeleton', 'spider'];
                         else if (relativeWave >= 15 && relativeWave <= 19) pool = ['orc', 'skeleton', 'spider'];
                         else if (relativeWave >= 21 && relativeWave <= 29) pool = ['orc', 'golem', 'spider'];
@@ -127,10 +136,17 @@ window.update = function() {
                     }
                 } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
                     if (arenaState !== "DOOR_OPEN") {
-                        let relativeWave = ((arenaWave - 1) % 50) + 1;
                         let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
                         let keyType = isBeforeBoss ? 'key_skull' : 'key';
                         currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                        
+                        if (arenaWave % 5 === 0) {
+                            let potions = ['potion_green', 'potion_red', 'potion_blue', 'potion_yellow'];
+                            let pType = potions[Math.floor(Math.random() * potions.length)];
+                            currentItems.push({ id: 'arena_potion_'+arenaWave, type: pType, x: canvas.width/2 + 25, y: canvas.height/2 + 25, size: 15, collected: false });
+                        }
+
+                        currentDoors.push({ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next', requiresKey: true, locked: true, requiresKeySkull: isBeforeBoss, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 });
                         arenaState = "DOOR_OPEN"; 
                     }
                 }
@@ -190,9 +206,14 @@ window.update = function() {
                 arenaWave++; 
                 arenaState = "WAITING";
                 arenaTimer = 180;
-                let relativeWave = ((arenaWave - 1) % 50) + 1;
-                worldState.arenaFloor = [10, 20, 30, 40, 45, 50].includes(relativeWave) ? 'floor6' : 'sol_base';
-                arenaShrink = [10, 20, 30, 40, 45, 50].includes(relativeWave) ? 150 : 0;
+                
+                let nextRelWave = ((arenaWave - 1) % 50) + 1;
+                if ([10, 20, 30, 40, 45, 50].includes(nextRelWave)) {
+                    worldState.arenaFloor = 'floor6';
+                } else {
+                    let randomFloors = ['floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
+                    worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
+                }
             }
 
             if (typeof window.saveRoomState === 'function') window.saveRoomState();
