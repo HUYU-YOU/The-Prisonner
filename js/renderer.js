@@ -105,10 +105,10 @@ window.renderGameView = function() {
         ctx.beginPath(); ctx.moveTo(canvas.width - 350 + wallMargin, 0); ctx.lineTo(canvas.width - 350 + wallMargin, canvas.height); ctx.stroke();
     }
     
-    let wallL = assetsManager.images['left_wall']; if (wallL && wallL.complete) ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
-    let wallR = assetsManager.images['right_wall']; if (wallR && wallR.complete) ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
-    let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
-    let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
+    let wallL = assetsManager.images['left_wall']; if (wallL && wallL.complete && wallL.naturalWidth > 0) ctx.drawImage(wallL, isVertCorridor ? 350 - wallMargin : 0, 0, wallMargin, canvas.height);
+    let wallR = assetsManager.images['right_wall']; if (wallR && wallR.complete && wallR.naturalWidth > 0) ctx.drawImage(wallR, isVertCorridor ? canvas.width - 350 : canvas.width - wallMargin, 0, wallMargin, canvas.height);
+    let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete && wallT.naturalWidth > 0) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
+    let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete && wallB.naturalWidth > 0) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
     if (typeof bloodStains !== 'undefined') {
         bloodStains.forEach(blood => { 
@@ -865,7 +865,7 @@ window.renderGameView = function() {
         ctx.fillStyle = '#ecf0f1'; 
         ctx.font = 'bold 28px Arial'; 
         ctx.textAlign = 'center';
-        let displayWave = typeof arenaState !== 'undefined' && arenaState === "WAITING" ? arenaWave : arenaWave - 1;
+        let displayWave = typeof arenaWave !== 'undefined' ? arenaWave : 1;
         if (typeof arenaState !== 'undefined' && arenaState === "WAITING" && typeof arenaTimer !== 'undefined' && arenaTimer > 0) {
             ctx.fillText("VAGUE " + displayWave + " DANS " + Math.ceil(arenaTimer/60) + "S", canvas.width/2, wallMargin + 40);
         } else if (displayWave > 0) {
