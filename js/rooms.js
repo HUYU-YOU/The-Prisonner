@@ -197,19 +197,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     }
 
     if (roomId === 999) {
-        let isBossWave = (arenaWave % 5 === 0);
-        if (isBossWave) {
-            worldState.arenaFloor = 'floor6';
-        } else {
-            let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
-            worldState.arenaFloor = randomFloors[Math.floor(Math.random() * randomFloors.length)];
-        }
-        
-        currentDoors = []; 
+        let relativeWave = ((arenaWave - 1) % 50) + 1;
+        let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
+        currentDoors = [{ x: canvas.width/2 - 75, y: 0, width: 150, height: wallMargin + 15, face: 'north', id: 'door_arena_next_' + arenaWave, requiresKey: true, locked: true, requiresKeySkull: isBeforeBoss, dest: 999, spawnX: canvas.width/2 - 20, spawnY: canvas.height - wallMargin - 60 }];
         currentItems = []; 
-        arenaShrink = 0; 
-        player.x = canvas.width / 2 - player.size / 2; 
-        player.y = canvas.height / 2 - player.size / 2;
     } 
     else {
         if (worldState.enemyStates[roomId]) { 
