@@ -1,23 +1,27 @@
 window.level4State = {
     isInit: false,
     hasStarted: false,
+    imgLoaded: false,
     scrollSpeed: 6,
     distance: 0,
     maxDistance: 15000, 
     segments: [],
     traps: [], 
     trapSpawnTimer: 0, 
-    dangerY: -300,
+    dangerY: -400,
     isFinished: false,
-    corridorW: 1000, 
-    segH: 1000,      
+    corridorW: 750, 
+    segH: 1200,      
 
     init: function() {
         this.isInit = true;
         this.hasStarted = false;
+        this.imgLoaded = false;
         this.distance = 0;
-        this.corridorW = Math.min(1000, canvas.width); 
-        this.segH = this.corridorW; 
+        
+        // Valeurs par défaut écrasées dès que l'image est chargée
+        this.corridorW = 750; 
+        this.segH = 1200;     
         
         this.segments = [
             { id: 'OPFLOOR21', y: 0 },
@@ -25,7 +29,7 @@ window.level4State = {
         ];
         this.traps = [];
         this.trapSpawnTimer = 0;
-        this.dangerY = -300; 
+        this.dangerY = -400; 
         this.isFinished = false;
 
         let pSize = player.size || 40;
@@ -36,6 +40,19 @@ window.level4State = {
 
     update: function() {
         if (!this.isInit) this.init();
+        
+        // --- ADAPTATION DYNAMIQUE À LA VRAIE TAILLE DE L'IMAGE ---
+        if (!this.imgLoaded) {
+            let floorImg = typeof assetsManager !== 'undefined' ? assetsManager.images['OPFLOOR21'] : null;
+            if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
+                this.corridorW = floorImg.naturalWidth;
+                this.segH = floorImg.naturalHeight;
+                if (this.segments.length > 1) {
+                    this.segments[1].y = this.segments[0].y + this.segH;
+                }
+                this.imgLoaded = true;
+            }
+        }
         
         let pSize = player.size || 40;
 
@@ -82,17 +99,19 @@ window.level4State = {
             }
         }
 
+        let corridorX = (canvas.width - this.corridorW) / 2;
+        // La zone infranchissable des murs (calculée automatiquement sur ~22% de la largeur de ton image)
+        let margin = this.corridorW * 0.22; 
+
         if (!this.isFinished && this.distance > 500) {
             this.trapSpawnTimer--;
             if (this.trapSpawnTimer <= 0) {
-                let margin = 60;
-                let corridorX = (canvas.width - this.corridorW) / 2;
-                let trapX = corridorX + margin + Math.random() * (this.corridorW - margin * 2 - 80);
-                let trapTypes = ['hole', 'spikes', 'rock'];
-                let tType = trapTypes[Math.floor(Math.random() * trapTypes.length)];
-                
                 let tWidth = 80 + Math.random() * 60;
                 let tHeight = 80 + Math.random() * 60;
+                
+                let trapX = corridorX + margin + Math.random() * (this.corridorW - margin * 2 - tWidth);
+                let trapTypes = ['hole', 'spikes', 'rock'];
+                let tType = trapTypes[Math.floor(Math.random() * trapTypes.length)];
                 
                 this.traps.push({
                     type: tType,
@@ -107,7 +126,7 @@ window.level4State = {
             }
         }
 
-        let pSpeed = player.dashTimer > 0 ? player.speed * 2 : player.speed;
+        let pSpeed = player.dashTimer > 0 ? player.speed * 2.2 : player.speed * 1.4;
         let oldPx = player.x;
         let oldPy = player.y;
 
@@ -155,33 +174,24 @@ window.level4State = {
             }
         }
 
-        let corridorX = (canvas.width - this.corridorW) / 2;
-        let margin = 60; 
-        
         if (player.x < corridorX + margin) player.x = corridorX + margin;
         if (player.x > corridorX + this.corridorW - margin - pSize) player.x = corridorX + this.corridorW - margin - pSize;
         
         if (player.y < this.dangerY + 30) player.y = this.dangerY + 30; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
-        this.dangerY += (currentSpeed * 0.92); 
+        this.dangerY += (currentSpeed * 0.55); 
         
         if (this.dangerY > player.y - 15) {
             playerStats.health -= 2; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-        } else if (this.dangerY < -300) {
-            this.dangerY = -300; 
+        } else if (this.dangerY < -400) {
+            this.dangerY = -400; 
         }
         
-        if (keys['z'] || keys['w'] || keys['arrowup']) this.dangerY += 2; 
+        if (keys['z'] || keys['w'] || keys['arrowup']) this.dangerY += 0.5; 
     }
-};
-
-window.updateLevel4 = function() {
-    if (gameState !== "PLAYING") return;
-    window.level4State.update();
-    if (typeof window.renderLevel4 === 'function') window.renderLevel4();
 };
 
 window.renderLevel4 = function() {
@@ -191,7 +201,7 @@ window.renderLevel4 = function() {
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
     let pSize = player.size || 40;
 
-    // 1. Fond du couloir (images carrées sans déformation)
+    // 1. Fond du couloir
     window.level4State.segments.forEach(seg => {
         let img = assetsManager.images[seg.id];
         if (img && img.complete && img.naturalWidth > 0) {
@@ -208,8 +218,8 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 2. Murs pleins sur les côtés
-    ctx.fillStyle = '#050302';
+    // 2. Murs pleins sur les côtés pour encadrer le couloir (Noir complet pour le contraste)
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
 
@@ -244,7 +254,7 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 4. Joueur (Sécurisé contre les translations NaN)
+    // 4. Joueur
     ctx.save();
     ctx.translate((player.x || 0) + pSize/2, (player.y || 0) + pSize/2);
     
@@ -272,7 +282,7 @@ window.renderLevel4 = function() {
     }
     ctx.restore();
 
-    // 5. Mur de la mort (Fumée)
+    // 5. Mur de la mort (Fumée) limité au couloir
     if (window.level4State.dangerY > 0) {
         ctx.fillStyle = 'rgba(10, 5, 5, 0.95)';
         ctx.fillRect(corridorX, 0, window.level4State.corridorW, window.level4State.dangerY);
@@ -306,7 +316,7 @@ window.renderLevel4 = function() {
         ctx.fillText("LE CHÂTEAU S'EFFONDRE !", canvas.width/2, canvas.height/2 - 10);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText("Déplacez-vous pour commencer à fuir !", canvas.width/2, canvas.height/2 + 35);
+        ctx.fillText("Déplacez-vous vers le bas pour fuir !", canvas.width/2, canvas.height/2 + 35);
         ctx.textAlign = 'left';
     }
 };
