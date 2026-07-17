@@ -125,6 +125,14 @@ window.update = function() {
                         let t = window.arenaQueue.shift();
                         if (typeof window.spawnEnemy === 'function') window.spawnEnemy(t, 1);
                     }
+                } else if ((!window.arenaQueue || window.arenaQueue.length === 0) && currentEnemies.length === 0) {
+                    if (arenaState !== "DOOR_OPEN") {
+                        let relativeWave = ((arenaWave - 1) % 50) + 1;
+                        let isBeforeBoss = [9, 19, 29, 39, 44, 49].includes(relativeWave); 
+                        let keyType = isBeforeBoss ? 'key_skull' : 'key';
+                        currentItems.push({ id: 'arena_key_'+arenaWave, type: keyType, x: canvas.width/2 - 10, y: canvas.height/2 - 10, size: 20, collected: false });
+                        arenaState = "DOOR_OPEN"; 
+                    }
                 }
             }
         }
