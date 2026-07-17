@@ -1,23 +1,26 @@
 window.level4State = {
     isInit: false,
+    hasStarted: false,
     scrollSpeed: 6,
     distance: 0,
     maxDistance: 15000, 
     segments: [],
     traps: [], 
     trapSpawnTimer: 0, 
-    dangerY: -100,
+    dangerY: -300,
     isFinished: false,
 
     init: function() {
         this.isInit = true;
+        this.hasStarted = false;
         this.distance = 0;
         this.segments = [
-            { id: 'floor21', y: 0 }
+            { id: 'floor21', y: 0 },
+            { id: 'floor22', y: canvas.height } // Précharge le 2eme pour éviter le trou noir
         ];
         this.traps = [];
         this.trapSpawnTimer = 0;
-        this.dangerY = -100;
+        this.dangerY = -300; // Recule le mur rouge au départ
         this.isFinished = false;
 
         player.x = canvas.width / 2 - player.size / 2;
@@ -27,6 +30,15 @@ window.level4State = {
 
     update: function() {
         if (!this.isInit) this.init();
+        
+        // --- NOUVEAU : On attend que tu bouges pour lancer l'enfer ---
+        if (!this.hasStarted) {
+            if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
+                this.hasStarted = true;
+            } else {
+                return; // Bloque l'update tant que tu es immobile
+            }
+        }
         
         if (player.dashTimer > 0) player.dashTimer--;
         if (player.dashCooldown > 0) player.dashCooldown--;
@@ -148,8 +160,8 @@ window.level4State = {
             playerStats.health -= 2; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-        } else if (this.dangerY < -150) {
-            this.dangerY = -150; 
+        } else if (this.dangerY < -300) {
+            this.dangerY = -300; 
         }
         
         if (keys['z'] || keys['w'] || keys['arrowup']) this.dangerY += 2; 
@@ -173,6 +185,11 @@ window.renderLevel4 = function() {
         } else {
             ctx.fillStyle = '#2c251f';
             ctx.fillRect(0, seg.y, canvas.width, canvas.height);
+            // Grille de secours visuelle pour comprendre le mouvement
+            ctx.strokeStyle = '#3d342c'; ctx.lineWidth = 1; 
+            for(let i = 0; i < canvas.width; i += 60) { 
+                for(let j = 0; j < canvas.height; j += 60) { ctx.strokeRect(i, seg.y + j, 60, 60); }
+            } 
         }
     });
 
@@ -253,4 +270,17 @@ window.renderLevel4 = function() {
     ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
     ctx.fillText("FUITE : " + Math.floor(distPercent * 100) + "%", canvas.width/2, 36);
     ctx.textAlign = 'left';
+
+    if (!window.level4State.hasStarted) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, canvas.height/2 - 70, canvas.width, 140);
+        ctx.fillStyle = '#e74c3c';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText("LE CHÂTEAU S'EFFONDRE !", canvas.width/2, canvas.height/2 - 10);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText("Déplacez-vous pour commencer à fuir !", canvas.width/2, canvas.height/2 + 35);
+        ctx.textAlign = 'left';
+    }
 };
