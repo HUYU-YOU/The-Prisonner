@@ -43,6 +43,15 @@ assetsManager.load('OPFLOOR23', 'assets/tiles/OPFLOOR23.png');
 assetsManager.load('OPFLOOR24', 'assets/tiles/OPFLOOR24.png');
 assetsManager.load('OPFLOOR25', 'assets/tiles/OPFLOOR25.png');
 
+// Pièges
+assetsManager.load('caisse', 'assets/decors/caisse.png');
+assetsManager.load('hole', 'assets/decors/hole.png');
+assetsManager.load('pic_0', 'assets/decors/pic_0.png');
+assetsManager.load('pic_1', 'assets/decors/pic_1.png');
+
+// Boss & Portail
+assetsManager.load('floorboss_1', 'assets/tiles/floorboss_1.png');
+
 assetsManager.load('left_wall', 'assets/tiles/left_wall.png');
 assetsManager.load('right_wall', 'assets/tiles/right_wall.png');
 assetsManager.load('back_wall', 'assets/tiles/back_wall.png');   
