@@ -47,6 +47,78 @@ window.togglePause = function() {
         lastClickTime = Date.now();
     }
 };
+window.playCinematic = function(videoFile, onComplete) {
+    // Sauvegarde l'état du jeu et met en pause
+    window.previousGameState = gameState;
+    gameState = "CINEMATIC";
+    keys = {}; // Reset les touches
+
+    // Conteneur plein écran
+    let container = document.createElement('div');
+    container.id = "cinematic-overlay";
+    container.style.position = "absolute";
+    container.style.top = "0";
+    container.style.left = "0";
+    container.style.width = "100%";
+    container.style.height = "100%";
+    container.style.backgroundColor = "#000000";
+    container.style.zIndex = "9999";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.justifyContent = "center";
+    container.style.alignItems = "center";
+
+    // Élément Vidéo
+    let video = document.createElement('video');
+    video.src = "assets/cinematic/" + videoFile;
+    video.style.maxWidth = "100%";
+    video.style.maxHeight = "100%";
+    video.autoplay = true;
+    video.controls = false; 
+
+    // Texte "Passer"
+    let skipText = document.createElement('div');
+    skipText.innerText = "Appuyez sur [ESPACE] pour passer";
+    skipText.style.position = "absolute";
+    skipText.style.bottom = "30px";
+    skipText.style.right = "30px";
+    skipText.style.color = "#ffffff";
+    skipText.style.fontFamily = "Arial, sans-serif";
+    skipText.style.fontSize = "20px";
+    skipText.style.fontWeight = "bold";
+    skipText.style.opacity = "0.8";
+
+    container.appendChild(video);
+    container.appendChild(skipText);
+    document.body.appendChild(container);
+
+    let isFinished = false;
+
+    // Fonction de fin de cinématique
+    let finishCinematic = function() {
+        if (isFinished) return;
+        isFinished = true;
+        if (document.getElementById("cinematic-overlay")) {
+            document.body.removeChild(container);
+        }
+        document.removeEventListener('keydown', skipHandler);
+        gameState = window.previousGameState; // Relance le jeu
+        if (onComplete) onComplete();
+    };
+
+    // Gestion de la touche Espace
+    let skipHandler = function(e) {
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault();
+            video.pause();
+            finishCinematic();
+        }
+    };
+
+    video.onended = finishCinematic;
+    video.onerror = finishCinematic; // Sécurité si le mp4 est introuvable
+    document.addEventListener('keydown', skipHandler);
+};
 
 window.drawMiniMap = function() {
     let mapCanvas = document.getElementById('map-canvas');
