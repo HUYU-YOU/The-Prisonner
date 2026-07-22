@@ -21,7 +21,8 @@ window.update = function() {
             requestAnimationFrame(window.update); return;
         }
         
-        if (gameState === "PAUSED" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
+        // --- SÉCURITÉ CINÉMATIQUE ---
+        if (gameState === "PAUSED" || gameState === "CINEMATIC" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
             requestAnimationFrame(window.update); return; 
         }
         
@@ -34,7 +35,7 @@ window.update = function() {
         if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
             if (typeof window.updateLevel4 === 'function') {
                 window.updateLevel4();
-                requestAnimationFrame(window.update); // <--- CORRECTION CRUCIALE ICI : Relance la boucle !
+                requestAnimationFrame(window.update); 
                 return; 
             }
         }
@@ -60,7 +61,7 @@ window.update = function() {
         if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
         if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
         
-        if (currentRoomId >= 200 && currentRoomId < 900) {
+        if (currentRoomId >= 200 && currentRoomId < 900 && currentRoomId !== 301 && currentRoomId !== 302) {
             if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000;
             worldState.oxygen--;
             if (worldState.oxygen <= 0) {
@@ -210,26 +211,38 @@ window.update = function() {
                 }
             }
 
-            if (typeof window.saveRoomState === 'function') window.saveRoomState();
-            if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
+            // --- FONCTION DE TRANSITION DE SALLE ---
+            let executeRoomTransition = function() {
+                if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
 
-            if (worldState.droppedItems[doorToPass.dest]) {
-                currentItems.splice(0, currentItems.length, ...worldState.droppedItems[doorToPass.dest]);
+                if (worldState.droppedItems[doorToPass.dest]) {
+                    currentItems.splice(0, currentItems.length, ...worldState.droppedItems[doorToPass.dest]);
+                }
+
+                if (typeof currentDoors !== 'undefined') {
+                    currentDoors.forEach(d => {
+                        if (d.face === returnFace) {
+                            worldState.openedDoors[d.id] = true;
+                            d.locked = false;
+                        }
+                    });
+                }
+
+                player.x = doorToPass.spawnX;
+                player.y = doorToPass.spawnY;
+                
+                requestAnimationFrame(window.update);
+            };
+
+            // --- CINÉMATIQUE 3 : ENTRÉE DANS LE NIVEAU 4 (Salle 301) ---
+            if (doorToPass.dest === 301) {
+                let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
+                if (pPrefix === 'mage') pPrefix = 'burned';
+                window.playCinematic(pPrefix + '3.mp4', executeRoomTransition);
+            } else {
+                executeRoomTransition();
             }
-
-            if (typeof currentDoors !== 'undefined') {
-                currentDoors.forEach(d => {
-                    if (d.face === returnFace) {
-                        worldState.openedDoors[d.id] = true;
-                        d.locked = false;
-                    }
-                });
-            }
-
-            player.x = doorToPass.spawnX;
-            player.y = doorToPass.spawnY;
-            
-            requestAnimationFrame(window.update);
             return;
         }
         
@@ -271,13 +284,14 @@ window.update = function() {
             }
         }
         
-        if (typeof playerSlowTimer !== 'undefined' && playerSlowTimer > 0) playerSlowTimer--;
+        if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) window.playerSlowTimer--;
         if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0) playerInvulnerableTimer--;
+        
         let manaBar = document.getElementById('mana-bar');
         if (playerStats.mana >= 100) { if (manaBar) manaBar.style.opacity = Math.floor(Date.now() / 250) % 2 === 0 ? "1" : "0.3"; } else { if (manaBar) manaBar.style.opacity = "1"; }
         
-        let currentSpeedPlayer = (typeof playerSlowTimer !== 'undefined' && playerSlowTimer > 0) ? player.speed / 2 : player.speed;
-        if (currentRoomId >= 200 && currentRoomId < 900) currentSpeedPlayer *= 0.65;
+        let currentSpeedPlayer = (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) ? player.speed / 2 : player.speed;
+        if (currentRoomId >= 200 && currentRoomId < 900 && currentRoomId !== 301 && currentRoomId !== 302) currentSpeedPlayer *= 0.65;
         
         let centerStairs = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
         
@@ -324,10 +338,17 @@ window.update = function() {
                                     text: "L'eau est sombre et glaciale...\nPlonger dans les abysses ?\n\n[ESPACE] Plonger   -   [ECHAP] Reculer",
                                     onConfirm: function() {
                                         worldState.oxygen = 36000;
-                                        if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                                        if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
-                                        player.x = canvas.width / 2 - player.size / 2;
-                                        player.y = canvas.height - wallMargin - 150;
+                                        
+                                        // --- CINÉMATIQUE 2 : PLONGÉE ---
+                                        let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
+                                        if (pPrefix === 'mage') pPrefix = 'burned';
+                                        
+                                        window.playCinematic(pPrefix + '2.mp4', function() {
+                                            if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                                            if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
+                                            player.x = canvas.width / 2 - player.size / 2;
+                                            player.y = canvas.height - wallMargin - 150;
+                                        });
                                     },
                                     onCancel: function() { 
                                         let cx = canvas.width / 2; let cy = canvas.height / 2;
@@ -367,10 +388,17 @@ window.update = function() {
                                     text: "L'eau est sombre et glaciale...\nPlonger dans les abysses ?\n\n[ESPACE] Plonger   -   [ECHAP] Reculer",
                                     onConfirm: function() {
                                         worldState.oxygen = 36000;
-                                        if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                                        if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
-                                        player.x = canvas.width / 2 - player.size / 2;
-                                        player.y = canvas.height - wallMargin - 150;
+
+                                        // --- CINÉMATIQUE 2 : PLONGÉE ---
+                                        let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
+                                        if (pPrefix === 'mage') pPrefix = 'burned';
+                                        
+                                        window.playCinematic(pPrefix + '2.mp4', function() {
+                                            if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                                            if (typeof window.loadRoom === 'function') window.loadRoom(201, 'south');
+                                            player.x = canvas.width / 2 - player.size / 2;
+                                            player.y = canvas.height - wallMargin - 150;
+                                        });
                                     },
                                     onCancel: function() { 
                                         let cx = canvas.width / 2; let cy = canvas.height / 2;
@@ -385,13 +413,6 @@ window.update = function() {
                         player.y = oldPy; player.dashTimer = 0; break;
                     }
                 }
-            }
-        }
-        
-        if (typeof currentCrates !== 'undefined') {
-            for (let i = 0; i < currentCrates.length; i++) {
-                let obj = currentCrates[i];
-                if (!obj.isBroken && typeof window.checkCollision === 'function' && window.checkCollision(player, obj)) { player.y = oldPy; player.dashTimer = 0; break; }
             }
         }
         
@@ -474,6 +495,27 @@ window.update = function() {
                 player.dashTimer = 0; 
                 if (typeof window.updateHUD === 'function') window.updateHUD(); 
                 return requestAnimationFrame(window.update);
+            }
+        }
+
+        if (currentRoomId === 302 && worldState && worldState.bossDefeated) {
+            let triggerLabyrinthe = { x: canvas.width/2 - 50, y: wallMargin, width: 100, height: 50 };
+            let isColliding = typeof window.checkCollision === 'function' ? window.checkCollision(player, triggerLabyrinthe) : false;
+            
+            if (isColliding && !window.activeDialogue) {
+                keys = {}; 
+                window.activeDialogue = {
+                    text: "Voulez-vous descendre dans le Labyrinthe ?\n\n[ESPACE] Descendre   -   [ECHAP] Rester",
+                    onConfirm: function() {
+                        if (typeof window.saveRoomState === 'function') window.saveRoomState();
+                        if (typeof window.loadRoom === 'function') window.loadRoom(401, 'south'); 
+                        player.x = canvas.width / 2 - player.size / 2;
+                        player.y = canvas.height - wallMargin - 150;
+                    },
+                    onCancel: function() { 
+                        player.y += 50; 
+                    }
+                };
             }
         }
         
