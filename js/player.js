@@ -227,6 +227,15 @@ window.handlePlayerDeath = function() {
         shakeTimer = 0; shakeIntensity = 0; playerPoisonTimer = 0; playerSlowTimer = 0; arenaShrink = 0; 
         spaceHoldTimer = 0; waveStartDelay = 0; necroKills = []; necroSummons = [];
         
+        // --- RESET COMPLET DU NIVEAU 4 ---
+        window.level4ScrollY = 0;
+        window.level4CollapseY = 0;
+        window.level4Distance = 0;
+        window.isLevel4Active = false;
+        if (typeof currentObstacles !== 'undefined') currentObstacles = [];
+        if (typeof currentCrates !== 'undefined') currentCrates = [];
+        // ---------------------------------
+        
         worldState = { unlockedDoors: {}, openedDoors: {}, collectedItems: {}, clearedRooms: {}, bloodStains: {}, enemyStates: {}, visitedRooms: {}, brokenCrates: {}, openedChests: {}, bossDefeated: false }; 
         playerStats.inventory = { keys: { gold: 0, skull: 0, orb: 0 }, potions: { green: 0, yellow: 0, blue: 0, red: 0 }, coins: parseInt(localStorage.getItem('kebra_coins')) || 0 };
         
