@@ -42,6 +42,7 @@ assetsManager.load('OPFLOOR22', 'assets/tiles/OPFLOOR22.png');
 assetsManager.load('OPFLOOR23', 'assets/tiles/OPFLOOR23.png');
 assetsManager.load('OPFLOOR24', 'assets/tiles/OPFLOOR24.png');
 assetsManager.load('OPFLOOR25', 'assets/tiles/OPFLOOR25.png');
+assetsManager.load('floorboss_1', 'assets/tiles/floorboss_1.png');
 
 // Pièges
 assetsManager.load('caisse', 'assets/decors/caisse.png');
@@ -341,3 +342,8 @@ assetsManager.load('right_water_door_close', 'assets/decors/right_water_door_clo
 assetsManager.load('front_water_door_close', 'assets/decors/front_water_door_close.png');
 assetsManager.load('back_water_door_close', 'assets/decors/back_water_door_close.png');
 assetsManager.load('water_door', 'assets/decors/water_door.png');
+
+assetsManager.load('caisse', 'assets/decors/caisse.png');
+assetsManager.load('hole', 'assets/decors/hole.png');
+assetsManager.load('pic_0', 'assets/decors/pic_0.png');
+assetsManager.load('pic_1', 'assets/decors/pic_1.png');
