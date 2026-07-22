@@ -15,6 +15,24 @@ window.level4State = {
     corridorW: 750, 
     segH: 1200,      
 
+  window.level4State = {
+    isInit: false,
+    hasStarted: false,
+    imgLoaded: false,
+    scrollSpeed: 7, 
+    distance: 0,
+    sequence: ['OPFLOOR21', 'OPFLOOR22', 'OPFLOOR23', 'OPFLOOR24', 'OPFLOOR22', 'OPFLOOR23', 'OPFLOOR24', 'OPFLOOR25'],
+    currentSeqIndex: 0,
+    segments: [],
+    traps: [], 
+    trapSpawnTimer: 0, 
+    dangerY: 0,
+    scrollingStopped: false,
+    portalSpawned: false,
+    corridorW: 750, 
+    segH: 1200,      
+    cinematicPlayed: false, // <-- NOUVEAU : Sécurité pour ne pas jouer la vidéo en boucle si on meurt
+
     init: function() {
         this.isInit = true;
         this.hasStarted = false;
@@ -27,7 +45,6 @@ window.level4State = {
         this.corridorW = 750; 
         this.segH = 1200;     
         
-        // On commence tout en bas de la map 21
         this.segments = [
             { id: this.sequence[0], y: canvas.height - this.segH } 
         ];
@@ -39,10 +56,28 @@ window.level4State = {
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         player.size = pSize;
         player.x = (canvas.width / 2) - (pSize / 2);
-        player.y = canvas.height * 0.75; // Spawn au Sud
-        player.faceAngle = -Math.PI / 2; // Regarde le Nord
+        player.y = canvas.height * 0.75; 
+        player.faceAngle = -Math.PI / 2; 
         player.dashTimer = 0;
+
+        // --- DECLENCHEMENT FORCE DE LA CINEMATIQUE 3 ---
+        if (!this.cinematicPlayed) {
+            this.cinematicPlayed = true;
+            let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
+            if (pPrefix === 'mage') pPrefix = 'burned';
+            if (pPrefix === 'necromancer') pPrefix = 'necro';
+            
+            if (typeof window.playCinematic === 'function') {
+                // On force le jeu en pause invisible le temps de la vidéo
+                let savedState = gameState;
+                window.playCinematic(pPrefix + '3.mp4', function() {
+                    gameState = "PLAYING"; // Relance une fois la vidéo finie ou passée
+                });
+            }
+        }
     },
+    
+    // ... (ne touche pas au reste du fichier update et render)
 
     update: function() {
         if (!this.isInit) this.init();
