@@ -55,9 +55,22 @@ window.selectHero = function(heroClass) {
     let menuScreen = document.getElementById('menu-screen'); if (menuScreen) menuScreen.style.display = 'none';
     
     if (typeof window.updatePortrait === 'function') window.updatePortrait(heroClass); 
-    if (typeof window.loadRoom === 'function') window.loadRoom(1); 
     if (typeof window.updateHUD === 'function') window.updateHUD(); 
-    gameState = "PLAYING";
+
+    // --- CINÉMATIQUE 1 : Lancement Histoire ---
+    let pPrefix = heroClass.toLowerCase();
+    if (pPrefix === 'mage') pPrefix = 'burned';
+    if (pPrefix === 'necromancer') pPrefix = 'necro';
+    
+    if (typeof window.playCinematic === 'function') {
+        window.playCinematic(pPrefix + '1.mp4', function() {
+            if (typeof window.loadRoom === 'function') window.loadRoom(1); 
+            gameState = "PLAYING";
+        });
+    } else {
+        if (typeof window.loadRoom === 'function') window.loadRoom(1); 
+        gameState = "PLAYING";
+    }
 };
 
 window.startArenaMode = function(heroClass) {
