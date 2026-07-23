@@ -228,10 +228,14 @@ window.handlePlayerDeath = function() {
         spaceHoldTimer = 0; waveStartDelay = 0; necroKills = []; necroSummons = [];
         
         // --- RESET COMPLET DU NIVEAU 4 ---
-        window.level4ScrollY = 0;
-        window.level4CollapseY = 0;
-        window.level4Distance = 0;
-        window.isLevel4Active = false;
+        if (typeof window.level4State !== 'undefined' && typeof window.level4State.reset === 'function') {
+            window.level4State.reset();
+        } else {
+            window.level4ScrollY = 0;
+            window.level4CollapseY = 0;
+            window.level4Distance = 0;
+            window.isLevel4Active = false;
+        }
         if (typeof currentObstacles !== 'undefined') currentObstacles = [];
         if (typeof currentCrates !== 'undefined') currentCrates = [];
         // ---------------------------------
