@@ -45,6 +45,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             worldState.roomFloors[roomId] = waterFloors[Math.floor(Math.random() * waterFloors.length)];
         }
         else if (roomId === 301) worldState.roomFloors[roomId] = 'floor12';
+        else if (roomId === 302) worldState.roomFloors[roomId] = 'floorboss_1'; // TEXTURE SALLE BOSS MAGE
         else if (roomId !== 999) {
             let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
             worldState.roomFloors[roomId] = randomFloors[Math.floor(Math.random() * randomFloors.length)];
@@ -190,8 +191,11 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         worldState.level4Timer = 3600; 
         if (typeof window.spawnEnemy === 'function') window.spawnEnemy('boulder', 1, canvas.width/2 - 75, 80);
     }
+    else if (roomId === 302) {
+        currentDoors = []; // SALLE DU BOSS MAGE CORROMPU
+    }
 
-    if (roomId !== 1 && roomId !== 8 && roomId !== 999 && roomId !== 301 && roomId < 100) {
+    if (roomId !== 1 && roomId !== 8 && roomId !== 999 && roomId !== 301 && roomId !== 302 && roomId < 100) {
         let broken0 = worldState.brokenCrates[roomId + "_0"]; currentCrates.push({ id: roomId + "_0", type: 'barrel', x: bLeft + 50, y: wallMargin + 50, size: 45, health: broken0 ? 0 : 30, isBroken: broken0 });
         let broken1 = worldState.brokenCrates[roomId + "_1"]; currentCrates.push({ id: roomId + "_1", type: 'box', x: bRight - 90, y: canvas.height - 150, size: 45, health: broken1 ? 0 : 30, isBroken: broken1 });
     }
@@ -249,6 +253,11 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 206) { window.spawnEnemy('anglerfish', 3, canvas.width/2, canvas.height/2); }
             else if (roomId === 207) { window.spawnEnemy('siren', 3, canvas.width/2, canvas.height/2); }
             else if (roomId === 208) { window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 90); window.spawnEnemy('siren', 2, canvas.width/2, canvas.height/2 + 150); }
+            
+            else if (roomId === 302) {
+                // SPAWN DU BOSS MAGE CORROMPU AU CENTRE DE LA SALLE
+                window.spawnEnemy('mage', 1, canvas.width/2 - 30, canvas.height/2 - 30);
+            }
         }
     }
 };
