@@ -1,21 +1,8 @@
-window.level4State = {
-    isInit: false,
-    hasStarted: false,
-    imgLoaded: false,
-    scrollSpeed: 7, 
-    distance: 0,
-    sequence: ['OPFLOOR21', 'OPFLOOR22', 'OPFLOOR23', 'OPFLOOR24', 'OPFLOOR25'],
-    currentSeqIndex: 0,
-    segments: [],
-    traps: [], 
-    trapSpawnTimer: 0, 
-    dangerY: 0,
-    scrollingStopped: false,
-    portalSpawned: false,
-    corridorW: 750, 
-    segH: 1200,      
+// ============================================================================
+// js/level4.js - LOGIQUE ET RENDU DU NIVEAU 4 (COURSE D'OBSTACLES)
+// ============================================================================
 
-  window.level4State = {
+window.level4State = {
     isInit: false,
     hasStarted: false,
     imgLoaded: false,
@@ -31,8 +18,9 @@ window.level4State = {
     portalSpawned: false,
     corridorW: 750, 
     segH: 1200,      
-    cinematicPlayed: false, // <-- NOUVEAU : Sécurité pour ne pas jouer la vidéo en boucle si on meurt
+    cinematicPlayed: false,
 
+    // Initialisation du niveau
     init: function() {
         this.isInit = true;
         this.hasStarted = false;
@@ -53,6 +41,7 @@ window.level4State = {
         
         this.dangerY = canvas.height + 300; 
 
+        // Positionnement du joueur au Sud (anti-NaN)
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         player.size = pSize;
         player.x = (canvas.width / 2) - (pSize / 2);
@@ -60,7 +49,7 @@ window.level4State = {
         player.faceAngle = -Math.PI / 2; 
         player.dashTimer = 0;
 
-        // --- DECLENCHEMENT FORCE DE LA CINEMATIQUE 3 ---
+        // Déclenchement de la Cinématique 3 au lancement
         if (!this.cinematicPlayed) {
             this.cinematicPlayed = true;
             let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
@@ -68,24 +57,35 @@ window.level4State = {
             if (pPrefix === 'necromancer') pPrefix = 'necro';
             
             if (typeof window.playCinematic === 'function') {
-                // On force le jeu en pause invisible le temps de la vidéo
-                let savedState = gameState;
                 window.playCinematic(pPrefix + '3.mp4', function() {
-                    gameState = "PLAYING"; // Relance une fois la vidéo finie ou passée
+                    gameState = "PLAYING";
                 });
             }
         }
     },
-    
-    // ... (ne touche pas au reste du fichier update et render)
 
+    // Réinitialisation après la mort
+    reset: function() {
+        this.isInit = false;
+        this.cinematicPlayed = false;
+        this.hasStarted = false;
+        this.distance = 0;
+        this.currentSeqIndex = 0;
+        this.scrollingStopped = false;
+        this.portalSpawned = false;
+        this.traps = [];
+    },
+
+    // Moteur du niveau
     update: function() {
         if (!this.isInit) this.init();
         
+        // Sécurité position joueur
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         if (isNaN(player.x) || player.x === undefined) player.x = (canvas.width / 2) - (pSize / 2);
         if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.75;
 
+        // Auto-adaptation aux vrais pixels de l'image
         if (!this.imgLoaded) {
             let floorImg = typeof assetsManager !== 'undefined' ? assetsManager.images['OPFLOOR21'] : null;
             if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
@@ -96,6 +96,7 @@ window.level4State = {
             }
         }
         
+        // Attente de démarrage du mouvement
         if (!this.hasStarted) {
             if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
                 this.hasStarted = true;
@@ -104,6 +105,7 @@ window.level4State = {
             }
         }
         
+        // Direction du joueur
         if (keys['s'] || keys['arrowdown']) player.faceAngle = Math.PI / 2;
         if (keys['z'] || keys['w'] || keys['arrowup']) player.faceAngle = -Math.PI / 2;
         if (keys['q'] || keys['a'] || keys['arrowleft']) player.faceAngle = Math.PI;
@@ -114,6 +116,7 @@ window.level4State = {
 
         let currentSpeed = 0;
         
+        // Gestion du défilement de la map
         if (!this.scrollingStopped) {
             currentSpeed = this.scrollSpeed;
             if (keys['z'] || keys['w'] || keys['arrowup']) currentSpeed = this.scrollSpeed * 1.5;
@@ -136,7 +139,7 @@ window.level4State = {
                 this.segments.pop();
             }
 
-            // Stop condition : La Map 25 arrive en haut
+            // Arrivée sur la map 25
             if (this.currentSeqIndex === this.sequence.length - 1) {
                 if (this.segments[0].y >= 0) {
                     let diff = this.segments[0].y; 
@@ -150,6 +153,7 @@ window.level4State = {
         let corridorX = (canvas.width - this.corridorW) / 2;
         let margin = this.corridorW * 0.22; 
 
+        // Génération dynamique des pièges
         if (!this.scrollingStopped) {
             this.trapSpawnTimer--;
             if (this.trapSpawnTimer <= 0) {
@@ -157,7 +161,7 @@ window.level4State = {
                 let tHeight = 80 + Math.random() * 60;
                 
                 let trapX = corridorX + margin + Math.random() * (this.corridorW - margin * 2 - tWidth);
-                let trapTypes = ['hole', 'spikes', 'rock'];
+                let trapTypes = ['hole_block', 'hole_death', 'spikes', 'caisse'];
                 let tType = trapTypes[Math.floor(Math.random() * trapTypes.length)];
                 
                 this.traps.push({
@@ -166,7 +170,9 @@ window.level4State = {
                     y: -200, 
                     width: tWidth,
                     height: tHeight,
-                    hitCooldown: 0
+                    hitCooldown: 0,
+                    stateTimer: Math.random() * 60,
+                    isActive: false
                 });
                 
                 let progress = this.currentSeqIndex / this.sequence.length;
@@ -180,15 +186,28 @@ window.level4State = {
         let oldPx = player.x;
         let oldPy = player.y;
 
+        if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) {
+            pSpeed *= 0.5;
+        }
+
         if (keys['q'] || keys['a'] || keys['arrowleft']) player.x -= pSpeed;
         if (keys['d'] || keys['arrowright']) player.x += pSpeed;
         if (keys['z'] || keys['w'] || keys['arrowup']) player.y -= pSpeed;
         if (keys['s'] || keys['arrowdown']) player.y += pSpeed;
 
+        // Collisions avec les pièges
         for (let i = this.traps.length - 1; i >= 0; i--) {
             let trap = this.traps[i];
             trap.y += currentSpeed; 
             if (trap.hitCooldown > 0) trap.hitCooldown--;
+
+            if (trap.type === 'spikes') {
+                trap.stateTimer++;
+                if (trap.stateTimer > 50) {
+                    trap.isActive = !trap.isActive;
+                    trap.stateTimer = 0;
+                }
+            }
 
             let isColliding = false;
             if (typeof window.checkCollision === 'function') {
@@ -196,24 +215,31 @@ window.level4State = {
             }
 
             if (isColliding) {
-                if (trap.type === 'rock') {
+                if (trap.type === 'caisse') {
                     player.x = oldPx;
                     player.y = oldPy;
                     player.y += currentSpeed; 
                 } 
-                else if (trap.type === 'hole') {
-                    if (player.dashTimer <= 0 && trap.hitCooldown <= 0) {
-                        playerStats.health -= 15;
-                        trap.hitCooldown = 60; 
-                        player.y += 40; 
+                else if (trap.type === 'hole_block') {
+                    if (player.dashTimer <= 0) {
+                        player.x = oldPx;
+                        player.y = oldPy;
+                        player.y += currentSpeed;
+                    }
+                }
+                else if (trap.type === 'hole_death') {
+                    if (player.dashTimer <= 0) {
+                        playerStats.health = 0; 
                         if (typeof window.updateHUD === 'function') window.updateHUD();
+                        if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
                     }
                 }
                 else if (trap.type === 'spikes') {
-                    if (trap.hitCooldown <= 0 && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0)) {
+                    if (trap.isActive && trap.hitCooldown <= 0 && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0)) {
                         playerStats.health -= 10;
                         trap.hitCooldown = 40;
                         if (typeof playerInvulnerableTimer !== 'undefined') playerInvulnerableTimer = 30;
+                        window.playerSlowTimer = 60; 
                         if (typeof window.updateHUD === 'function') window.updateHUD();
                     }
                 }
@@ -224,11 +250,11 @@ window.level4State = {
             }
         }
 
+        // Passage du portail vers le Boss Mage Corrompu (302)
         if (this.portalSpawned) {
             let portalZone = { x: canvas.width/2 - 50, y: 50, width: 100, height: 100 };
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, portalZone)) {
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                // Assure-toi que 302 est bien l'ID de la salle de ton boss Mage Corrompu !
                 if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south'); 
                 player.x = canvas.width / 2 - player.size / 2;
                 player.y = canvas.height - 150;
@@ -238,12 +264,14 @@ window.level4State = {
             }
         }
 
+        // Limites du couloir
         if (player.x < corridorX + margin) player.x = corridorX + margin;
         if (player.x > corridorX + this.corridorW - margin - pSize) player.x = corridorX + this.corridorW - margin - pSize;
         
         if (player.y < 20) player.y = 20; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
+        // Progression de la fumée de la mort
         if (!this.scrollingStopped) {
             let targetDangerY = canvas.height - 180; 
             if (this.dangerY > targetDangerY) {
@@ -253,6 +281,7 @@ window.level4State = {
             }
         }
 
+        // Degats de la fumée
         if (player.y + pSize > this.dangerY + 20) {
             playerStats.health -= 2; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
@@ -274,6 +303,7 @@ window.renderLevel4 = function() {
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
     let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
 
+    // 1. Rendu du fond
     window.level4State.segments.forEach(seg => {
         let img = assetsManager.images[seg.id];
         if (img && img.complete && img.naturalWidth > 0) {
@@ -281,63 +311,52 @@ window.renderLevel4 = function() {
         } else {
             ctx.fillStyle = '#1a1511';
             ctx.fillRect(corridorX, seg.y, window.level4State.corridorW, window.level4State.segH);
-            ctx.strokeStyle = '#2c251f'; ctx.lineWidth = 1; 
-            for(let i = 0; i < window.level4State.corridorW; i += 60) { 
-                for(let j = 0; j < window.level4State.segH; j += 60) { 
-                    ctx.strokeRect(corridorX + i, seg.y + j, 60, 60); 
-                }
-            } 
         }
     });
 
+    // 2. Murs noirs latéraux
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
 
+    // 3. Rendu du Portail du Boss
     if (window.level4State.portalSpawned) {
-        ctx.fillStyle = '#8e44ad';
-        ctx.beginPath();
-        ctx.arc(canvas.width/2, 100, 50, 0, Math.PI*2);
-        ctx.fill();
-        ctx.shadowColor = '#9b59b6';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = '#f39c12';
-        ctx.beginPath();
-        ctx.arc(canvas.width/2, 100, 40, 0, Math.PI*2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        let portalImg = assetsManager.images['portal_key'];
+        if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
+            ctx.drawImage(portalImg, canvas.width/2 - 50, 50, 100, 100);
+        } else {
+            ctx.fillStyle = '#8e44ad';
+            ctx.beginPath(); ctx.arc(canvas.width/2, 100, 50, 0, Math.PI*2); ctx.fill();
+        }
     }
 
+    // 4. Rendu des Pièges
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
-        if (trap.type === 'hole') imgKey = 'trap_hole';
-        else if (trap.type === 'spikes') imgKey = 'trap_spikes';
-        else if (trap.type === 'rock') imgKey = 'trap_rock';
+        if (trap.type === 'hole_block' || trap.type === 'hole_death') imgKey = 'hole';
+        else if (trap.type === 'spikes') imgKey = trap.isActive ? 'pic_1' : 'pic_0';
+        else if (trap.type === 'caisse') imgKey = 'caisse';
 
         let tImg = typeof window.getAsset === 'function' ? window.getAsset(imgKey) : assetsManager.images[imgKey];
         
         if (tImg && tImg.complete && tImg.naturalWidth > 0) {
-            ctx.drawImage(tImg, trap.x, trap.y, trap.width, trap.height);
-        } else {
-            if (trap.type === 'hole') ctx.fillStyle = '#0a0a0a';
-            else if (trap.type === 'spikes') ctx.fillStyle = '#7f8c8d';
-            else if (trap.type === 'rock') ctx.fillStyle = '#34495e';
-            
-            ctx.fillRect(trap.x, trap.y, trap.width, trap.height);
-            
-            if (trap.type === 'spikes') {
-                ctx.fillStyle = '#c0392b';
-                ctx.beginPath(); 
-                ctx.arc(trap.x + trap.width/2, trap.y + trap.height/2, trap.width/4, 0, Math.PI*2); 
-                ctx.fill();
-            } else if (trap.type === 'rock') {
-                ctx.strokeStyle = '#2c3e50';
-                ctx.lineWidth = 4;
-                ctx.strokeRect(trap.x, trap.y, trap.width, trap.height);
+            if (trap.type === 'hole_death') {
+                ctx.globalAlpha = 0.8; 
+                ctx.drawImage(tImg, trap.x, trap.y, trap.width, trap.height);
+                ctx.globalAlpha = 1.0;
+            } else {
+                ctx.drawImage(tImg, trap.x, trap.y, trap.width, trap.height);
             }
+        } else {
+            if (trap.type === 'hole_block') ctx.fillStyle = '#111111';
+            else if (trap.type === 'hole_death') ctx.fillStyle = '#000000';
+            else if (trap.type === 'spikes') ctx.fillStyle = trap.isActive ? '#c0392b' : '#7f8c8d';
+            else if (trap.type === 'caisse') ctx.fillStyle = '#8e44ad';
+            ctx.fillRect(trap.x, trap.y, trap.width, trap.height);
         }
     });
 
+    // 5. Rendu du Joueur (avec sécurité Hitbox visuelle)
     let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
     let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
 
@@ -379,14 +398,21 @@ window.renderLevel4 = function() {
             if (player.heroClass === 'Elf') s = pSize * 1.875;
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
+            // CERCLE VISUEL SI LE SKIN EST MANQUANT OU NON CHARGÉ
             ctx.fillStyle = '#2ecc71';
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#f1c40f';
+            ctx.lineWidth = 4;
             ctx.beginPath(); ctx.arc(0,0, pSize/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(pPrefix, 0, 4);
         }
     }
     ctx.restore();
 
+    // 6. Rendu de la Fumée de la Mort (Ténèbres en bas)
     if (window.level4State.dangerY < canvas.height) {
         ctx.fillStyle = 'rgba(10, 5, 5, 0.95)';
         ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
@@ -402,6 +428,7 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
+    // 7. Barre de progression / UI
     let totalSegments = window.level4State.sequence.length;
     let distPercent = Math.min(1, window.level4State.currentSeqIndex / (totalSegments - 1));
     let barW = 500;
@@ -416,6 +443,7 @@ window.renderLevel4 = function() {
     }
     ctx.textAlign = 'left';
 
+    // Message de démarrage
     if (!window.level4State.hasStarted) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, canvas.height/2 - 70, canvas.width, 140);
