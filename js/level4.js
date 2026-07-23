@@ -228,11 +228,14 @@ window.level4State = {
                     }
                 }
                 else if (trap.type === 'hole_death') {
+                    // MODO TEST : DÉSACTIVÉ POUR SURVIVRE !
+                    /*
                     if (player.dashTimer <= 0) {
                         playerStats.health = 0; 
                         if (typeof window.updateHUD === 'function') window.updateHUD();
                         if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
                     }
+                    */
                 }
                 else if (trap.type === 'spikes') {
                     if (trap.isActive && trap.hitCooldown <= 0 && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0)) {
@@ -281,12 +284,14 @@ window.level4State = {
             }
         }
 
-        // Degats de la fumée
+        // Degats de la fumée - MODO TEST : DÉSACTIVÉ POUR SURVIVRE !
+        /*
         if (player.y + pSize > this.dangerY + 20) {
             playerStats.health -= 2; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
         }
+        */
     }
 };
 
