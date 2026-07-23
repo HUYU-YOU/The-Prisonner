@@ -45,6 +45,11 @@ window.spawnEnemy = function(type, count, baseX = null, baseY = null) {
         else if (type === 'kraken') { size = 180; hp = 5000; spd = 0.5; col = '#2c3e50'; }
         else if (type === 'boulder') { size = 180; hp = 999999; spd = 3.5; col = '#7f8c8d'; }
 
+        // --- BOOST DE +200% DE PV POUR LE MAGE CORROMPU EN SALLE 302 ---
+        if (type === 'mage' && typeof currentRoomId !== 'undefined' && currentRoomId === 302) {
+            hp *= 3; // 900 x 3 = 2700 PV
+        }
+
         if (typeof currentGameMode !== 'undefined' && currentGameMode === 'story' && type === 'minotaure') {
             hp *= 5;
         }
@@ -612,7 +617,8 @@ window.updateEnemies = function() {
             
             if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
 
-            if (['troll', 'deathgod', 'elysia', 'kraken'].includes(e.type) && (currentRoomId === 8 || currentRoomId === 208)) { 
+            // DETECTION DU BOSS ET MORT DU MAGE CORROMPU EN SALLE 302
+            if (['troll', 'deathgod', 'elysia', 'kraken', 'mage'].includes(e.type) && (currentRoomId === 8 || currentRoomId === 208 || currentRoomId === 302)) { 
                 if (!worldState.clearedRooms[currentRoomId]) {
                     worldState.clearedRooms[currentRoomId] = true;
                     worldState.bossDefeated = true; 
@@ -620,7 +626,7 @@ window.updateEnemies = function() {
                     
                     if (e.type === 'kraken') {
                         currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
-                    } else {
+                    } else if (e.type !== 'mage') {
                         currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
                     }
                 }
