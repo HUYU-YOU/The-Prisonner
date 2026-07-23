@@ -6,7 +6,7 @@ window.level4State = {
     isInit: false,
     hasStarted: false,
     imgLoaded: false,
-    scrollSpeed: 7, 
+    scrollSpeed: 4.5, 
     distance: 0,
     sequence: ['OPFLOOR21', 'OPFLOOR22', 'OPFLOOR23', 'OPFLOOR24', 'OPFLOOR22', 'OPFLOOR23', 'OPFLOOR24', 'OPFLOOR25'],
     currentSeqIndex: 0,
@@ -115,12 +115,13 @@ window.level4State = {
         if (player.dashCooldown > 0) player.dashCooldown--;
 
         let currentSpeed = 0;
+        this.scrollSpeed = 4.5; // RALENTISSEMENT GLOBAL
         
         // Gestion du défilement de la map
         if (!this.scrollingStopped) {
             currentSpeed = this.scrollSpeed;
             if (keys['z'] || keys['w'] || keys['arrowup']) currentSpeed = this.scrollSpeed * 1.5;
-            if (keys['s'] || keys['arrowdown']) currentSpeed = this.scrollSpeed * 0.5;
+            if (keys['s'] || keys['arrowdown']) currentSpeed = this.scrollSpeed * 0.7;
             
             this.distance += currentSpeed;
 
@@ -153,7 +154,7 @@ window.level4State = {
         let corridorX = (canvas.width - this.corridorW) / 2;
         let margin = this.corridorW * 0.22; 
 
-        // Génération dynamique des pièges
+        // Génération dynamique des pièges (RÉDUITE)
         if (!this.scrollingStopped) {
             this.trapSpawnTimer--;
             if (this.trapSpawnTimer <= 0) {
@@ -176,26 +177,11 @@ window.level4State = {
                 });
                 
                 let progress = this.currentSeqIndex / this.sequence.length;
-                this.trapSpawnTimer = Math.max(20, 70 - (progress * 40));
+                this.trapSpawnTimer = Math.max(50, 110 - (progress * 40));
             }
         }
 
-        let baseSpeed = (player && typeof player.speed === 'number' && !isNaN(player.speed)) ? player.speed : 4;
-        let pSpeed = player.dashTimer > 0 ? baseSpeed * 2.2 : baseSpeed * 1.4;
-        
-        let oldPx = player.x;
-        let oldPy = player.y;
-
-        if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) {
-            pSpeed *= 0.5;
-        }
-
-        if (keys['q'] || keys['a'] || keys['arrowleft']) player.x -= pSpeed;
-        if (keys['d'] || keys['arrowright']) player.x += pSpeed;
-        if (keys['z'] || keys['w'] || keys['arrowup']) player.y -= pSpeed;
-        if (keys['s'] || keys['arrowdown']) player.y += pSpeed;
-
-        // Collisions avec les pièges
+        // Gestion du mouvement des Pièges
         for (let i = this.traps.length - 1; i >= 0; i--) {
             let trap = this.traps[i];
             trap.y += currentSpeed; 
@@ -208,34 +194,51 @@ window.level4State = {
                     trap.stateTimer = 0;
                 }
             }
-
-            let isColliding = false;
-            if (typeof window.checkCollision === 'function') {
-                isColliding = window.checkCollision(player, trap);
+            if (trap.y > canvas.height + 200) {
+                this.traps.splice(i, 1);
             }
+        }
 
-            if (isColliding) {
-                if (trap.type === 'caisse') {
-                    player.x = oldPx;
-                    player.y = oldPy;
-                    player.y += currentSpeed; 
-                } 
-                else if (trap.type === 'hole_block') {
-                    if (player.dashTimer <= 0) {
-                        player.x = oldPx;
-                        player.y = oldPy;
-                        player.y += currentSpeed;
-                    }
+        // --- DÉPLACEMENTS JOUEUR & COLLISIONS "GLISSANTES" ---
+        let baseSpeed = (player && typeof player.speed === 'number' && !isNaN(player.speed)) ? player.speed : 4;
+        let pSpeed = player.dashTimer > 0 ? baseSpeed * 2.2 : baseSpeed * 1.4;
+        
+        if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) {
+            pSpeed *= 0.5;
+        }
+
+        // 1. Déplacement sur l'axe X (Latéral)
+        let oldPx = player.x;
+        if (keys['q'] || keys['a'] || keys['arrowleft']) player.x -= pSpeed;
+        if (keys['d'] || keys['arrowright']) player.x += pSpeed;
+
+        for (let trap of this.traps) {
+            if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
+                if (trap.type === 'caisse' || (trap.type === 'hole_block' && player.dashTimer <= 0)) {
+                    player.x = oldPx; // Stoppe seulement X (Permet de glisser sur les côtés)
+                    break;
+                }
+            }
+        }
+
+        // 2. Déplacement sur l'axe Y (Vertical)
+        let oldPy = player.y;
+        if (keys['z'] || keys['w'] || keys['arrowup']) player.y -= pSpeed;
+        if (keys['s'] || keys['arrowdown']) player.y += pSpeed;
+
+        for (let trap of this.traps) {
+            if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
+                if (trap.type === 'caisse' || (trap.type === 'hole_block' && player.dashTimer <= 0)) {
+                    player.y = oldPy; // Stoppe Y
+                    player.y += currentSpeed; // Mais pousse le joueur avec le mur
+                    break;
                 }
                 else if (trap.type === 'hole_death') {
-                    // MODO TEST : DÉSACTIVÉ POUR SURVIVRE !
-                    /*
                     if (player.dashTimer <= 0) {
-                        playerStats.health = 0; 
+                        playerStats.health = 0; // MORT RÉACTIVÉE MAIS ÉVITABLE !
                         if (typeof window.updateHUD === 'function') window.updateHUD();
                         if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
                     }
-                    */
                 }
                 else if (trap.type === 'spikes') {
                     if (trap.isActive && trap.hitCooldown <= 0 && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0)) {
@@ -246,10 +249,6 @@ window.level4State = {
                         if (typeof window.updateHUD === 'function') window.updateHUD();
                     }
                 }
-            }
-
-            if (trap.y > canvas.height + 200) {
-                this.traps.splice(i, 1);
             }
         }
 
@@ -274,24 +273,22 @@ window.level4State = {
         if (player.y < 20) player.y = 20; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
-        // Progression de la fumée de la mort
+        // Progression de l'éboulement
         if (!this.scrollingStopped) {
             let targetDangerY = canvas.height - 180; 
             if (this.dangerY > targetDangerY) {
-                this.dangerY -= 3; 
+                this.dangerY -= 2; 
             } else {
                 this.dangerY = targetDangerY; 
             }
         }
 
-        // Degats de la fumée - MODO TEST : DÉSACTIVÉ POUR SURVIVRE !
-        /*
+        // Dégâts de l'éboulement (MORT RÉACTIVÉE MAIS ÉVITABLE !)
         if (player.y + pSize > this.dangerY + 20) {
             playerStats.health -= 2; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
         }
-        */
     }
 };
 
@@ -361,7 +358,7 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 5. Rendu du Joueur (avec sécurité Hitbox visuelle)
+    // 5. Rendu du Joueur (Avec AURA lumineuse pour ne plus le perdre de vue)
     let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
     let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
 
@@ -374,6 +371,15 @@ window.renderLevel4 = function() {
     if (drawPlayer) {
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
         
+        // Halo blanc clair derrière le joueur pour le détacher du fond
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(0, 0, pSize * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
         let angle = player.faceAngle || (-Math.PI/2);
         let deg = angle * 180 / Math.PI;
         while(deg < 0) deg += 360;
@@ -403,7 +409,6 @@ window.renderLevel4 = function() {
             if (player.heroClass === 'Elf') s = pSize * 1.875;
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
-            // CERCLE VISUEL SI LE SKIN EST MANQUANT OU NON CHARGÉ
             ctx.fillStyle = '#2ecc71';
             ctx.strokeStyle = '#f1c40f';
             ctx.lineWidth = 4;
@@ -417,17 +422,19 @@ window.renderLevel4 = function() {
     }
     ctx.restore();
 
-    // 6. Rendu de la Fumée de la Mort (Ténèbres en bas)
+    // 6. Rendu de l'Éboulement (Terre, Poussière et Rochers Bruns/Noirs)
     if (window.level4State.dangerY < canvas.height) {
-        ctx.fillStyle = 'rgba(10, 5, 5, 0.95)';
+        // Base terre
+        ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
         ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
         
-        ctx.shadowColor = '#e74c3c';
-        ctx.shadowBlur = 40;
-        ctx.fillStyle = '#8a0303';
-        for (let i = corridorX; i < corridorX + window.level4State.corridorW; i += 60) {
+        // Poussière et rochers irréguliers
+        ctx.shadowColor = '#1a110b';
+        ctx.shadowBlur = 20;
+        for (let i = corridorX; i < corridorX + window.level4State.corridorW; i += 45) {
+            ctx.fillStyle = (i % 90 === 0) ? '#4e342e' : '#3e2723';
             ctx.beginPath();
-            ctx.arc(i + 30, window.level4State.dangerY, 30 + Math.random() * 20, 0, Math.PI * 2);
+            ctx.arc(i + 20, window.level4State.dangerY + Math.random() * 15, 30 + Math.random() * 20, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.shadowBlur = 0;
