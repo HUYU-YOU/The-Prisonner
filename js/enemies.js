@@ -323,7 +323,24 @@ window.updateEnemies = function() {
                 enemy.shootCooldown = 180; enemy.attackAnimTimer = 20;
             }
         }
-
+        
+if (e.type === 'siren') {
+    let bubbleImages = ['assets/effects/bubble1.png', 'assets/effects/bubble2.png'];
+    for (let b = 0; b < 10; b++) {
+        let randImg = bubbleImages[Math.floor(Math.random() * bubbleImages.length)];
+        bloodStains.push({
+            type: 'bubble',
+            imgId: randImg,
+            x: e.x + e.size/2 + (Math.random() * 40 - 20),
+            y: e.y + e.size/2 + (Math.random() * 40 - 20),
+            vx: (Math.random() - 0.5) * 2,
+            vy: -1 - Math.random() * 2.5,
+            size: 16 + Math.random() * 20,
+            life: 90 + Math.random() * 60,
+            maxLife: 120
+        });
+    }
+}
         if (enemy.type === 'elysia') {
             let hpRatio = Math.max(0.1, enemy.health / enemy.maxHealth); 
             if (enemy.phase === 1) {
