@@ -62,7 +62,7 @@ window.update = function() {
         if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
         
         if (currentRoomId >= 200 && currentRoomId < 900 && currentRoomId !== 301 && currentRoomId !== 302) {
-            if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 36000;
+            if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 18000;
             worldState.oxygen--;
             if (worldState.oxygen <= 0) {
                 playerStats.health = 0;
@@ -387,7 +387,7 @@ window.update = function() {
                                 window.activeDialogue = {
                                     text: "L'eau est sombre et glaciale...\nPlonger dans les abysses ?\n\n[ESPACE] Plonger   -   [ECHAP] Reculer",
                                     onConfirm: function() {
-                                        worldState.oxygen = 36000;
+                                        worldState.oxygen = 18000;
 
                                         // --- CINÉMATIQUE 2 : PLONGÉE ---
                                         let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
