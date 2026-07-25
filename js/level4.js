@@ -1,6 +1,7 @@
 // ============================================================================
 // js/level4.js - LOGIQUE ET RENDU DU NIVEAU 4 (COURSE D'OBSTACLES)
 // ============================================================================
+
 window.level4State = {
     isInit: false,
     hasStarted: false,
@@ -19,7 +20,6 @@ window.level4State = {
     segH: 1200,      
     cinematicPlayed: false,
 
-    // Initialisation du niveau
     init: function() {
         this.isInit = true;
         this.hasStarted = false;
@@ -40,7 +40,7 @@ window.level4State = {
         
         this.dangerY = canvas.height + 300; 
 
-        // --- RÈGLE SPÉCIALE CHEVALIER : PAS D'EFFONDREMENT ---
+        // RÈGLE SPÉCIALE CHEVALIER : PAS D'EFFONDREMENT
         if (player.heroClass === 'Knight') {
             if (!this.cinematicPlayed) {
                 this.cinematicPlayed = true;
@@ -57,15 +57,15 @@ window.level4State = {
             return;
         }
 
-        // --- SPAWN SÉCURISÉ PLUS HAUT (HORS DE LA FUMÉE) ---
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         player.size = pSize;
         player.x = (canvas.width / 2) - (pSize / 2);
-        player.y = canvas.height * 0.4; // Placé plus haut sur l'écran
+        player.y = canvas.height * 0.4; 
         player.faceAngle = -Math.PI / 2; 
-        player.dashTimer = 0;
+        
+        // --- AUTO-DASH AUTOMATIQUE AU LANCEMENT ---
+        player.dashTimer = 25;
 
-        // Déclenchement de la Cinématique 3 au lancement
         if (!this.cinematicPlayed) {
             this.cinematicPlayed = true;
             let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
@@ -80,7 +80,6 @@ window.level4State = {
         }
     },
 
-    // Réinitialisation après la mort
     reset: function() {
         this.isInit = false;
         this.cinematicPlayed = false;
@@ -92,16 +91,13 @@ window.level4State = {
         this.traps = [];
     },
 
-    // Moteur du niveau
     update: function() {
         if (!this.isInit) this.init();
         
-        // --- SÉCURITÉ SPAWN ---
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         if (isNaN(player.x) || player.x === undefined) player.x = (canvas.width / 2) - (pSize / 2);
         if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.4;
 
-        // Auto-adaptation aux vrais pixels de l'image
         if (!this.imgLoaded) {
             let floorImg = typeof assetsManager !== 'undefined' ? assetsManager.images['OPFLOOR21'] : null;
             if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
@@ -112,16 +108,16 @@ window.level4State = {
             }
         }
         
-        // Attente de démarrage du mouvement
         if (!this.hasStarted) {
             if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
                 this.hasStarted = true;
+                // --- AUTO-DASH AU PREMIER MOUVEMENT ---
+                player.dashTimer = 25;
             } else {
                 return; 
             }
         }
         
-        // Direction du joueur
         if (keys['s'] || keys['arrowdown']) player.faceAngle = Math.PI / 2;
         if (keys['z'] || keys['w'] || keys['arrowup']) player.faceAngle = -Math.PI / 2;
         if (keys['q'] || keys['a'] || keys['arrowleft']) player.faceAngle = Math.PI;
@@ -131,9 +127,8 @@ window.level4State = {
         if (player.dashCooldown > 0) player.dashCooldown--;
 
         let currentSpeed = 0;
-        this.scrollSpeed = 4.5; // RALENTISSEMENT GLOBAL
+        this.scrollSpeed = 4.5;
         
-        // Gestion du défilement de la map
         if (!this.scrollingStopped) {
             currentSpeed = this.scrollSpeed;
             if (keys['z'] || keys['w'] || keys['arrowup']) currentSpeed = this.scrollSpeed * 1.5;
@@ -156,7 +151,6 @@ window.level4State = {
                 this.segments.pop();
             }
 
-            // Arrivée sur la map 25
             if (this.currentSeqIndex === this.sequence.length - 1) {
                 if (this.segments[0].y >= 0) {
                     let diff = this.segments[0].y; 
@@ -170,7 +164,6 @@ window.level4State = {
         let corridorX = (canvas.width - this.corridorW) / 2;
         let margin = this.corridorW * 0.22; 
 
-        // Génération dynamique des pièges
         if (!this.scrollingStopped) {
             this.trapSpawnTimer--;
             if (this.trapSpawnTimer <= 0) {
@@ -197,7 +190,6 @@ window.level4State = {
             }
         }
 
-        // Gestion du mouvement des Pièges
         for (let i = this.traps.length - 1; i >= 0; i--) {
             let trap = this.traps[i];
             trap.y += currentSpeed; 
@@ -215,7 +207,6 @@ window.level4State = {
             }
         }
 
-        // --- DÉPLACEMENTS JOUEUR & COLLISIONS "GLISSANTES" ---
         let baseSpeed = (player && typeof player.speed === 'number' && !isNaN(player.speed)) ? player.speed : 4;
         let pSpeed = player.dashTimer > 0 ? baseSpeed * 2.2 : baseSpeed * 1.4;
         
@@ -223,7 +214,6 @@ window.level4State = {
             pSpeed *= 0.5;
         }
 
-        // 1. Déplacement sur l'axe X (Latéral)
         let oldPx = player.x;
         if (keys['q'] || keys['a'] || keys['arrowleft']) player.x -= pSpeed;
         if (keys['d'] || keys['arrowright']) player.x += pSpeed;
@@ -237,7 +227,6 @@ window.level4State = {
             }
         }
 
-        // 2. Déplacement sur l'axe Y (Vertical)
         let oldPy = player.y;
         if (keys['z'] || keys['w'] || keys['arrowup']) player.y -= pSpeed;
         if (keys['s'] || keys['arrowdown']) player.y += pSpeed;
@@ -268,7 +257,6 @@ window.level4State = {
             }
         }
 
-        // Passage du portail vers le Boss Mage
         if (this.portalSpawned) {
             let portalZone = { x: canvas.width/2 - 50, y: 50, width: 100, height: 100 };
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, portalZone)) {
@@ -297,13 +285,11 @@ window.level4State = {
             }
         }
 
-        // Limites du couloir
         if (player.x < corridorX + margin) player.x = corridorX + margin;
         if (player.x > corridorX + this.corridorW - margin - pSize) player.x = corridorX + this.corridorW - margin - pSize;
         if (player.y < 20) player.y = 20; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
-        // Progression de l'éboulement
         if (!this.scrollingStopped) {
             let targetDangerY = canvas.height - 60; 
             if (this.dangerY > targetDangerY) {
@@ -313,7 +299,6 @@ window.level4State = {
             }
         }
 
-        // Dégâts de l'éboulement
         if (player.y + pSize > this.dangerY + 30) {
             playerStats.health -= 0.5; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
@@ -335,6 +320,7 @@ window.renderLevel4 = function() {
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
     let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
 
+    // 1. Rendu du fond
     window.level4State.segments.forEach(seg => {
         let img = assetsManager.images[seg.id];
         if (img && img.complete && img.naturalWidth > 0) {
@@ -345,10 +331,12 @@ window.renderLevel4 = function() {
         }
     });
 
+    // 2. Murs noirs latéraux
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
 
+    // 3. Rendu du Portail du Boss
     if (window.level4State.portalSpawned) {
         let portalImg = assetsManager.images['portal_key'];
         if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
@@ -359,6 +347,7 @@ window.renderLevel4 = function() {
         }
     }
 
+    // 4. Rendu des Pièges
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
         if (trap.type === 'hole_block' || trap.type === 'hole_death') imgKey = 'hole';
@@ -384,11 +373,11 @@ window.renderLevel4 = function() {
         }
     });
 
-    // --- SÉCURITÉ DE SPAWN VISUEL ---
+    // 5. Rendu du Joueur
     let px = player.x;
     let py = player.y;
     if (isNaN(px) || px === undefined) px = canvas.width/2 - pSize/2;
-    if (isNaN(py) || py === undefined) py = canvas.height - 150;
+    if (isNaN(py) || py === undefined) py = canvas.height * 0.4;
 
     ctx.save();
     ctx.translate(px + pSize/2, py + pSize/2);
@@ -397,7 +386,7 @@ window.renderLevel4 = function() {
     if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
     
     if (drawPlayer) {
-        ctx.globalAlpha = 1.0; // Force l'opacité au cas où le frame précédent l'aurait bloquée
+        ctx.globalAlpha = 1.0; 
         let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
         
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
@@ -436,7 +425,6 @@ window.renderLevel4 = function() {
         if (img && img.complete && img.naturalWidth > 0) {
             let s = pSize * 3.75;
             if (player.heroClass === 'Knight') s = pSize * 3.0; 
-            // --- CORRECTION DE LA TAILLE GÉANTE DE L'ARCHER ---
             else if (player.heroClass === 'Elf') s = pSize * 2.25; 
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
@@ -453,6 +441,7 @@ window.renderLevel4 = function() {
     }
     ctx.restore();
 
+    // 6. Rendu de l'Éboulement
     if (window.level4State.dangerY < canvas.height) {
         ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
         ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
@@ -468,20 +457,26 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
-    let totalSegments = window.level4State.sequence.length;
-    let distPercent = Math.min(1, window.level4State.currentSeqIndex / (totalSegments - 1));
-    let barW = 500;
-    ctx.fillStyle = '#111'; ctx.fillRect(canvas.width/2 - barW/2, 20, barW, 20);
-    ctx.fillStyle = '#e67e22'; ctx.fillRect(canvas.width/2 - barW/2 + 2, 22, (barW - 4) * distPercent, 16);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+    // 7. BARRE DE PROGRESSION FLUIDE & DÉCOMPTE À L'ENVERS (SANS TEXTE)
+    let totalDistanceMax = (window.level4State.sequence.length - 1) * window.level4State.segH;
+    let distRatio = Math.min(1, Math.max(0, window.level4State.distance / totalDistanceMax));
+    let remainingCountdown = Math.max(0, Math.ceil((1 - distRatio) * 100));
     
-    if (window.level4State.portalSpawned) {
-        ctx.fillText("PORTAIL DU BOSS OUVERT !", canvas.width/2, 36);
-    } else {
-        ctx.fillText("FUITE : " + Math.floor(distPercent * 100) + "%", canvas.width/2, 36);
-    }
+    let barW = 500;
+    ctx.fillStyle = '#111'; 
+    ctx.fillRect(canvas.width/2 - barW/2, 20, barW, 20);
+    
+    ctx.fillStyle = '#e67e22'; 
+    ctx.fillRect(canvas.width/2 - barW/2 + 2, 22, (barW - 4) * distRatio, 16);
+    
+    // Décompte à l'envers uniquement (100 -> 0)
+    ctx.fillStyle = '#fff'; 
+    ctx.font = 'bold 16px Arial'; 
+    ctx.textAlign = 'center';
+    ctx.fillText(remainingCountdown, canvas.width/2, 36);
     ctx.textAlign = 'left';
 
+    // Message de démarrage
     if (!window.level4State.hasStarted) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, canvas.height/2 - 70, canvas.width, 140);
