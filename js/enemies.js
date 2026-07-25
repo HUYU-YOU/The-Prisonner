@@ -184,7 +184,7 @@ window.updateEnemies = function() {
                 let pSpeed = 6;
                 for(let k = -2; k <= 2; k++) {
                     let spreadAngle = angleToPlayer + (k * 0.15);
-                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 10.5, type: 'ink_ball', color: '#111', damage: 30 });
+                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 7.35, type: 'ink_ball', color: '#111', damage: 30 });
                 }
                 enemy.shootCooldown = 90; enemy.attackAnimTimer = 30; 
             }
@@ -369,8 +369,18 @@ window.updateEnemies = function() {
             }
         }
 
+        // --- TOLÉRANCE STRICTE DE VUE DE LA SIRÈNE (AUCUNE ATTAQUE DE DOS) ---
+        let canAttack = true;
+        if (enemy.type === 'siren') {
+            let angleToSiren = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+            let diff = Math.abs(player.faceAngle - angleToSiren);
+            while(diff > Math.PI) diff -= Math.PI * 2;
+            diff = Math.abs(diff);
+            if (diff > Math.PI / 3) canAttack = false; // Tolérance de 60 degrés. Si hors vue, AUCUNE ATTAQUE.
+        }
+
         let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille', 'siren'].includes(enemy.type);
-        if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln) {
+        if (isRanged && dist < 600 && enemy.shootCooldown <= 0 && !isElfInvuln && canAttack) {
             let pSpeed = 6 * 1.3, pType = 'bone_skeleton', pColor = '#ecf0f1', pSize = 7.5, pDmg = 10;
             if (enemy.type === 'spider') { pType = 'bat_web'; pColor = '#8e44ad'; pSpeed = 4 * 1.3; pSize = 9; pDmg = 5; }
             else if (enemy.type === 'mage') { pType = 'fire_mage_corompue'; pColor = '#e67e22'; pSpeed = 7 * 1.3; pSize = 12; pDmg = 15; }
@@ -379,7 +389,7 @@ window.updateEnemies = function() {
             else if (enemy.type === 'armor') { pType = 'armor_sword'; pColor = '#7f8c8d'; pSpeed = 8 * 1.3; pSize = 15; pDmg = 35; }
             else if (enemy.type === 'golem' || enemy.type === 'small_golem') { pType = 'rock_golem'; pColor = '#7f8c8d'; pSpeed = 5 * 1.3; pSize = 10; pDmg = 25; }
             else if (enemy.type === 'gargouille') { pType = 'rock_gargouille'; pColor = '#34495e'; pSpeed = 6 * 1.3; pSize = 12; pDmg = 25; }
-            else if (enemy.type === 'siren') { pType = 'water_ball'; pColor = '#3498db'; pSpeed = 7 * 1.3; pSize = 10; pDmg = 20; }
+            else if (enemy.type === 'siren') { pType = 'water_ball'; pColor = '#3498db'; pSpeed = 7 * 1.3; pSize = 5; pDmg = 20; } 
 
             if (enemy.type !== 'dragon') {
                 if (enemy.type === 'mage' && enemy.phase === 2) {
@@ -632,7 +642,11 @@ window.updateEnemies = function() {
                         else if (player.heroClass === 'Necromancer') victoryVideo = 'necro5.mp4';
 
                         if (typeof window.playCinematic === 'function') {
-                            window.playCinematic(victoryVideo);
+                            window.playCinematic(victoryVideo, function() {
+                                currentRoomId = 401;
+                                player.x = canvas.width / 2;
+                                player.y = canvas.height - 150;
+                            });
                         }
                         
                         if (typeof currentDoors !== 'undefined') {
@@ -676,7 +690,8 @@ window.updateEnemies = function() {
 
             if (e.type === 'siren') {
                 let bubbleImages = ['assets/effects/bubble1.png', 'assets/effects/bubble2.png'];
-                for (let b = 0; b < 10; b++) {
+                let numBubbles = 3 + Math.floor(Math.random() * 2);
+                for (let b = 0; b < numBubbles; b++) {
                     let randImg = bubbleImages[Math.floor(Math.random() * bubbleImages.length)];
                     bloodStains.push({
                         type: 'bubble',
