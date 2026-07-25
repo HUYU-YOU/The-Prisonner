@@ -636,6 +636,12 @@ window.updateEnemies = function() {
                         if (typeof window.playCinematic === 'function') {
                             window.playCinematic(victoryVideo);
                         }
+                        
+                        // --- DÉVERROUILLAGE DE LA PORTE DU JARDIN ---
+                        let gardenDoor = currentDoors.find(d => d.id === 'door_302_garden');
+                        if (gardenDoor) {
+                            gardenDoor.locked = false;
+                        }
                     } else {
                         currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
                     }
