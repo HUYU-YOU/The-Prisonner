@@ -48,10 +48,9 @@ window.renderGameView = function() {
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
         if (typeof window.renderLevel4 === 'function') {
             window.renderLevel4();
-            return; // On coupe le rendu classique, le niveau 4 gère ses propres visuels
+            return;
         }
     }
-    // ---------------------
     
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
@@ -119,27 +118,43 @@ window.renderGameView = function() {
     let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete && wallT.naturalWidth > 0) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete && wallB.naturalWidth > 0) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
+    // --- ACHICHAGE TACHES DE SANG & ANIMATION BULLES ---
     if (typeof bloodStains !== 'undefined') {
         bloodStains.forEach(blood => { 
             ctx.save();
             let alpha = 1.0;
             let fadeTime = 300;
-            if (blood.life !== undefined && blood.life < fadeTime) {
-                alpha = Math.max(0, blood.life / fadeTime);
-            }
-            ctx.globalAlpha = alpha;
-            
-            ctx.translate(blood.x, blood.y);
-            if (blood.rotation) ctx.rotate(blood.rotation);
-            
-            let bImg = window.getAsset(blood.imgId);
-            
-            if (bImg && bImg.complete && bImg.naturalWidth > 0) {
-                let s = blood.size || 40;
-                ctx.drawImage(bImg, -s/2, -s/2, s, s);
+
+            if (blood.type === 'bubble') {
+                if (blood.vx) blood.x += blood.vx;
+                if (blood.vy) blood.y += blood.vy;
+                let bImg = window.getAsset(blood.imgId) || assetsManager.images[blood.imgId];
+                ctx.globalAlpha = Math.max(0, blood.life / (blood.maxLife || 120));
+                if (bImg && bImg.complete && bImg.naturalWidth > 0) {
+                    ctx.drawImage(bImg, blood.x - blood.size/2, blood.y - blood.size/2, blood.size, blood.size);
+                } else {
+                    ctx.fillStyle = 'rgba(52, 152, 219, 0.7)';
+                    ctx.beginPath(); ctx.arc(blood.x, blood.y, blood.size/2, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+                }
             } else {
-                ctx.fillStyle = blood.type === 'kill' ? '#500000' : '#8a0303'; 
-                ctx.beginPath(); ctx.arc(0, 0, (blood.size || 30) / 2, 0, Math.PI * 2); ctx.fill(); 
+                if (blood.life !== undefined && blood.life < fadeTime) {
+                    alpha = Math.max(0, blood.life / fadeTime);
+                }
+                ctx.globalAlpha = alpha;
+                
+                ctx.translate(blood.x, blood.y);
+                if (blood.rotation) ctx.rotate(blood.rotation);
+                
+                let bImg = window.getAsset(blood.imgId);
+                
+                if (bImg && bImg.complete && bImg.naturalWidth > 0) {
+                    let s = blood.size || 40;
+                    ctx.drawImage(bImg, -s/2, -s/2, s, s);
+                } else {
+                    ctx.fillStyle = blood.type === 'kill' ? '#500000' : '#8a0303'; 
+                    ctx.beginPath(); ctx.arc(0, 0, (blood.size || 30) / 2, 0, Math.PI * 2); ctx.fill(); 
+                }
             }
             ctx.restore();
         });
@@ -205,6 +220,7 @@ window.renderGameView = function() {
         });
     }
 
+    // --- CORRECTION DES PORTES D'EAU EN NIVEAU 3 ---
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
             ctx.save();
@@ -217,12 +233,14 @@ window.renderGameView = function() {
             if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900) {
                 let faceKey = door.face; 
                 let waterState = isOpen ? '_open' : '_close'; 
-                let assetName = faceKey + '_water_door' + waterState; 
-                doorImg = assetsManager.images[assetName];
+                
+                if (faceKey === 'north') doorImg = window.getAsset('back_water_door' + waterState) || assetsManager.images['back_water_door' + waterState];
+                else if (faceKey === 'south') doorImg = window.getAsset('front_water_door' + waterState) || assetsManager.images['front_water_door' + waterState];
+                else if (faceKey === 'west') doorImg = window.getAsset('left_water_door' + waterState) || assetsManager.images['left_water_door' + waterState];
+                else if (faceKey === 'east') doorImg = window.getAsset('right_water_door' + waterState) || assetsManager.images['right_water_door' + waterState];
                 
                 if (!doorImg || !doorImg.complete) {
-                    if (faceKey === 'west') doorImg = assetsManager.images['left_water_door' + waterState];
-                    if (faceKey === 'east') doorImg = assetsManager.images['right_water_door' + waterState];
+                    doorImg = assetsManager.images[faceKey + '_water_door' + waterState];
                 }
             } else {
                 if (door.face === 'north') doorImg = assetsManager.images['back_door' + stateStr]; 
@@ -656,8 +674,10 @@ window.renderGameView = function() {
         if (pImg && pImg.complete && pImg.naturalWidth > 0) {
             let displaySize = player.size * 3.75; 
             
-            if (player.heroClass === 'Elf') {
-                displaySize = (is8DirP || isSwimming) ? (player.size * 1.875) : (player.size * 4.5); 
+            if (player.heroClass === 'Knight') {
+                displaySize = player.size * 3.0;
+            } else if (player.heroClass === 'Elf') {
+                displaySize = (is8DirP || isSwimming) ? (player.size * 2.25) : (player.size * 5.4);
             } else if (player.heroClass === 'Mage' && !is8DirP && !isSwimming) {
                 displaySize = player.size * 5.25;
             }
@@ -686,7 +706,7 @@ window.renderGameView = function() {
             }
         } else {
             if (prefixP === 'Knight') {
-                ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(0, 0, (player.size*0.8)/2, 0, Math.PI*2); ctx.fill(); 
                 ctx.fillStyle = '#2c3e50'; ctx.fillRect(-5, -10, 10, 20);
                 
                 ctx.save();
@@ -703,7 +723,7 @@ window.renderGameView = function() {
                 ctx.fillStyle = '#ecf0f1'; ctx.fillRect(6, -2, 28, 4); 
                 ctx.restore();
             } else {
-                ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, player.size/2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(0, 0, (player.size*1.2)/2, 0, Math.PI*2); ctx.fill();
             }
         }
         ctx.restore(); 
@@ -819,13 +839,22 @@ window.renderGameView = function() {
     }
     
     if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900 && typeof worldState.oxygen !== 'undefined') {
-        let oxyPercent = Math.max(0, worldState.oxygen / 36000);
-        let boxWidth = 300; let boxX = canvas.width - boxWidth - wallMargin;
-        ctx.fillStyle = '#111'; ctx.fillRect(boxX, 20, boxWidth, 20);
-        ctx.fillStyle = '#3498db'; ctx.fillRect(boxX + 2, 22, (boxWidth - 4) * oxyPercent, 16);
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText("OXYGÈNE : " + Math.ceil(worldState.oxygen / 60) + " s", boxX + boxWidth/2, 36);
-        ctx.textAlign = 'left';
+        let oxyPercent = Math.max(0, worldState.oxygen / 18000);
+        let barW = 400; 
+        let barH = 14;
+        let barX = canvas.width/2 - barW/2;
+        let barY = canvas.height - 35;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+        ctx.fillRect(barX - 4, barY - 4, barW + 8, barH + 8);
+        ctx.strokeStyle = '#2980b9'; ctx.lineWidth = 2;
+        ctx.strokeRect(barX - 4, barY - 4, barW + 8, barH + 8);
+
+        ctx.fillStyle = '#3498db'; 
+        ctx.fillRect(barX, barY, barW * oxyPercent, barH);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(barX, barY, barW * oxyPercent, barH / 2);
     }
 
     if (typeof currentEnemies !== 'undefined') {
@@ -873,24 +902,49 @@ window.renderGameView = function() {
         ctx.textAlign = 'left';
     }
 
+    // --- CORRECTION DU VISUEL DES DIALOGUES ET CENTRAGE DU TEXTE ---
     if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
         ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 4;
-        let dw = 700, dh = 150;
-        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 30; 
         
+        let dw = 750, dh = 160;
+        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 40; 
+        
+        // Fond stylisé
+        let grad = ctx.createLinearGradient(dx, dy, dx, dy + dh);
+        grad.addColorStop(0, 'rgba(15, 20, 30, 0.95)');
+        grad.addColorStop(1, 'rgba(5, 10, 15, 0.95)');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 20;
         ctx.fillRect(dx, dy, dw, dh);
-        ctx.strokeRect(dx, dy, dw, dh);
+        ctx.shadowBlur = 0;
         
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 22px Arial';
+        // Bordures
+        ctx.strokeStyle = '#f39c12';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(dx, dy, dw, dh);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dx + 5, dy + 5, dw - 10, dh - 10);
+        
         ctx.textAlign = 'center';
-        let lines = window.activeDialogue.text.split('\n');
+        
+        // On nettoie les lignes vides qui poussaient le texte en bas
+        let lines = window.activeDialogue.text.split('\n').filter(l => l.trim() !== '');
+        
         for (let i = 0; i < lines.length; i++) {
-            if (i === lines.length - 1) ctx.fillStyle = '#f1c40f'; 
-            ctx.fillText(lines[i], canvas.width/2, dy + 45 + (i * 35));
+            if (i === lines.length - 1) {
+                // Texte d'action toujours verrouillé en bas de la fenêtre
+                ctx.fillStyle = '#f1c40f';
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText(lines[i], canvas.width/2, dy + dh - 25);
+            } else {
+                // Texte narratif
+                ctx.fillStyle = '#ecf0f1';
+                ctx.font = 'bold 24px Arial';
+                let startY = lines.length === 2 ? 65 : 45; // Centre si une seule ligne de lore
+                ctx.fillText(lines[i], canvas.width/2, dy + startY + (i * 35));
+            }
         }
         ctx.restore();
     }
