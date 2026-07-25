@@ -84,6 +84,13 @@ window.renderGameView = function() {
     
     if (typeof currentRoomId !== 'undefined') {
         let floorKey = 'sol_base';
+        
+        // --- HOOK MAP BOSS LEVIATHAN ---
+        if (currentRoomId === 208 && typeof worldState !== 'undefined') {
+            worldState.roomFloors = worldState.roomFloors || {};
+            worldState.roomFloors[208] = 'floor_water5';
+        }
+
         if (currentRoomId === 999 && worldState && worldState.arenaFloor) {
             floorKey = worldState.arenaFloor;
         } else if (worldState && worldState.roomFloors && worldState.roomFloors[currentRoomId]) {
@@ -569,6 +576,11 @@ window.renderGameView = function() {
                 ctx.shadowColor = p.color || '#fff'; 
                 ctx.shadowBlur = 40; 
                 let drawSize = p.size * 12.0; 
+
+                // --- REDUCTION DES SKINS DES PROJECTILES (50% et 30%) ---
+                if (p.type === 'water_ball') drawSize *= 0.5;
+                if (p.type === 'ink_ball') drawSize *= 0.7;
+                
                 ctx.drawImage(epImg, -drawSize/2, -drawSize/2, drawSize, drawSize);
             } else {
                 let spinDir = (p.vx >= 0) ? 1 : -1;
