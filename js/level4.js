@@ -62,9 +62,6 @@ window.level4State = {
         player.x = (canvas.width / 2) - (pSize / 2);
         player.y = canvas.height * 0.4; 
         player.faceAngle = -Math.PI / 2; 
-        
-        // --- AUTO-DASH AUTOMATIQUE AU LANCEMENT ---
-        player.dashTimer = 25;
 
         if (!this.cinematicPlayed) {
             this.cinematicPlayed = true;
@@ -95,8 +92,6 @@ window.level4State = {
         if (!this.isInit) this.init();
         
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
-        if (isNaN(player.x) || player.x === undefined) player.x = (canvas.width / 2) - (pSize / 2);
-        if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.4;
 
         if (!this.imgLoaded) {
             let floorImg = typeof assetsManager !== 'undefined' ? assetsManager.images['OPFLOOR21'] : null;
@@ -109,9 +104,13 @@ window.level4State = {
         }
         
         if (!this.hasStarted) {
+            // Force la position de départ (prévient les bugs de rendu avant mouvement)
+            player.x = (canvas.width / 2) - (pSize / 2);
+            player.y = canvas.height * 0.4;
+            
             if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
                 this.hasStarted = true;
-                // --- AUTO-DASH AU PREMIER MOUVEMENT ---
+                // --- LE DASH SE DÉCLENCHE ICI (à la première pression) ---
                 player.dashTimer = 25;
             } else {
                 return; 
@@ -386,11 +385,12 @@ window.renderLevel4 = function() {
     if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
     
     if (drawPlayer) {
-        ctx.globalAlpha = 1.0; 
+        ctx.globalAlpha = 1.0; // SÉCURITÉ : Forcer l'opacité initiale de base
         let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
         
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
         else if (isElfInvuln) ctx.globalAlpha = 0.4;
+        else ctx.globalAlpha = 1.0; // SÉCURITÉ
         
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.shadowColor = '#ffffff';
@@ -457,10 +457,9 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
-    // 7. BARRE DE PROGRESSION FLUIDE & DÉCOMPTE À L'ENVERS (SANS TEXTE)
+    // 7. BARRE DE PROGRESSION FLUIDE (TOTALEMENT SANS TEXTE)
     let totalDistanceMax = (window.level4State.sequence.length - 1) * window.level4State.segH;
     let distRatio = Math.min(1, Math.max(0, window.level4State.distance / totalDistanceMax));
-    let remainingCountdown = Math.max(0, Math.ceil((1 - distRatio) * 100));
     
     let barW = 500;
     ctx.fillStyle = '#111'; 
@@ -468,13 +467,6 @@ window.renderLevel4 = function() {
     
     ctx.fillStyle = '#e67e22'; 
     ctx.fillRect(canvas.width/2 - barW/2 + 2, 22, (barW - 4) * distRatio, 16);
-    
-    // Décompte à l'envers uniquement (100 -> 0)
-    ctx.fillStyle = '#fff'; 
-    ctx.font = 'bold 16px Arial'; 
-    ctx.textAlign = 'center';
-    ctx.fillText(remainingCountdown, canvas.width/2, 36);
-    ctx.textAlign = 'left';
 
     // Message de démarrage
     if (!window.level4State.hasStarted) {
