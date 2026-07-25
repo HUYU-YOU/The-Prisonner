@@ -338,7 +338,7 @@ window.update = function() {
                                 window.activeDialogue = {
                                     text: "L'eau est sombre et glaciale...\nPlonger dans les abysses ?\n\n[ESPACE] Plonger   -   [ECHAP] Reculer",
                                     onConfirm: function() {
-                                        worldState.oxygen = 36000;
+                                        worldState.oxygen = 18000;
                                         
                                         // --- CINÉMATIQUE 2 : PLONGÉE ---
                                         let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
