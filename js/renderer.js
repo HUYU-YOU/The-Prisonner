@@ -44,10 +44,22 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
 
+    // --- HOOK NIVEAU 4 ---
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
-        if (typeof window.renderLevel4 === 'function') {
-            window.renderLevel4();
+        if (player.heroClass === 'Knight') {
+            currentRoomId = 302;
+            if (typeof worldState !== 'undefined') {
+                worldState.roomFloors = worldState.roomFloors || {};
+                worldState.roomFloors[302] = 'floorboss_2';
+            }
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 150;
             return;
+        } else {
+            if (typeof window.renderLevel4 === 'function') {
+                window.renderLevel4();
+                return;
+            }
         }
     }
     
@@ -293,7 +305,6 @@ window.renderGameView = function() {
                         if (assetName === 'gold_coin') displaySize = item.size * 3.5; 
                         else if (assetName && assetName.includes('key')) {
                             displaySize = item.size * 2.2;
-                            // --- REDUCTION TAILLE CLE SQUELETTE (-30%) ---
                             if (assetName === 'skeleton_key') displaySize *= 0.7;
                         }
                         
