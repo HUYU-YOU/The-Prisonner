@@ -246,7 +246,8 @@ window.renderGameView = function() {
             else if (door.requiresKey && door.locked) { stateStr = '_key'; }
             if (typeof currentRoomId !== 'undefined' && currentRoomId === 8 && !worldState.level2Unlocked && door.face === 'south') { stateStr = '_close'; }
             
-            if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900) {
+            // --- CORRECTION : Les portes aquatiques ne s'affichent que jusqu'à la salle 299 ---
+            if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 300) {
                 let faceKey = door.face; 
                 let waterState = isOpen ? '_open' : '_close'; 
                 
@@ -577,7 +578,6 @@ window.renderGameView = function() {
                 ctx.shadowBlur = 40; 
                 let drawSize = p.size * 12.0; 
 
-                // --- REDUCTION DES SKINS DES PROJECTILES (50% et 30%) ---
                 if (p.type === 'water_ball') drawSize *= 0.5;
                 if (p.type === 'ink_ball') drawSize *= 0.7;
                 
@@ -616,7 +616,9 @@ window.renderGameView = function() {
         else ctx.globalAlpha = 1.0;
         
         let isMoving = (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']);
-        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900);
+        
+        // --- CORRECTION : Le joueur nage uniquement dans les salles aquatiques (200-299) ---
+        let isSwimming = (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 300);
         
         let bobbingY = 0;
         let tilt = 0;
@@ -773,7 +775,8 @@ window.renderGameView = function() {
     if (isElfUlt) {
         lctx.fillStyle = 'rgba(0, 0, 0, 0)'; 
     } 
-    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900) {
+    // --- CORRECTION : La lumière abyssale d'eau se limite aux salles 200-299 ---
+    else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 300) {
         lctx.fillStyle = 'rgba(5, 20, 35, 0.85)'; 
     }
     else if (player.heroClass === 'Mage') {
@@ -862,7 +865,8 @@ window.renderGameView = function() {
         ctx.fillText("x " + playerStats.inventory.coins, wallMargin + 55, 43);
     }
     
-    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 900 && typeof worldState.oxygen !== 'undefined') {
+    // --- CORRECTION : Jauge d'oxygène seulement jusqu'à la salle 299 ---
+    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 200 && currentRoomId < 300 && typeof worldState.oxygen !== 'undefined') {
         let oxyPercent = Math.max(0, worldState.oxygen / 18000);
         let barW = 400; 
         let barH = 14;
