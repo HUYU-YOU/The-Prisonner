@@ -266,7 +266,7 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 205) { window.spawnEnemy('siren', 2, canvas.width/2, canvas.height/2); }
             else if (roomId === 206) { window.spawnEnemy('anglerfish', 3, canvas.width/2, canvas.height/2); }
             else if (roomId === 207) { window.spawnEnemy('siren', 3, canvas.width/2, canvas.height/2); }
-           else if (roomId === 208) { 
+            else if (roomId === 208) { 
                 window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 30); 
                 window.spawnEnemy('siren', 1, canvas.width/2 - 200, wallMargin + 50); 
                 window.spawnEnemy('siren', 1, canvas.width/2 + 200, wallMargin + 50); 
@@ -277,7 +277,18 @@ window.loadRoom = function(roomId, entryFace = 'south') {
                     else if (player.heroClass === 'Knight') bossVideo = 'knight5.mp4';
                     
                     if (bossVideo) {
-                        window.playCinematic(bossVideo, function() 
+                        window.playCinematic(bossVideo, function() {
+                            // On bloque l'état du jeu jusqu'à une touche de déplacement
+                            if (typeof gameState !== 'undefined') gameState = "PAUSED_WAITING_MOVE";
+                            
+                            let resumeOnMove = function(e) {
+                                let k = e.key.toLowerCase();
+                                if (['z', 'q', 's', 'd', 'w', 'a', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
+                                    if (typeof gameState !== 'undefined') gameState = "PLAYING";
+                                    window.removeEventListener('keydown', resumeOnMove);
+                                }
+                            };
+                            window.addEventListener('keydown', resumeOnMove);
                         });
                     }
                 }
