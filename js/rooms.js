@@ -28,6 +28,14 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     if (!worldState.collectedItems) worldState.collectedItems = {};
     if (!worldState.enemyStates) worldState.enemyStates = {};
 
+    // --- RESET DU STATUT DU BOSS POUR NE PAS DÉVERROUILLER LA PORTE TROP TÔT ---
+    if ([8, 208, 302].includes(roomId)) {
+        worldState.bossDefeated = !!worldState.clearedRooms[roomId];
+    } else {
+        worldState.bossDefeated = false;
+    }
+    // ---------------------------------------------------------------------------
+
     if (!worldState.bloodStains[roomId]) worldState.bloodStains[roomId] = []; 
     bloodStains = worldState.bloodStains[roomId];
     worldState.visitedRooms[roomId] = true; 
@@ -46,7 +54,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         }
         else if (roomId === 301) worldState.roomFloors[roomId] = 'floor12';
         else if (roomId === 302) {
-            // TEXTURE SALLE BOSS MAGE - FLOOR_BOSS2 POUR CHEVALIER
             let isKnight = (player && player.heroClass === 'Knight');
             worldState.roomFloors[roomId] = isKnight ? 'floor_boss2' : 'floorboss_1';
         }
@@ -196,7 +203,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         if (typeof window.spawnEnemy === 'function') window.spawnEnemy('boulder', 1, canvas.width/2 - 75, 80);
     }
     else if (roomId === 302) {
-        currentDoors = []; // SALLE DU BOSS MAGE CORROMPU
+        // --- LA PORTE VERS LE JARDIN (BLOQUÉE TANT QUE LE BOSS VIT) ---
+        currentDoors = [ 
+            { ...doorN, id: 'door_302_garden', requiresKey: true, locked: !worldState.bossDefeated, dest: 401, spawnX: spawnS.x, spawnY: spawnS.y } 
+        ]; 
     }
 
     if (roomId !== 1 && roomId !== 8 && roomId !== 999 && roomId !== 301 && roomId !== 302 && roomId < 100) {
@@ -259,7 +269,6 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 208) { window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 90); window.spawnEnemy('siren', 2, canvas.width/2, canvas.height/2 + 150); }
             
             else if (roomId === 302) {
-                // SPAWN DU BOSS MAGE CORROMPU AU CENTRE DE LA SALLE
                 window.spawnEnemy('mage', 1, canvas.width/2 - 30, canvas.height/2 - 30);
             }
         }
