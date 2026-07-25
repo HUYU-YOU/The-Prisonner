@@ -384,8 +384,11 @@ window.renderLevel4 = function() {
         }
     });
 
-    let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
-    let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
+    // --- SÉCURITÉ DE SPAWN VISUEL ---
+    let px = player.x;
+    let py = player.y;
+    if (isNaN(px) || px === undefined) px = canvas.width/2 - pSize/2;
+    if (isNaN(py) || py === undefined) py = canvas.height - 150;
 
     ctx.save();
     ctx.translate(px + pSize/2, py + pSize/2);
@@ -394,7 +397,11 @@ window.renderLevel4 = function() {
     if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
     
     if (drawPlayer) {
+        ctx.globalAlpha = 1.0; // Force l'opacité au cas où le frame précédent l'aurait bloquée
+        let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
+        
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
+        else if (isElfInvuln) ctx.globalAlpha = 0.4;
         
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.shadowColor = '#ffffff';
@@ -428,8 +435,9 @@ window.renderLevel4 = function() {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let s = pSize * 3.75;
-            if (player.heroClass === 'Knight') s = pSize * 3.0; // -20%
-            else if (player.heroClass === 'Elf') s = pSize * 5.4; // Ratio corrigé pour l'Elfe
+            if (player.heroClass === 'Knight') s = pSize * 3.0; 
+            // --- CORRECTION DE LA TAILLE GÉANTE DE L'ARCHER ---
+            else if (player.heroClass === 'Elf') s = pSize * 2.25; 
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
             ctx.fillStyle = '#2ecc71';
