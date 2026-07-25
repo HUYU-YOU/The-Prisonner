@@ -45,7 +45,11 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             worldState.roomFloors[roomId] = waterFloors[Math.floor(Math.random() * waterFloors.length)];
         }
         else if (roomId === 301) worldState.roomFloors[roomId] = 'floor12';
-        else if (roomId === 302) worldState.roomFloors[roomId] = 'floorboss_1'; // TEXTURE SALLE BOSS MAGE
+        else if (roomId === 302) {
+            // TEXTURE SALLE BOSS MAGE - FLOOR_BOSS2 POUR CHEVALIER
+            let isKnight = (player && player.heroClass === 'Knight');
+            worldState.roomFloors[roomId] = isKnight ? 'floor_boss2' : 'floorboss_1';
+        }
         else if (roomId !== 999) {
             let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
             worldState.roomFloors[roomId] = randomFloors[Math.floor(Math.random() * randomFloors.length)];
@@ -63,9 +67,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
     const doorW = { x: isVertCorridor ? bLeft - 15 : -15, y: canvas.height/2 - 75, width: wallMargin + 15, height: 150, face: 'west' };
     const doorE = { x: isVertCorridor ? bRight - wallMargin : canvas.width - wallMargin - 15, y: canvas.height/2 - 75, width: wallMargin + 15, height: 150, face: 'east' };
 
-    const spawnN = { x: canvas.width/2 - 20, y: wallMargin + 20 };       
+    const spawnN = { x: canvas.width/2 - 20, y: wallMargin + 20 };        
     const spawnS = { x: canvas.width/2 - 20, y: canvas.height - wallMargin - 60 }; 
-    const spawnW = { x: (isVertCorridor ? bLeft : wallMargin) + 20, y: canvas.height/2 - 20 };       
+    const spawnW = { x: (isVertCorridor ? bLeft : wallMargin) + 20, y: canvas.height/2 - 20 };        
     const spawnE = { x: (isVertCorridor ? bRight : canvas.width - wallMargin) - 60, y: canvas.height/2 - 20 }; 
 
     const doorN_right = { x: canvas.width - wallMargin - 200, y: 0, width: 150, height: wallMargin + 15, face: 'north' };
