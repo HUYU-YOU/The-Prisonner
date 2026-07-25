@@ -44,7 +44,6 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
 
-    // --- HOOK NIVEAU 4 ---
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
         if (typeof window.renderLevel4 === 'function') {
             window.renderLevel4();
@@ -292,7 +291,11 @@ window.renderGameView = function() {
                         let imgRatio = itemImg.naturalWidth / itemImg.naturalHeight;
                         let displaySize = item.size * 2.5; 
                         if (assetName === 'gold_coin') displaySize = item.size * 3.5; 
-                        else if (assetName && assetName.includes('key')) displaySize = item.size * 2.2; 
+                        else if (assetName && assetName.includes('key')) {
+                            displaySize = item.size * 2.2;
+                            // --- REDUCTION TAILLE CLE SQUELETTE (-30%) ---
+                            if (assetName === 'skeleton_key') displaySize *= 0.7;
+                        }
                         
                         ctx.drawImage(itemImg, -displaySize/2, -(displaySize / imgRatio)/2, displaySize, displaySize / imgRatio);
                     } else {
@@ -900,19 +903,16 @@ window.renderGameView = function() {
         ctx.textAlign = 'left';
     }
 
-    // --- DIALOGUE RPG AMÉLIORÉ ET AUTO-AJUSTABLE ---
     if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
         ctx.save();
         
-        // On sépare les lignes et on retire les retours à la ligne vides qui faussaient l'affichage
         let lines = window.activeDialogue.text.split('\n').map(l => l.trim()).filter(l => l !== '');
         
         let dw = 800;
-        let dh = Math.max(160, lines.length * 40 + 60); // Ajuste la hauteur automatiquement
+        let dh = Math.max(160, lines.length * 40 + 60); 
         let dx = canvas.width/2 - dw/2;
         let dy = canvas.height - dh - 40; 
         
-        // Fond dégradé
         let grad = ctx.createLinearGradient(dx, dy, dx, dy + dh);
         grad.addColorStop(0, 'rgba(20, 25, 35, 0.95)');
         grad.addColorStop(0.5, 'rgba(10, 15, 20, 0.98)');
@@ -927,7 +927,6 @@ window.renderGameView = function() {
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
 
-        // Double bordure élégante (Or / Métal)
         ctx.strokeStyle = '#d4af37';
         ctx.lineWidth = 3;
         ctx.strokeRect(dx, dy, dw, dh);
@@ -942,7 +941,6 @@ window.renderGameView = function() {
             let isActionLine = (i === lines.length - 1 && lines[i].includes('['));
             
             if (isActionLine) {
-                // Ligne d'action fixée tout en bas
                 ctx.fillStyle = '#f1c40f';
                 ctx.font = 'bold 22px Arial';
                 ctx.shadowColor = 'rgba(241, 196, 15, 0.4)';
@@ -950,7 +948,6 @@ window.renderGameView = function() {
                 ctx.fillText(lines[i], canvas.width/2, dy + dh - 25);
                 ctx.shadowBlur = 0;
             } else {
-                // Lignes narratives centrées dynamiquement
                 ctx.fillStyle = '#ecf0f1';
                 ctx.font = 'bold 26px Arial';
                 let narrativeLines = lines.length - (lines[lines.length-1].includes('[') ? 1 : 0);
