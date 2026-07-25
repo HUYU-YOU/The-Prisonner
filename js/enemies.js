@@ -369,14 +369,13 @@ window.updateEnemies = function() {
             }
         }
 
-        // --- TOLÉRANCE STRICTE DE VUE DE LA SIRÈNE (AUCUNE ATTAQUE DE DOS) ---
         let canAttack = true;
         if (enemy.type === 'siren') {
             let angleToSiren = Math.atan2(enemy.y - player.y, enemy.x - player.x);
             let diff = Math.abs(player.faceAngle - angleToSiren);
             while(diff > Math.PI) diff -= Math.PI * 2;
             diff = Math.abs(diff);
-            if (diff > Math.PI / 3) canAttack = false; // Tolérance de 60 degrés. Si hors vue, AUCUNE ATTAQUE.
+            if (diff > Math.PI / 3) canAttack = false; 
         }
 
         let isRanged = ['skeleton', 'mage', 'deathgod', 'elysia', 'armor', 'spider', 'golem', 'small_golem', 'gargouille', 'siren'].includes(enemy.type);
@@ -507,7 +506,8 @@ window.updateEnemies = function() {
                 playerStats.health -= dmg; 
                 enemy.attackAnimTimer = 30;
                 
-                let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                // --- CORRECTION : Condition sous l'eau ---
+                let isSwimming = (currentRoomId >= 200 && currentRoomId < 300);
                 if (!isSwimming) {
                     let randHit = Math.floor(Math.random() * 3) + 1;
                     let maxLife = (currentRoomId === 999) ? 1200 : 3600;
@@ -592,7 +592,7 @@ window.updateEnemies = function() {
                             currentEnemies.forEach(e => {
                                 if (!e.invulnerable && window.checkCollision(hitBox, e)) {
                                     e.health -= summon.damage; 
-                                    let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                                    let isSwimming = (currentRoomId >= 200 && currentRoomId < 300); // --- CORRECTION ---
                                     if (!isSwimming) {
                                         let hitNum = Math.floor(Math.random() * 3) + 1;
                                         let bSize = e.size * 1.5;
@@ -606,7 +606,7 @@ window.updateEnemies = function() {
                     } else if (summon.type === 'soul') {
                         if (minDist < 50) { 
                             nearestEnemy.health -= summon.damage; summon.attackCooldown = 60; summon.attackAnimTimer = 20;
-                            let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+                            let isSwimming = (currentRoomId >= 200 && currentRoomId < 300); // --- CORRECTION ---
                             if (!isSwimming) {
                                 let hitNum = Math.floor(Math.random() * 3) + 1;
                                 let bSize = nearestEnemy.size * 1.5;
@@ -643,9 +643,20 @@ window.updateEnemies = function() {
 
                         if (typeof window.playCinematic === 'function') {
                             window.playCinematic(victoryVideo, function() {
-                                currentRoomId = 401;
-                                player.x = canvas.width / 2;
-                                player.y = canvas.height - 150;
+                                // --- CORRECTION TELEPORTATION DIRECTE ---
+                                if (typeof window.changeRoom === 'function') {
+                                    window.changeRoom(401, 'south');
+                                } else if (typeof window.enterRoom === 'function') {
+                                    window.enterRoom(401, 'south');
+                                } else {
+                                    currentRoomId = 401;
+                                    player.x = canvas.width / 2;
+                                    player.y = canvas.height - 150;
+                                    if (typeof currentDoors !== 'undefined') currentDoors.length = 0;
+                                    if (typeof currentEnemies !== 'undefined') currentEnemies.length = 0;
+                                    if (typeof currentObstacles !== 'undefined') currentObstacles.length = 0;
+                                    if (typeof currentItems !== 'undefined') currentItems.length = 0;
+                                }
                             });
                         }
                         
@@ -707,7 +718,8 @@ window.updateEnemies = function() {
                 }
             }
             
-            let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
+            // --- CORRECTION : Condition sous l'eau ---
+            let isSwimming = (currentRoomId >= 200 && currentRoomId < 300);
             if (!isSwimming && e.type !== 'boulder') {
                 let imgPrefix = e.type === 'skeleton' ? 'skeleton_kill_view' : 'bloods_kill_view';
                 let killNum = Math.floor(Math.random() * 3) + 1;
