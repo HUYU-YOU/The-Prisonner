@@ -266,7 +266,10 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             else if (roomId === 205) { window.spawnEnemy('siren', 2, canvas.width/2, canvas.height/2); }
             else if (roomId === 206) { window.spawnEnemy('anglerfish', 3, canvas.width/2, canvas.height/2); }
             else if (roomId === 207) { window.spawnEnemy('siren', 3, canvas.width/2, canvas.height/2); }
-            else if (roomId === 208) { window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 90); window.spawnEnemy('siren', 2, canvas.width/2, canvas.height/2 + 150); }
+            else if (roomId === 208) { window.spawnEnemy('kraken', 1, canvas.width/2 - 90, canvas.height/2 - 30); 
+                                        window.spawnEnemy('siren', 1, canvas.width/2 - 200, wallMargin + 50); 
+                                        window.spawnEnemy('siren', 1, canvas.width/2 + 200, wallMargin + 50); 
+}
             
             else if (roomId === 302) {
                 window.spawnEnemy('mage', 1, canvas.width/2 - 30, canvas.height/2 - 30);
