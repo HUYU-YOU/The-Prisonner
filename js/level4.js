@@ -361,7 +361,13 @@ window.renderLevel4 = function() {
             ctx.beginPath(); ctx.arc(canvas.width/2, 100, 50, 0, Math.PI*2); ctx.fill();
         }
     }
-
+// Dans renderLevel4() de js/level4.js :
+if (img && img.complete && img.naturalWidth > 0) {
+    let s = pSize * 3.75;
+    if (player.heroClass === 'Knight') s = pSize * 3.0; // -20%
+    else if (player.heroClass === 'Elf') s = pSize * 2.25; // +20%
+    ctx.drawImage(img, -s/2, -s/2, s, s);
+}
     // 4. Rendu des Pièges
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
