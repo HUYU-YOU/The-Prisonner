@@ -47,6 +47,7 @@ window.togglePause = function() {
         lastClickTime = Date.now();
     }
 };
+
 window.playCinematic = function(videoFile, onComplete) {
     // Sauvegarde l'état du jeu et met en pause
     window.previousGameState = gameState;
@@ -106,7 +107,7 @@ window.playCinematic = function(videoFile, onComplete) {
         if (onComplete) onComplete();
     };
 
-    // Gestion de la touche Entrée
+    // Gestion de la touche ENTRÉE (Évite de lancer l'ultime)
     let skipHandler = function(e) {
         if (e.code === 'Enter' || e.key === 'Enter') {
             e.preventDefault();
