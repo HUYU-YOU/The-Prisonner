@@ -60,16 +60,17 @@ window.update = function() {
         if (!worldState.droppedItems) worldState.droppedItems = {};
         if (!worldState.unlockedDoors) worldState.unlockedDoors = {};
         if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
-        
+
         if (currentRoomId >= 200 && currentRoomId < 900 && currentRoomId !== 301 && currentRoomId !== 302) {
-            if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 18000;
-            worldState.oxygen--;
-            if (worldState.oxygen <= 0) {
-                playerStats.health = 0;
-                if (typeof window.updateHUD === 'function') window.updateHUD();
-                if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-            }
-        }
+    if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 18000; 
+    worldState.oxygen--;
+    if (worldState.oxygen <= 0) {
+        playerStats.health = 0;
+        if (typeof window.updateHUD === 'function') window.updateHUD();
+        if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+    }
+}
+        
 
         if (typeof window.playerRedPotionActive !== 'undefined' && window.playerRedPotionActive) {
             if (playerStats.health < playerStats.maxHealth) {
