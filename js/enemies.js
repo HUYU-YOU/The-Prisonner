@@ -323,24 +323,7 @@ window.updateEnemies = function() {
                 enemy.shootCooldown = 180; enemy.attackAnimTimer = 20;
             }
         }
-        
-if (e.type === 'siren') {
-    let bubbleImages = ['assets/effects/bubble1.png', 'assets/effects/bubble2.png'];
-    for (let b = 0; b < 10; b++) {
-        let randImg = bubbleImages[Math.floor(Math.random() * bubbleImages.length)];
-        bloodStains.push({
-            type: 'bubble',
-            imgId: randImg,
-            x: e.x + e.size/2 + (Math.random() * 40 - 20),
-            y: e.y + e.size/2 + (Math.random() * 40 - 20),
-            vx: (Math.random() - 0.5) * 2,
-            vy: -1 - Math.random() * 2.5,
-            size: 16 + Math.random() * 20,
-            life: 90 + Math.random() * 60,
-            maxLife: 120
-        });
-    }
-}
+
         if (enemy.type === 'elysia') {
             let hpRatio = Math.max(0.1, enemy.health / enemy.maxHealth); 
             if (enemy.phase === 1) {
@@ -634,7 +617,6 @@ if (e.type === 'siren') {
             
             if (player.heroClass === 'Necromancer') { necroKills.push(e.type); }
 
-            // DETECTION DU BOSS ET MORT DU MAGE CORROMPU EN SALLE 302
             if (['troll', 'deathgod', 'elysia', 'kraken', 'mage'].includes(e.type) && (currentRoomId === 8 || currentRoomId === 208 || currentRoomId === 302)) { 
                 if (!worldState.clearedRooms[currentRoomId]) {
                     worldState.clearedRooms[currentRoomId] = true;
@@ -644,7 +626,6 @@ if (e.type === 'siren') {
                     if (e.type === 'kraken') {
                         currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
                     } else if (e.type === 'mage' && currentRoomId === 302) {
-                        // --- CINEMATIQUES DE VICTOIRE SALLE 302 ---
                         let victoryVideo = 'knight4.mp4';
                         if (player.heroClass === 'Elf') victoryVideo = 'elf5.mp4';
                         else if (player.heroClass === 'Mage') victoryVideo = 'burned5.mp4';
@@ -654,10 +635,11 @@ if (e.type === 'siren') {
                             window.playCinematic(victoryVideo);
                         }
                         
-                        // --- DÉVERROUILLAGE DE LA PORTE DU JARDIN ---
-                        let gardenDoor = currentDoors.find(d => d.id === 'door_302_garden');
-                        if (gardenDoor) {
-                            gardenDoor.locked = false;
+                        if (typeof currentDoors !== 'undefined') {
+                            let gardenDoor = currentDoors.find(d => d.id === 'door_302_garden');
+                            if (gardenDoor) {
+                                gardenDoor.locked = false;
+                            }
                         }
                     } else {
                         currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
@@ -690,6 +672,24 @@ if (e.type === 'siren') {
             
             if (Math.random() < 0.3 && !['troll', 'mage', 'dragon', 'deathgod', 'elysia', 'armor', 'kraken', 'boulder'].includes(e.type)) { 
                 currentItems.push({ id: 'coin_en_' + Date.now() + i, type: 'coin', x: e.x + e.size/2, y: e.y + e.size/2, size: 8, collected: false }); 
+            }
+
+            if (e.type === 'siren') {
+                let bubbleImages = ['assets/effects/bubble1.png', 'assets/effects/bubble2.png'];
+                for (let b = 0; b < 10; b++) {
+                    let randImg = bubbleImages[Math.floor(Math.random() * bubbleImages.length)];
+                    bloodStains.push({
+                        type: 'bubble',
+                        imgId: randImg,
+                        x: e.x + e.size/2 + (Math.random() * 40 - 20),
+                        y: e.y + e.size/2 + (Math.random() * 40 - 20),
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: -1 - Math.random() * 2.5,
+                        size: 16 + Math.random() * 20,
+                        life: 90 + Math.random() * 60,
+                        maxLife: 120
+                    });
+                }
             }
             
             let isSwimming = (currentRoomId >= 200 && currentRoomId < 900);
