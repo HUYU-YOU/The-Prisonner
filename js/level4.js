@@ -361,13 +361,7 @@ window.renderLevel4 = function() {
             ctx.beginPath(); ctx.arc(canvas.width/2, 100, 50, 0, Math.PI*2); ctx.fill();
         }
     }
-// Dans renderLevel4() de js/level4.js :
-if (img && img.complete && img.naturalWidth > 0) {
-    let s = pSize * 3.75;
-    if (player.heroClass === 'Knight') s = pSize * 3.0; // -20%
-    else if (player.heroClass === 'Elf') s = pSize * 2.25; // +20%
-    ctx.drawImage(img, -s/2, -s/2, s, s);
-}
+
     // 4. Rendu des Pièges
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
@@ -394,7 +388,7 @@ if (img && img.complete && img.naturalWidth > 0) {
         }
     });
 
-    // 5. Rendu du Joueur (CORRIGÉ POUR LA VISIBILITÉ GARANTIE)
+    // 5. Rendu du Joueur
     let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
     let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
 
@@ -430,7 +424,6 @@ if (img && img.complete && img.naturalWidth > 0) {
         if (pPrefix === 'Mage') pPrefix = 'Burned';
         else pPrefix = pPrefix.charAt(0).toUpperCase() + pPrefix.slice(1).toLowerCase();
         
-        // CORRECTION VISIBILITE : Toujours fallback sur south_view qui existe forcément
         let skin1 = `${pPrefix}_${dir}_view`;
         let fallbackName = `${pPrefix}_south_view`;
         
@@ -441,7 +434,8 @@ if (img && img.complete && img.naturalWidth > 0) {
         
         if (img && img.complete && img.naturalWidth > 0) {
             let s = pSize * 3.75;
-            if (player.heroClass === 'Elf') s = pSize * 1.875;
+            if (player.heroClass === 'Knight') s = pSize * 3.0; // -20%
+            else if (player.heroClass === 'Elf') s = pSize * 2.25; // +20%
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
             ctx.fillStyle = '#2ecc71';
