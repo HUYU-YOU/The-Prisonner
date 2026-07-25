@@ -626,7 +626,17 @@ window.updateEnemies = function() {
                     
                     if (e.type === 'kraken') {
                         currentItems.push({ id: 'final_sphere', type: 'key_orb', x: e.x + e.size/2 - 15, y: e.y + e.size/2 - 15, size: 30, collected: false });
-                    } else if (e.type !== 'mage') {
+                    } else if (e.type === 'mage' && currentRoomId === 302) {
+                        // --- CINEMATIQUES DE VICTOIRE SALLE 302 ---
+                        let victoryVideo = 'knight4.mp4';
+                        if (player.heroClass === 'Elf') victoryVideo = 'elf5.mp4';
+                        else if (player.heroClass === 'Mage') victoryVideo = 'burned5.mp4';
+                        else if (player.heroClass === 'Necromancer') victoryVideo = 'necro5.mp4';
+
+                        if (typeof window.playCinematic === 'function') {
+                            window.playCinematic(victoryVideo);
+                        }
+                    } else {
                         currentItems.push({ id: 'boss_key', type: 'key_skull', x: e.x + e.size/2 - 10, y: e.y + e.size/2 - 10, size: 20, collected: false }); 
                     }
                 }
