@@ -335,7 +335,6 @@ window.renderLevel4 = function() {
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
     let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
 
-    // 1. Rendu du fond
     window.level4State.segments.forEach(seg => {
         let img = assetsManager.images[seg.id];
         if (img && img.complete && img.naturalWidth > 0) {
@@ -346,12 +345,10 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 2. Murs noirs latéraux
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
 
-    // 3. Rendu du Portail du Boss
     if (window.level4State.portalSpawned) {
         let portalImg = assetsManager.images['portal_key'];
         if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
@@ -362,7 +359,6 @@ window.renderLevel4 = function() {
         }
     }
 
-    // 4. Rendu des Pièges
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
         if (trap.type === 'hole_block' || trap.type === 'hole_death') imgKey = 'hole';
@@ -388,7 +384,6 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 5. Rendu du Joueur
     let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
     let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
 
@@ -401,7 +396,6 @@ window.renderLevel4 = function() {
     if (drawPlayer) {
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
         
-        // Halo blanc clair derrière le joueur
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.shadowColor = '#ffffff';
         ctx.shadowBlur = 15;
@@ -425,17 +419,17 @@ window.renderLevel4 = function() {
         else pPrefix = pPrefix.charAt(0).toUpperCase() + pPrefix.slice(1).toLowerCase();
         
         let skin1 = `${pPrefix}_${dir}_view`;
-        let fallbackName = `${pPrefix}_south_view`;
         
         let img = typeof window.getAsset === 'function' ? window.getAsset(skin1) : null;
         if (!img || !img.complete || img.naturalWidth === 0) {
+            let fallbackName = pPrefix === 'Elf' ? 'Elf_south_view' : `${pPrefix}_south_view`;
             img = typeof window.getAsset === 'function' ? window.getAsset(fallbackName) : null;
         }
         
         if (img && img.complete && img.naturalWidth > 0) {
             let s = pSize * 3.75;
             if (player.heroClass === 'Knight') s = pSize * 3.0; // -20%
-            else if (player.heroClass === 'Elf') s = pSize * 2.25; // +20%
+            else if (player.heroClass === 'Elf') s = pSize * 5.4; // Ratio corrigé pour l'Elfe
             ctx.drawImage(img, -s/2, -s/2, s, s);
         } else {
             ctx.fillStyle = '#2ecc71';
@@ -451,7 +445,6 @@ window.renderLevel4 = function() {
     }
     ctx.restore();
 
-    // 6. Rendu de l'Éboulement
     if (window.level4State.dangerY < canvas.height) {
         ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
         ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
@@ -467,7 +460,6 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
-    // 7. Barre de progression / UI
     let totalSegments = window.level4State.sequence.length;
     let distPercent = Math.min(1, window.level4State.currentSeqIndex / (totalSegments - 1));
     let barW = 500;
@@ -482,7 +474,6 @@ window.renderLevel4 = function() {
     }
     ctx.textAlign = 'left';
 
-    // Message de démarrage
     if (!window.level4State.hasStarted) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, canvas.height/2 - 70, canvas.width, 140);
