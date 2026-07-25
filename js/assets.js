@@ -318,6 +318,11 @@ assetsManager.load('floor_water3', 'assets/tiles/floor_water3.png');
 assetsManager.load('floor_water4', 'assets/tiles/floor_water4.png');
 assetsManager.load('floor_water5', 'assets/tiles/floor_water5.png');
 
+// --- CORRECTION: Les nouvelles lignes ont été formatées correctement ici ---
+assetsManager.load('floorboss_2', 'assets/decors/floorboss_2.png');
+assetsManager.load('bubble1', 'assets/effects/bubble1.png');
+assetsManager.load('bubble2', 'assets/effects/bubble2.png');
+
 assetsManager.load('Attack_water_ball', 'assets/skins/Attack/Attack_water_ball.jpeg');
 assetsManager.load('Attack_ink_ball', 'assets/skins/Attack/Attack_ink_ball.jpeg');
 
