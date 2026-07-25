@@ -76,9 +76,9 @@ window.playCinematic = function(videoFile, onComplete) {
     video.autoplay = true;
     video.controls = false; 
 
-    // Texte "Passer"
+    // Texte "Passer" avec ENTRÉE
     let skipText = document.createElement('div');
-    skipText.innerText = "Appuyez sur [ESPACE] pour passer";
+    skipText.innerText = "Appuyez sur [ENTRÉE] pour passer";
     skipText.style.position = "absolute";
     skipText.style.bottom = "30px";
     skipText.style.right = "30px";
@@ -106,9 +106,9 @@ window.playCinematic = function(videoFile, onComplete) {
         if (onComplete) onComplete();
     };
 
-    // Gestion de la touche Espace
+    // Gestion de la touche Entrée
     let skipHandler = function(e) {
-        if (e.code === 'Space' || e.key === ' ') {
+        if (e.code === 'Enter' || e.key === 'Enter') {
             e.preventDefault();
             video.pause();
             finishCinematic();
