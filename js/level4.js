@@ -1,7 +1,6 @@
 // ============================================================================
 // js/level4.js - LOGIQUE ET RENDU DU NIVEAU 4 (COURSE D'OBSTACLES)
 // ============================================================================
-
 window.level4State = {
     isInit: false,
     hasStarted: false,
@@ -58,11 +57,11 @@ window.level4State = {
             return;
         }
 
-        // Positionnement du joueur au Sud (anti-NaN)
+        // --- SPAWN SÉCURISÉ PLUS HAUT (HORS DE LA FUMÉE) ---
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         player.size = pSize;
         player.x = (canvas.width / 2) - (pSize / 2);
-        player.y = canvas.height * 0.75; 
+        player.y = canvas.height * 0.4; // Placé plus haut sur l'écran
         player.faceAngle = -Math.PI / 2; 
         player.dashTimer = 0;
 
@@ -97,10 +96,10 @@ window.level4State = {
     update: function() {
         if (!this.isInit) this.init();
         
-        // Sécurité position joueur
+        // --- SÉCURITÉ SPAWN ---
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
         if (isNaN(player.x) || player.x === undefined) player.x = (canvas.width / 2) - (pSize / 2);
-        if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.75;
+        if (isNaN(player.y) || player.y === undefined) player.y = canvas.height * 0.4;
 
         // Auto-adaptation aux vrais pixels de l'image
         if (!this.imgLoaded) {
@@ -171,7 +170,7 @@ window.level4State = {
         let corridorX = (canvas.width - this.corridorW) / 2;
         let margin = this.corridorW * 0.22; 
 
-        // Génération dynamique des pièges (RÉDUITE)
+        // Génération dynamique des pièges
         if (!this.scrollingStopped) {
             this.trapSpawnTimer--;
             if (this.trapSpawnTimer <= 0) {
@@ -232,7 +231,7 @@ window.level4State = {
         for (let trap of this.traps) {
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
                 if (trap.type === 'caisse' || (trap.type === 'hole_block' && player.dashTimer <= 0)) {
-                    player.x = oldPx; // Stoppe seulement X (Permet de glisser sur les côtés)
+                    player.x = oldPx; 
                     break;
                 }
             }
@@ -246,8 +245,8 @@ window.level4State = {
         for (let trap of this.traps) {
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
                 if (trap.type === 'caisse' || (trap.type === 'hole_block' && player.dashTimer <= 0)) {
-                    player.y = oldPy; // Stoppe Y
-                    player.y += currentSpeed; // Mais pousse le joueur avec le mur
+                    player.y = oldPy; 
+                    player.y += currentSpeed; 
                     break;
                 }
                 else if (trap.type === 'hole_death') {
@@ -269,7 +268,7 @@ window.level4State = {
             }
         }
 
-        // Passage du portail vers le Boss Mage Corrompu (302) AVEC LA CINEMATIQUE
+        // Passage du portail vers le Boss Mage
         if (this.portalSpawned) {
             let portalZone = { x: canvas.width/2 - 50, y: 50, width: 100, height: 100 };
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, portalZone)) {
@@ -301,21 +300,20 @@ window.level4State = {
         // Limites du couloir
         if (player.x < corridorX + margin) player.x = corridorX + margin;
         if (player.x > corridorX + this.corridorW - margin - pSize) player.x = corridorX + this.corridorW - margin - pSize;
-        
         if (player.y < 20) player.y = 20; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
-        // Progression de l'éboulement PLUS LENTE
+        // Progression de l'éboulement
         if (!this.scrollingStopped) {
-            let targetDangerY = canvas.height - 60; // Laisse plus de place au joueur
+            let targetDangerY = canvas.height - 60; 
             if (this.dangerY > targetDangerY) {
-                this.dangerY -= 1; // Avance moins vite
+                this.dangerY -= 1; 
             } else {
                 this.dangerY = targetDangerY; 
             }
         }
 
-        // Dégâts de l'éboulement RÉDUITS
+        // Dégâts de l'éboulement
         if (player.y + pSize > this.dangerY + 30) {
             playerStats.health -= 0.5; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
