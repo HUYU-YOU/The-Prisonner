@@ -31,7 +31,7 @@ window.level4State = {
         this.portalSpawned = false;
         
         this.corridorW = 750; 
-        this.segH = 1200;     
+        this.segH = 1200;      
         
         this.segments = [
             { id: this.sequence[0], y: canvas.height - this.segH } 
@@ -40,6 +40,23 @@ window.level4State = {
         this.trapSpawnTimer = 0;
         
         this.dangerY = canvas.height + 300; 
+
+        // --- RÈGLE SPÉCIALE CHEVALIER : PAS D'EFFONDREMENT ---
+        if (player.heroClass === 'Knight') {
+            if (!this.cinematicPlayed) {
+                this.cinematicPlayed = true;
+                if (typeof window.playCinematic === 'function') {
+                    window.playCinematic('knight3.mp4', function() {
+                        if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south');
+                        player.x = canvas.width / 2 - player.size / 2;
+                        player.y = canvas.height - 150;
+                    });
+                } else {
+                    if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south');
+                }
+            }
+            return;
+        }
 
         // Positionnement du joueur au Sud (anti-NaN)
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
@@ -235,7 +252,7 @@ window.level4State = {
                 }
                 else if (trap.type === 'hole_death') {
                     if (player.dashTimer <= 0) {
-                        playerStats.health = 0; // MORT RÉACTIVÉE MAIS ÉVITABLE !
+                        playerStats.health = 0; 
                         if (typeof window.updateHUD === 'function') window.updateHUD();
                         if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
                     }
@@ -252,16 +269,31 @@ window.level4State = {
             }
         }
 
-        // Passage du portail vers le Boss Mage Corrompu (302)
+        // Passage du portail vers le Boss Mage Corrompu (302) AVEC LA CINEMATIQUE
         if (this.portalSpawned) {
             let portalZone = { x: canvas.width/2 - 50, y: 50, width: 100, height: 100 };
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, portalZone)) {
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
-                if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south'); 
-                player.x = canvas.width / 2 - player.size / 2;
-                player.y = canvas.height - 150;
-                player.dashTimer = 0; 
-                if (typeof window.updateHUD === 'function') window.updateHUD(); 
+                
+                let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'elf';
+                if (pPrefix === 'mage') pPrefix = 'burned';
+                if (pPrefix === 'necromancer') pPrefix = 'necro';
+                
+                let videoName = pPrefix + '4.mp4';
+                
+                let goToBoss = function() {
+                    if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south'); 
+                    player.x = canvas.width / 2 - player.size / 2;
+                    player.y = canvas.height - 150;
+                    player.dashTimer = 0; 
+                    if (typeof window.updateHUD === 'function') window.updateHUD(); 
+                };
+
+                if (typeof window.playCinematic === 'function') {
+                    window.playCinematic(videoName, goToBoss);
+                } else {
+                    goToBoss();
+                }
                 return;
             }
         }
@@ -273,19 +305,19 @@ window.level4State = {
         if (player.y < 20) player.y = 20; 
         if (player.y > canvas.height - pSize - 20) player.y = canvas.height - pSize - 20;
 
-        // Progression de l'éboulement
+        // Progression de l'éboulement PLUS LENTE
         if (!this.scrollingStopped) {
-            let targetDangerY = canvas.height - 180; 
+            let targetDangerY = canvas.height - 60; // Laisse plus de place au joueur
             if (this.dangerY > targetDangerY) {
-                this.dangerY -= 2; 
+                this.dangerY -= 1; // Avance moins vite
             } else {
                 this.dangerY = targetDangerY; 
             }
         }
 
-        // Dégâts de l'éboulement (MORT RÉACTIVÉE MAIS ÉVITABLE !)
-        if (player.y + pSize > this.dangerY + 20) {
-            playerStats.health -= 2; 
+        // Dégâts de l'éboulement RÉDUITS
+        if (player.y + pSize > this.dangerY + 30) {
+            playerStats.health -= 0.5; 
             if (typeof window.updateHUD === 'function') window.updateHUD();
             if (playerStats.health <= 0 && typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
         }
@@ -358,7 +390,7 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 5. Rendu du Joueur (Avec AURA lumineuse pour ne plus le perdre de vue)
+    // 5. Rendu du Joueur (CORRIGÉ POUR LA VISIBILITÉ GARANTIE)
     let px = isNaN(player.x) ? (canvas.width/2 - pSize/2) : player.x;
     let py = isNaN(player.y) ? (canvas.height*0.75) : player.y;
 
@@ -371,7 +403,7 @@ window.renderLevel4 = function() {
     if (drawPlayer) {
         if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
         
-        // Halo blanc clair derrière le joueur pour le détacher du fond
+        // Halo blanc clair derrière le joueur
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.shadowColor = '#ffffff';
         ctx.shadowBlur = 15;
@@ -394,14 +426,13 @@ window.renderLevel4 = function() {
         if (pPrefix === 'Mage') pPrefix = 'Burned';
         else pPrefix = pPrefix.charAt(0).toUpperCase() + pPrefix.slice(1).toLowerCase();
         
-        let skin1 = pPrefix + '_' + dir + '_view';
-        let skin2 = skin1.toLowerCase();
+        // CORRECTION VISIBILITE : Toujours fallback sur south_view qui existe forcément
+        let skin1 = `${pPrefix}_${dir}_view`;
+        let fallbackName = `${pPrefix}_south_view`;
         
-        let img = null;
-        if (typeof window.getAsset === 'function') {
-            img = window.getAsset(skin1) || window.getAsset(skin2);
-        } else if (assetsManager && assetsManager.images) {
-            img = assetsManager.images[skin1] || assetsManager.images[skin2];
+        let img = typeof window.getAsset === 'function' ? window.getAsset(skin1) : null;
+        if (!img || !img.complete || img.naturalWidth === 0) {
+            img = typeof window.getAsset === 'function' ? window.getAsset(fallbackName) : null;
         }
         
         if (img && img.complete && img.naturalWidth > 0) {
@@ -422,13 +453,11 @@ window.renderLevel4 = function() {
     }
     ctx.restore();
 
-    // 6. Rendu de l'Éboulement (Terre, Poussière et Rochers Bruns/Noirs)
+    // 6. Rendu de l'Éboulement
     if (window.level4State.dangerY < canvas.height) {
-        // Base terre
         ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
         ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
         
-        // Poussière et rochers irréguliers
         ctx.shadowColor = '#1a110b';
         ctx.shadowBlur = 20;
         for (let i = corridorX; i < corridorX + window.level4State.corridorW; i += 45) {
