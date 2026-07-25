@@ -176,19 +176,32 @@ window.updateEnemies = function() {
             }
         }
         
-        if (enemy.type === 'kraken') {
-            if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
-                enemy.phase = 2; enemy.speed = 1.5;
-            }
-            if (enemy.shootCooldown <= 0 && !isElfInvuln) {
-                let pSpeed = 6;
-                for(let k = -2; k <= 2; k++) {
-                    let spreadAngle = angleToPlayer + (k * 0.15);
-                    enemyProjectiles.push({ x: enemy.x + enemy.size/2, y: enemy.y + enemy.size/2, vx: Math.cos(spreadAngle) * pSpeed, vy: Math.sin(spreadAngle) * pSpeed, size: 7.35, type: 'ink_ball', color: '#111', damage: 30 });
-                }
-                enemy.shootCooldown = 90; enemy.attackAnimTimer = 30; 
-            }
+ if (enemy.type === 'kraken') {
+    if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
+        enemy.phase = 2; 
+        enemy.speed = 1.5;
+    }
+    if (enemy.shootCooldown <= 0 && !isElfInvuln) {
+        let pSpeed = 6;
+        // Taille normale : 7.35 | Phase 2 (enragé) : 7.35 * 1.75 = ~12.86 (+75%)
+        let projSize = (enemy.phase === 2) ? 12.86 : 7.35; 
+        for(let k = -2; k <= 2; k++) {
+            let spreadAngle = angleToPlayer + (k * 0.15);
+            enemyProjectiles.push({ 
+                x: enemy.x + enemy.size/2, 
+                y: enemy.y + enemy.size/2, 
+                vx: Math.cos(spreadAngle) * pSpeed, 
+                vy: Math.sin(spreadAngle) * pSpeed, 
+                size: projSize, 
+                type: 'ink_ball', 
+                color: '#111', 
+                damage: 30 
+            });
         }
+        enemy.shootCooldown = 90; 
+        enemy.attackAnimTimer = 30; 
+    }
+}
 
         if (enemy.type === 'mage') {
             if (enemy.phase === 1 && enemy.health <= enemy.maxHealth / 2) {
