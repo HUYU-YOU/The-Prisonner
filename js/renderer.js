@@ -118,7 +118,6 @@ window.renderGameView = function() {
     let wallT = assetsManager.images['back_wall']; if (wallT && wallT.complete && wallT.naturalWidth > 0) ctx.drawImage(wallT, 0, 0, canvas.width, wallMargin);
     let wallB = assetsManager.images['front_wall']; if (wallB && wallB.complete && wallB.naturalWidth > 0) ctx.drawImage(wallB, 0, canvas.height - wallMargin, canvas.width, wallMargin);
     
-    // --- ACHICHAGE TACHES DE SANG & ANIMATION BULLES ---
     if (typeof bloodStains !== 'undefined') {
         bloodStains.forEach(blood => { 
             ctx.save();
@@ -220,7 +219,6 @@ window.renderGameView = function() {
         });
     }
 
-    // --- CORRECTION DES PORTES D'EAU EN NIVEAU 3 ---
     if (typeof currentDoors !== 'undefined') {
         currentDoors.forEach(door => {
             ctx.save();
@@ -902,48 +900,62 @@ window.renderGameView = function() {
         ctx.textAlign = 'left';
     }
 
-    // --- CORRECTION DU VISUEL DES DIALOGUES ET CENTRAGE DU TEXTE ---
+    // --- DIALOGUE RPG AMÉLIORÉ ET AUTO-AJUSTABLE ---
     if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
         ctx.save();
         
-        let dw = 750, dh = 160;
-        let dx = canvas.width/2 - dw/2, dy = canvas.height - dh - 40; 
+        // On sépare les lignes et on retire les retours à la ligne vides qui faussaient l'affichage
+        let lines = window.activeDialogue.text.split('\n').map(l => l.trim()).filter(l => l !== '');
         
-        // Fond stylisé
+        let dw = 800;
+        let dh = Math.max(160, lines.length * 40 + 60); // Ajuste la hauteur automatiquement
+        let dx = canvas.width/2 - dw/2;
+        let dy = canvas.height - dh - 40; 
+        
+        // Fond dégradé
         let grad = ctx.createLinearGradient(dx, dy, dx, dy + dh);
-        grad.addColorStop(0, 'rgba(15, 20, 30, 0.95)');
-        grad.addColorStop(1, 'rgba(5, 10, 15, 0.95)');
-        ctx.fillStyle = grad;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 20;
-        ctx.fillRect(dx, dy, dw, dh);
-        ctx.shadowBlur = 0;
+        grad.addColorStop(0, 'rgba(20, 25, 35, 0.95)');
+        grad.addColorStop(0.5, 'rgba(10, 15, 20, 0.98)');
+        grad.addColorStop(1, 'rgba(5, 5, 10, 0.95)');
         
-        // Bordures
-        ctx.strokeStyle = '#f39c12';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 25;
+        ctx.shadowOffsetY = 10;
+        ctx.fillStyle = grad;
+        ctx.fillRect(dx, dy, dw, dh);
+        
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Double bordure élégante (Or / Métal)
+        ctx.strokeStyle = '#d4af37';
         ctx.lineWidth = 3;
         ctx.strokeRect(dx, dy, dw, dh);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(dx + 5, dy + 5, dw - 10, dh - 10);
+        ctx.strokeRect(dx + 6, dy + 6, dw - 12, dh - 12);
         
         ctx.textAlign = 'center';
         
-        // On nettoie les lignes vides qui poussaient le texte en bas
-        let lines = window.activeDialogue.text.split('\n').filter(l => l.trim() !== '');
-        
         for (let i = 0; i < lines.length; i++) {
-            if (i === lines.length - 1) {
-                // Texte d'action toujours verrouillé en bas de la fenêtre
+            let isActionLine = (i === lines.length - 1 && lines[i].includes('['));
+            
+            if (isActionLine) {
+                // Ligne d'action fixée tout en bas
                 ctx.fillStyle = '#f1c40f';
-                ctx.font = 'bold 20px Arial';
+                ctx.font = 'bold 22px Arial';
+                ctx.shadowColor = 'rgba(241, 196, 15, 0.4)';
+                ctx.shadowBlur = 10;
                 ctx.fillText(lines[i], canvas.width/2, dy + dh - 25);
+                ctx.shadowBlur = 0;
             } else {
-                // Texte narratif
+                // Lignes narratives centrées dynamiquement
                 ctx.fillStyle = '#ecf0f1';
-                ctx.font = 'bold 24px Arial';
-                let startY = lines.length === 2 ? 65 : 45; // Centre si une seule ligne de lore
-                ctx.fillText(lines[i], canvas.width/2, dy + startY + (i * 35));
+                ctx.font = 'bold 26px Arial';
+                let narrativeLines = lines.length - (lines[lines.length-1].includes('[') ? 1 : 0);
+                let startY = (dh - 60) / 2 - ((narrativeLines - 1) * 20); 
+                ctx.fillText(lines[i], canvas.width/2, dy + startY + (i * 40) + 20);
             }
         }
         ctx.restore();
