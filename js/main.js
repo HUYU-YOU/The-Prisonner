@@ -36,7 +36,22 @@ window.update = function() {
         if (gameState === "PAUSED" || gameState === "CINEMATIC" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
             requestAnimationFrame(window.update); return; 
         }
-// ... LE RESTE DE TA FONCTION RESTE IDENTIQUE ...
+
+        // --- SÉCURITÉ GAME OVER --- (REMIS EN PLACE)
+        if (gameState === "GAMEOVER") { 
+            if (typeof window.renderGameView === 'function') window.renderGameView(); 
+            requestAnimationFrame(window.update); return; 
+        }
+
+        // --- HOOK NIVEAU 4 --- (REMIS EN PLACE)
+        if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
+            if (typeof window.updateLevel4 === 'function') {
+                window.updateLevel4();
+                requestAnimationFrame(window.update); 
+                return; 
+            }
+        }
+        // ---------------------
 
         if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
             if (keys['space'] || keys['enter']) {
