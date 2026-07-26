@@ -49,9 +49,11 @@ window.level4State = {
                         if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south');
                         player.x = canvas.width / 2 - player.size / 2;
                         player.y = canvas.height - 150;
+                        gameState = "WAITING_MOVE"; // Modifié : Attente de mouvement après la cinématique
                     });
                 } else {
                     if (typeof window.loadRoom === 'function') window.loadRoom(302, 'south');
+                    gameState = "WAITING_MOVE"; // Modifié
                 }
             }
             return;
@@ -71,7 +73,7 @@ window.level4State = {
             
             if (typeof window.playCinematic === 'function') {
                 window.playCinematic(pPrefix + '3.mp4', function() {
-                    gameState = "PLAYING";
+                    gameState = "WAITING_MOVE"; // Modifié : Déclenche l'attente (freeze) avant la course
                 });
             }
         }
@@ -110,19 +112,19 @@ window.level4State = {
             
             if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
                 this.hasStarted = true;
-                // --- LE DASH SE DÉCLENCHE ICI (à la première pression) ---
-                player.dashTimer = 25;
             } else {
                 return; 
             }
         }
+        
+        // --- MODIF : LE DASH EST FORCÉ ET CONTINU PENDANT TOUTE LA COURSE ---
+        player.dashTimer = 999;
         
         if (keys['s'] || keys['arrowdown']) player.faceAngle = Math.PI / 2;
         if (keys['z'] || keys['w'] || keys['arrowup']) player.faceAngle = -Math.PI / 2;
         if (keys['q'] || keys['a'] || keys['arrowleft']) player.faceAngle = Math.PI;
         if (keys['d'] || keys['arrowright']) player.faceAngle = 0;
 
-        if (player.dashTimer > 0) player.dashTimer--;
         if (player.dashCooldown > 0) player.dashCooldown--;
 
         let currentSpeed = 0;
@@ -219,7 +221,7 @@ window.level4State = {
 
         for (let trap of this.traps) {
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
-                if (trap.type === 'caisse' || (trap.type === 'hole_block' && player.dashTimer <= 0)) {
+                if (trap.type === 'caisse' || trap.type === 'hole_block') { // Modif: bloque le trou même en dash pour la course
                     player.x = oldPx; 
                     break;
                 }
@@ -232,17 +234,10 @@ window.level4State = {
 
         for (let trap of this.traps) {
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
-                if (trap.type === 'caisse' || (trap.type === 'hole_block' && player.dashTimer <= 0)) {
+                if (trap.type === 'caisse' || trap.type === 'hole_block' || trap.type === 'hole_death') { // Modif : les trous agissent comme des murs pendant le dash infini
                     player.y = oldPy; 
                     player.y += currentSpeed; 
                     break;
-                }
-                else if (trap.type === 'hole_death') {
-                    if (player.dashTimer <= 0) {
-                        playerStats.health = 0; 
-                        if (typeof window.updateHUD === 'function') window.updateHUD();
-                        if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-                    }
                 }
                 else if (trap.type === 'spikes') {
                     if (trap.isActive && trap.hitCooldown <= 0 && (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0)) {
@@ -273,6 +268,7 @@ window.level4State = {
                     player.y = canvas.height - 150;
                     player.dashTimer = 0; 
                     if (typeof window.updateHUD === 'function') window.updateHUD(); 
+                    gameState = "WAITING_MOVE"; // Modifié : Freeze dans la salle du boss jusqu'à ce qu'on bouge
                 };
 
                 if (typeof window.playCinematic === 'function') {
@@ -388,9 +384,9 @@ window.renderLevel4 = function() {
         ctx.globalAlpha = 1.0; // SÉCURITÉ : Forcer l'opacité initiale de base
         let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
         
-        if (player.dashTimer > 0) ctx.globalAlpha = 0.5;
-        else if (isElfInvuln) ctx.globalAlpha = 0.4;
-        else ctx.globalAlpha = 1.0; // SÉCURITÉ
+        // MODIF : On ne met plus ctx.globalAlpha = 0.5 quand le dashTimer > 0 car dans ce niveau il dashe TOUT LE TEMPS.
+        if (isElfInvuln) ctx.globalAlpha = 0.4;
+        else ctx.globalAlpha = 1.0; // Reste opaque même en dashant
         
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.shadowColor = '#ffffff';
