@@ -352,3 +352,6 @@ assetsManager.load('caisse', 'assets/decors/caisse.png');
 assetsManager.load('hole', 'assets/decors/hole.png');
 assetsManager.load('pic_0', 'assets/decors/pic_0.png');
 assetsManager.load('pic_1', 'assets/decors/pic_1.png');
+
+    { id: 'wall_laby', src: 'assets/tiles/wall_laby.png' },
+    { id: 'portal_close', src: 'assets/decors/portal_close.png' },
