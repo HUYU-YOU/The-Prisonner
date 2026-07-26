@@ -21,25 +21,22 @@ window.update = function() {
             requestAnimationFrame(window.update); return;
         }
         
+        // --- NOUVEAU : FREEZE ATTENTE DE MOUVEMENT ---
+        if (gameState === "WAITING_MOVE") {
+            if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
+                if (typeof window.renderLevel4 === 'function') window.renderLevel4();
+            } else {
+                if (typeof window.renderGameView === 'function') window.renderGameView();
+            }
+            requestAnimationFrame(window.update);
+            return;
+        }
+
         // --- SÉCURITÉ CINÉMATIQUE ---
         if (gameState === "PAUSED" || gameState === "CINEMATIC" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
             requestAnimationFrame(window.update); return; 
         }
-        
-        if (gameState === "GAMEOVER") { 
-            if (typeof window.renderGameView === 'function') window.renderGameView(); 
-            requestAnimationFrame(window.update); return; 
-        }
-
-        // --- HOOK NIVEAU 4 ---
-        if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
-            if (typeof window.updateLevel4 === 'function') {
-                window.updateLevel4();
-                requestAnimationFrame(window.update); 
-                return; 
-            }
-        }
-        // ---------------------
+// ... LE RESTE DE TA FONCTION RESTE IDENTIQUE ...
 
         if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
             if (keys['space'] || keys['enter']) {
