@@ -24,6 +24,8 @@ window.update = function() {
             } else {
                 if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
                     if (typeof window.renderLevel4 === 'function') window.renderLevel4();
+                } else if (typeof currentRoomId !== 'undefined' && currentRoomId >= 401 && currentRoomId < 500) {
+                    if (typeof window.renderLevel5 === 'function') window.renderLevel5();
                 } else {
                     if (typeof window.renderGameView === 'function') window.renderGameView();
                 }
@@ -43,10 +45,19 @@ window.update = function() {
             requestAnimationFrame(window.update); return; 
         }
 
-        // --- HOOK NIVEAU 4 --- (REMIS EN PLACE)
+        // --- HOOK NIVEAU 4 ---
         if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
             if (typeof window.updateLevel4 === 'function') {
                 window.updateLevel4();
+                requestAnimationFrame(window.update); 
+                return; 
+            }
+        }
+
+        // --- HOOK NIVEAU 5 (LABYRINTHE OPEN WORLD) ---
+        if (typeof currentRoomId !== 'undefined' && currentRoomId >= 401 && currentRoomId < 500) {
+            if (typeof window.updateLevel5 === 'function') {
+                window.updateLevel5();
                 requestAnimationFrame(window.update); 
                 return; 
             }
