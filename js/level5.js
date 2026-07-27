@@ -121,7 +121,7 @@ window.level5State = {
         }
     },
 
-    update: function() {
+  update: function() {
         if (!this.isInit) this.init();
 
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
@@ -237,14 +237,32 @@ window.level5State = {
                 }
             }
             
-            // TODO: Intégrer la logique des projectiles du joueur pour blesser les ennemis ici
-            // Pour l'instant on les retire s'ils meurent
+            // Logique des projectiles du joueur pour blesser les ennemis
+            if (typeof projectiles !== 'undefined') {
+                for (let j = projectiles.length - 1; j >= 0; j--) {
+                    let proj = projectiles[j];
+                    let projSize = proj.size || proj.width || 20; // Fallback sécurisé
+                    
+                    let projCenterX = proj.x + projSize / 2;
+                    let projCenterY = proj.y + projSize / 2;
+                    let enemyCenterX = e.x + e.size / 2;
+                    let enemyCenterY = e.y + e.size / 2;
+                    
+                    let distToEnemy = Math.hypot(projCenterX - enemyCenterX, projCenterY - enemyCenterY);
+                    
+                    if (distToEnemy < (e.size / 2 + projSize / 2)) {
+                        e.hp -= (proj.damage || 25);
+                        projectiles.splice(j, 1); // Le projectile disparaît à l'impact
+                    }
+                }
+            }
+
+            // Mort de l'ennemi
             if (e.hp <= 0) {
                 this.enemies.splice(i, 1);
             }
         }
     }
-};
 
 window.updateLevel5 = function() {
     if (gameState !== "PLAYING") return;
