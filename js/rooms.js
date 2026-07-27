@@ -57,6 +57,9 @@ window.loadRoom = function(roomId, entryFace = 'south') {
             let isKnight = (player && player.heroClass === 'Knight');
             worldState.roomFloors[roomId] = isKnight ? 'floor_boss2' : 'floorboss_1';
         }
+        else if (roomId >= 401 && roomId < 500) {
+            worldState.roomFloors[roomId] = 'sol_base'; // Le rendu est fait dans level5.js de toute façon
+        }
         else if (roomId !== 999) {
             let randomFloors = ['sol_base', 'floor7', 'floor8', 'floor9', 'floor10', 'floor11', 'floor12', 'floor13', 'floor14', 'floor15', 'floor16', 'floor17', 'floor18', 'floor19', 'floor20'];
             worldState.roomFloors[roomId] = randomFloors[Math.floor(Math.random() * randomFloors.length)];
@@ -207,6 +210,11 @@ window.loadRoom = function(roomId, entryFace = 'south') {
         currentDoors = [ 
             { ...doorN, id: 'door_302_garden', requiresKey: true, locked: !worldState.bossDefeated, dest: 401, spawnX: spawnS.x, spawnY: spawnS.y } 
         ]; 
+    }
+    else if (roomId >= 401 && roomId < 500) {
+        // Logique spécifique Open World : pas de portes classiques
+        currentDoors = [];
+        if (typeof window.level5State !== 'undefined') window.level5State.isInit = false; // Force la regénération du labyrinthe
     }
 
     if (roomId !== 1 && roomId !== 8 && roomId !== 999 && roomId !== 301 && roomId !== 302 && roomId < 100) {
