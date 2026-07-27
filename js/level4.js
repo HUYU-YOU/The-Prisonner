@@ -368,11 +368,9 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 5. Rendu du Joueur
-    let px = player.x;
-    let py = player.y;
-    if (isNaN(px) || px === undefined) px = canvas.width/2 - pSize/2;
-    if (isNaN(py) || py === undefined) py = canvas.height * 0.4;
+    // 5. Rendu du Joueur (Sécurisé pour être toujours affiché au bon endroit)
+    let px = (player && typeof player.x === 'number' && !isNaN(player.x)) ? player.x : canvas.width/2 - pSize/2;
+    let py = (player && typeof player.y === 'number' && !isNaN(player.y)) ? player.y : canvas.height * 0.4;
 
     ctx.save();
     ctx.translate(px + pSize/2, py + pSize/2);
@@ -381,12 +379,11 @@ window.renderLevel4 = function() {
     if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0 && Math.floor(playerInvulnerableTimer / 5) % 2 === 0) drawPlayer = false; 
     
     if (drawPlayer) {
-        ctx.globalAlpha = 1.0; // SÉCURITÉ : Forcer l'opacité initiale de base
+        ctx.globalAlpha = 1.0; 
         let isElfInvuln = (typeof isUltimateActive !== 'undefined' && isUltimateActive && player.heroClass === 'Elf' && (typeof elfStealthBroken === 'undefined' || !elfStealthBroken));
         
-        // MODIF : On ne met plus ctx.globalAlpha = 0.5 quand le dashTimer > 0 car dans ce niveau il dashe TOUT LE TEMPS.
         if (isElfInvuln) ctx.globalAlpha = 0.4;
-        else ctx.globalAlpha = 1.0; // Reste opaque même en dashant
+        else ctx.globalAlpha = 1.0;
         
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.shadowColor = '#ffffff';
@@ -396,7 +393,7 @@ window.renderLevel4 = function() {
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        let angle = player.faceAngle || (-Math.PI/2);
+        let angle = (player && typeof player.faceAngle === 'number') ? player.faceAngle : (-Math.PI/2);
         let deg = angle * 180 / Math.PI;
         while(deg < 0) deg += 360;
         deg = deg % 360;
@@ -453,7 +450,7 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
-    // 7. BARRE DE PROGRESSION FLUIDE (TOTALEMENT SANS TEXTE)
+    // 7. BARRE DE PROGRESSION FLUIDE
     let totalDistanceMax = (window.level4State.sequence.length - 1) * window.level4State.segH;
     let distRatio = Math.min(1, Math.max(0, window.level4State.distance / totalDistanceMax));
     
