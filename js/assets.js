@@ -347,11 +347,10 @@ assetsManager.load('right_water_door_close', 'assets/decors/right_water_door_clo
 assetsManager.load('front_water_door_close', 'assets/decors/front_water_door_close.png');
 assetsManager.load('back_water_door_close', 'assets/decors/back_water_door_close.png');
 assetsManager.load('water_door', 'assets/decors/water_door.png');
-
 assetsManager.load('caisse', 'assets/decors/caisse.png');
 assetsManager.load('hole', 'assets/decors/hole.png');
 assetsManager.load('pic_0', 'assets/decors/pic_0.png');
 assetsManager.load('pic_1', 'assets/decors/pic_1.png');
 
-    { id: 'wall_laby', src: 'assets/tiles/wall_laby.png' },
-    { id: 'portal_close', src: 'assets/decors/portal_close.png' },
+assetsManager.load('wall_laby', 'assets/tiles/wall_laby.png');
+assetsManager.load('portal_close', 'assets/decors/portal_close.png');
