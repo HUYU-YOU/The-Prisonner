@@ -46,9 +46,13 @@ window.getAsset = function(name) {
 window.renderGameView = function() {
     if (!ctx) return;
     
-    // --- SÉCURITÉ ANTI-CRASH FATAL ---
-    // Si assetsManager n'est pas défini au démarrage de la frame, on coupe court pour protéger la suite.
-    if (typeof assetsManager === 'undefined' || !assetsManager || !assetsManager.images) return;
+    // --- SÉCURITÉ ANTI-CRASH ET ECRAN NOIR ---
+    // On récupère l'instance globale en toute sécurité
+    var globalAm = window.assetsManager || (typeof assetsManager !== 'undefined' ? assetsManager : null);
+    if (!globalAm || !globalAm.images) return;
+    
+    // On définit assetsManager localement pour que le reste de tes appels fonctionnent
+    var assetsManager = globalAm;
 
     // --- HOOK NIVEAU 4 ---
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
