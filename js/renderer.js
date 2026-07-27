@@ -38,7 +38,6 @@ window.renderGameView = function() {
     if (!ctx) return;
     
     // --- SÉCURITÉ ANTI-CRASH & ANTI-ÉCRAN NOIR ---
-    // L'utilisation de 'var' empêche le crash d'initialisation (TDZ).
     var globalAm = window.assetsManager;
     var assetsManager = (globalAm && globalAm.images) ? globalAm : { images: {} };
 
@@ -58,6 +57,14 @@ window.renderGameView = function() {
                 window.renderLevel4();
                 return;
             }
+        }
+    }
+
+    // --- HOOK NIVEAU 5 ---
+    if (typeof currentRoomId !== 'undefined' && currentRoomId >= 401 && currentRoomId < 500) {
+        if (typeof window.renderLevel5 === 'function') {
+            window.renderLevel5();
+            return;
         }
     }
     
