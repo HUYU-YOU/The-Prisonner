@@ -1,8 +1,3 @@
-// ============================================================================
-// js/main.js - MOTEUR PRINCIPAL ET BOUCLE DE JEU
-// ============================================================================
-
-document.addEventListener('contextmenu', event => event.preventDefault());
 window.update = function() {
     try {
         if (typeof arenaShrink === 'undefined') arenaShrink = 0;
@@ -23,13 +18,18 @@ window.update = function() {
         
         // --- NOUVEAU : FREEZE ATTENTE DE MOUVEMENT ---
         if (gameState === "WAITING_MOVE") {
-            if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
-                if (typeof window.renderLevel4 === 'function') window.renderLevel4();
+            // SI on appuie sur une touche de mouvement, on sort du freeze !
+            if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
+                gameState = "PLAYING";
             } else {
-                if (typeof window.renderGameView === 'function') window.renderGameView();
+                if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
+                    if (typeof window.renderLevel4 === 'function') window.renderLevel4();
+                } else {
+                    if (typeof window.renderGameView === 'function') window.renderGameView();
+                }
+                requestAnimationFrame(window.update);
+                return;
             }
-            requestAnimationFrame(window.update);
-            return;
         }
 
         // --- SÉCURITÉ CINÉMATIQUE ---
@@ -74,16 +74,15 @@ window.update = function() {
         if (typeof worldState.level2Unlocked === 'undefined') worldState.level2Unlocked = false;
 
         if (currentRoomId >= 200 && currentRoomId < 900 && currentRoomId !== 301 && currentRoomId !== 302) {
-    if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 18000; 
-    worldState.oxygen--;
-    if (worldState.oxygen <= 0) {
-        playerStats.health = 0;
-        if (typeof window.updateHUD === 'function') window.updateHUD();
-        if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
-    }
-}
+            if (typeof worldState.oxygen === 'undefined') worldState.oxygen = 18000; 
+            worldState.oxygen--;
+            if (worldState.oxygen <= 0) {
+                playerStats.health = 0;
+                if (typeof window.updateHUD === 'function') window.updateHUD();
+                if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+            }
+        }
         
-
         if (typeof window.playerRedPotionActive !== 'undefined' && window.playerRedPotionActive) {
             if (playerStats.health < playerStats.maxHealth) {
                 playerStats.health += 1; 
