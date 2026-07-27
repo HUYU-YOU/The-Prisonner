@@ -34,20 +34,13 @@ window.getDirectionName = function(angle) {
     return 'south';
 };
 
-window.getAsset = function(name) {
-    if (!name) return null;
-    let am = (typeof assetsManager !== 'undefined') ? assetsManager : window.assetsManager;
-    if (!am || !am.images) return null;
-    return am.images[name] || 
-           am.images[name.toLowerCase()] || 
-           am.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
-};
 window.renderGameView = function() {
     if (!ctx) return;
     
     // --- SÉCURITÉ ANTI-CRASH & ANTI-ÉCRAN NOIR ---
-    let am = window.assetsManager || (typeof assetsManager !== 'undefined' ? assetsManager : null);
-    let assetsManager = { images: (am && am.images) ? am.images : {} };
+    // L'utilisation de 'var' empêche le crash d'initialisation (TDZ).
+    var globalAm = window.assetsManager;
+    var assetsManager = (globalAm && globalAm.images) ? globalAm : { images: {} };
 
     // --- HOOK NIVEAU 4 ---
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
