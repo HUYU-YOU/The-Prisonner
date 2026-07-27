@@ -42,7 +42,6 @@ window.getAsset = function(name) {
            am.images[name.toLowerCase()] || 
            am.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
 };
-
 window.renderGameView = function() {
     if (!ctx) return;
     
