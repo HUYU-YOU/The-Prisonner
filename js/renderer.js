@@ -36,9 +36,11 @@ window.getDirectionName = function(angle) {
 
 window.getAsset = function(name) {
     if (!name) return null;
-    return assetsManager.images[name] || 
-           assetsManager.images[name.toLowerCase()] || 
-           assetsManager.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
+    let am = (typeof assetsManager !== 'undefined') ? assetsManager : window.assetsManager;
+    if (!am || !am.images) return null;
+    return am.images[name] || 
+           am.images[name.toLowerCase()] || 
+           am.images[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()];
 };
 
 window.renderGameView = function() {
