@@ -46,10 +46,8 @@ window.renderGameView = function() {
     if (!ctx) return;
     
     // --- SÉCURITÉ ANTI-CRASH & ANTI-ÉCRAN NOIR ---
-    // Si assetsManager n'est pas encore chargé, on fournit un objet de secours vide 
-    // pour éviter le ReferenceError tout en permettant au jeu de s'afficher (avec les fallbacks).
-    var am = window.assetsManager || (typeof assetsManager !== 'undefined' ? assetsManager : null);
-    var assetsManager = am || { images: {} };
+    let am = window.assetsManager || (typeof assetsManager !== 'undefined' ? assetsManager : null);
+    let assetsManager = { images: (am && am.images) ? am.images : {} };
 
     // --- HOOK NIVEAU 4 ---
     if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
