@@ -16,6 +16,15 @@ window.addEventListener('keydown', (e) => {
     if (k === '4' || k === "'") { if (typeof window.usePotion === 'function') window.usePotion('yellow'); }
 });
 
+window.addEventListener('keydown', function(e) {
+    if (e.key === '4') {
+        console.log("DEBUG: TP Forcé vers le Niveau 4 (Salle 301)");
+        if (typeof window.loadRoom === 'function') {
+            window.loadRoom(301, 'south');
+            if (typeof gameState !== 'undefined') gameState = "PLAYING";
+        }
+    }
+});
 window.addEventListener('keyup', (e) => { 
     let k = e.key.toLowerCase(); if(k === ' ') k = 'space'; keys[k] = false; 
 });
