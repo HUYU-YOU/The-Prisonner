@@ -203,6 +203,12 @@ window.update = function() {
             }
         }
 
+        // --- CORRECTION ABSOLUE POUR LA SALLE 302 ---
+        // On annule la collision classique avec la porte Nord pour forcer le dialogue du centre
+        if (doorToPass && currentRoomId === 302 && doorToPass.dest === 401) {
+            doorToPass = null; 
+        }
+
         if (doorToPass) {
             worldState.droppedItems[currentRoomId] = currentItems.map(item => ({...item}));
             worldState.openedDoors[doorToPass.id] = true;
@@ -476,18 +482,16 @@ window.update = function() {
         if (typeof window.updateEnemies === 'function') window.updateEnemies();
         if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-
+        // --- PATCH BOSS EN TEMPS RÉEL (SALLES 8, 208, 302) ---
         if ((currentRoomId === 8 || currentRoomId === 208 || currentRoomId === 302) && typeof currentEnemies !== 'undefined' && currentEnemies.length === 0) {
             if (!worldState.bossDefeated) {
                 worldState.bossDefeated = true;
                 if (typeof currentDoors !== 'undefined') {
-                    currentDoors.forEach(d => {
-                        d.locked = false;
-                    });
+                    currentDoors.forEach(d => { d.locked = false; });
                 }
             }
         }
-
+        // -----------------------------------------------------
 
         if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
             let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
@@ -523,14 +527,16 @@ window.update = function() {
             }
         }
 
+        // --- NOUVEAU DÉCLENCHEUR AU CENTRE POUR LE LABYRINTHE ---
         if (currentRoomId === 302 && worldState && worldState.bossDefeated) {
-            let triggerLabyrinthe = { x: canvas.width/2 - 50, y: wallMargin, width: 100, height: 50 };
+            // Un grand carré de 150x150 posé au milieu de la salle !
+            let triggerLabyrinthe = { x: canvas.width/2 - 75, y: canvas.height/2 - 75, width: 150, height: 150 };
             let isColliding = typeof window.checkCollision === 'function' ? window.checkCollision(player, triggerLabyrinthe) : false;
             
             if (isColliding && !window.activeDialogue) {
                 keys = {}; 
                 window.activeDialogue = {
-                    text: "Voulez-vous descendre dans le Labyrinthe ?\n\n[ESPACE] Descendre   -   [ECHAP] Rester",
+                    text: "Un pouvoir magique émane du sol...\nVoulez-vous descendre dans le Labyrinthe ?\n\n[ESPACE] Descendre   -   [ECHAP] Rester",
                     onConfirm: function() {
                         if (typeof window.saveRoomState === 'function') window.saveRoomState();
                         if (typeof window.loadRoom === 'function') window.loadRoom(401, 'south'); 
@@ -538,7 +544,7 @@ window.update = function() {
                         player.y = canvas.height - wallMargin - 150;
                     },
                     onCancel: function() { 
-                        player.y += 50; 
+                        player.y += 100; // Si le joueur annule, on le repousse vers le bas pour ne pas spammer le dialogue
                     }
                 };
             }
