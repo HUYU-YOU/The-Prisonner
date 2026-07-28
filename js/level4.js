@@ -1,7 +1,3 @@
-// ============================================================================
-// js/level4.js - LOGIQUE ET RENDU DU NIVEAU 4 (COURSE D'OBSTACLES)
-// ============================================================================
-
 window.level4State = {
     isInit: false,
     hasStarted: false,
@@ -39,7 +35,6 @@ window.level4State = {
         this.trapSpawnTimer = 0;
         this.dangerY = canvas.height + 300; 
 
-        // RÈGLE SPÉCIALE CHEVALIER : PAS D'EFFONDREMENT
         if (typeof player !== 'undefined' && player !== null && player.heroClass === 'Knight') {
             if (!this.cinematicPlayed) {
                 this.cinematicPlayed = true;
@@ -118,7 +113,6 @@ window.level4State = {
             }
         }
         
-        // --- DASH CONTINU ---
         player.dashTimer = 999;
         
         if (typeof keys !== 'undefined') {
@@ -214,7 +208,9 @@ window.level4State = {
         }
 
         let baseSpeed = (typeof player.speed === 'number' && !isNaN(player.speed)) ? player.speed : 4;
-        let pSpeed = player.dashTimer > 0 ? baseSpeed * 2.2 : baseSpeed * 1.4;
+        
+        // --- CORRECTION : VITESSE RÉDUITE DE 50% ---
+        let pSpeed = (player.dashTimer > 0 ? baseSpeed * 2.2 : baseSpeed * 1.4) * 0.5;
         
         if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) {
             pSpeed *= 0.5;
@@ -228,7 +224,13 @@ window.level4State = {
 
         for (let trap of this.traps) {
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
-                if (trap.type === 'caisse' || trap.type === 'hole_block') {
+                if (trap.type === 'hole_death') {
+                    // --- CORRECTION : ONE SHOT INSTANTANÉ ---
+                    if (typeof playerStats !== 'undefined') playerStats.health = 0;
+                    if (typeof window.updateHUD === 'function') window.updateHUD();
+                    if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+                    return;
+                } else if (trap.type === 'caisse' || trap.type === 'hole_block') {
                     player.x = oldPx; 
                     break;
                 }
@@ -243,7 +245,13 @@ window.level4State = {
 
         for (let trap of this.traps) {
             if (typeof window.checkCollision === 'function' && window.checkCollision(player, trap)) {
-                if (trap.type === 'caisse' || trap.type === 'hole_block' || trap.type === 'hole_death') {
+                if (trap.type === 'hole_death') {
+                    // --- CORRECTION : ONE SHOT INSTANTANÉ ---
+                    if (typeof playerStats !== 'undefined') playerStats.health = 0;
+                    if (typeof window.updateHUD === 'function') window.updateHUD();
+                    if (typeof window.handlePlayerDeath === 'function') window.handlePlayerDeath();
+                    return;
+                } else if (trap.type === 'caisse' || trap.type === 'hole_block') {
                     player.y = oldPy; 
                     player.y += currentSpeed; 
                     break;
@@ -320,15 +328,9 @@ window.updateLevel4 = function() {
         window.level4State.update();
     }
     
-    // CORRECTION DU BUG D'INVISIBILITÉ (Timers bloqués)
-    if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0) {
-        playerInvulnerableTimer--;
-    }
-    if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) {
-        window.playerSlowTimer--;
-    }
+    if (typeof playerInvulnerableTimer !== 'undefined' && playerInvulnerableTimer > 0) playerInvulnerableTimer--;
+    if (typeof window.playerSlowTimer !== 'undefined' && window.playerSlowTimer > 0) window.playerSlowTimer--;
     
-    // Optionnel ici, mais par sécurité on laisse le renderer.js s'en occuper
     if (typeof window.renderLevel4 === 'function') window.renderLevel4();
 };
 
@@ -342,13 +344,11 @@ window.renderLevel4 = function() {
     
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
     
-    // SÉCURITÉ JOUEUR ABSOLUE
     let pSize = 40;
     if (typeof player !== 'undefined' && player !== null && typeof player.size === 'number' && !isNaN(player.size) && player.size >= 10) {
         pSize = player.size;
     }
 
-    // 1. Rendu du fond
     window.level4State.segments.forEach(seg => {
         let img = typeof assetsManager !== 'undefined' && assetsManager.images ? assetsManager.images[seg.id] : null;
         if (img && img.complete && img.naturalWidth > 0) {
@@ -359,12 +359,10 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 2. Murs noirs latéraux
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, corridorX, canvas.height);
     ctx.fillRect(corridorX + window.level4State.corridorW, 0, canvas.width - (corridorX + window.level4State.corridorW), canvas.height);
 
-    // 3. Rendu du Portail du Boss
     if (window.level4State.portalSpawned) {
         let portalImg = typeof assetsManager !== 'undefined' && assetsManager.images ? assetsManager.images['portal_key'] : null;
         if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
@@ -375,7 +373,6 @@ window.renderLevel4 = function() {
         }
     }
 
-    // 4. Rendu des Pièges
     window.level4State.traps.forEach(trap => {
         let imgKey = '';
         if (trap.type === 'hole_block' || trap.type === 'hole_death') imgKey = 'hole';
@@ -401,7 +398,6 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 5. Rendu de l'Éboulement
     if (window.level4State.dangerY < canvas.height) {
         ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
         ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
@@ -417,7 +413,6 @@ window.renderLevel4 = function() {
         ctx.shadowBlur = 0;
     }
 
-    // 6. BARRE DE PROGRESSION & UI
     let totalDistanceMax = (window.level4State.sequence.length - 1) * window.level4State.segH;
     let distRatio = Math.min(1, Math.max(0, window.level4State.distance / totalDistanceMax));
     
@@ -441,7 +436,6 @@ window.renderLevel4 = function() {
         ctx.textAlign = 'left';
     }
 
-    // 7. RENDU DU JOUEUR (100% SÉCURISÉ)
     let px = canvas.width/2 - pSize/2;
     let py = canvas.height * 0.4;
     
@@ -484,7 +478,6 @@ window.renderLevel4 = function() {
     else if (deg >= 225 && deg < 315) dir = 'north';
     else dir = 'east';
 
-    // Nom de classe propre et sécurisé
     let pClass = (typeof player !== 'undefined' && player !== null && player.heroClass) ? player.heroClass : 'Elf';
     let pPrefix = pClass;
     if (pClass === 'Mage') pPrefix = 'Burned';
@@ -507,8 +500,7 @@ window.renderLevel4 = function() {
         else if (pClass === 'Elf') s = pSize * 2.25; 
         ctx.drawImage(img, -s/2, -s/2, s, s);
     } else {
-        // FALLBACK ULTIME : IMPOSSIBLE À RATER SI L'IMAGE BUG
-        ctx.fillStyle = '#39ff14'; // Vert fluo radioactif
+        ctx.fillStyle = '#39ff14';
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(0, 0, pSize/2 + 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
