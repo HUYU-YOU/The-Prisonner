@@ -476,13 +476,18 @@ window.update = function() {
         if (typeof window.updateEnemies === 'function') window.updateEnemies();
         if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-        // --- PATCH BOSS EN TEMPS RÉEL (SALLES 8, 208, 302) ---
+
         if ((currentRoomId === 8 || currentRoomId === 208 || currentRoomId === 302) && typeof currentEnemies !== 'undefined' && currentEnemies.length === 0) {
             if (!worldState.bossDefeated) {
                 worldState.bossDefeated = true;
+                if (typeof currentDoors !== 'undefined') {
+                    currentDoors.forEach(d => {
+                        d.locked = false;
+                    });
+                }
             }
         }
-        // -----------------------------------------------------
+
 
         if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
             let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
