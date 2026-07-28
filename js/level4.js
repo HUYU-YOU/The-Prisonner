@@ -310,14 +310,20 @@ window.updateLevel4 = function() {
 
 window.renderLevel4 = function() {
     if (!ctx) return;
+    
+    ctx.save();
+    // SÉCURITÉ ABSOLUE : On réinitialise la matrice de transformation.
+    // C'est ÇA qui corrige l'invisibilité (annule le décalage de la caméra)
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    ctx.globalCompositeOperation = 'source-over'; 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     let corridorX = (canvas.width - window.level4State.corridorW) / 2;
-    let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
+    let pSize = (player && typeof player.size === 'number' && !isNaN(player.size) && player.size > 0) ? player.size : 40;
 
     // 1. Rendu du fond
     window.level4State.segments.forEach(seg => {
-        let img = assetsManager.images[seg.id];
+        let img = typeof assetsManager !== 'undefined' && assetsManager.images ? assetsManager.images[seg.id] : null;
         if (img && img.complete && img.naturalWidth > 0) {
             ctx.drawImage(img, corridorX, seg.y, window.level4State.corridorW, window.level4State.segH);
         } else {
@@ -333,7 +339,7 @@ window.renderLevel4 = function() {
 
     // 3. Rendu du Portail du Boss
     if (window.level4State.portalSpawned) {
-        let portalImg = assetsManager.images['portal_key'];
+        let portalImg = typeof assetsManager !== 'undefined' && assetsManager.images ? assetsManager.images['portal_key'] : null;
         if (portalImg && portalImg.complete && portalImg.naturalWidth > 0) {
             ctx.drawImage(portalImg, canvas.width/2 - 50, 50, 100, 100);
         } else {
@@ -349,7 +355,7 @@ window.renderLevel4 = function() {
         else if (trap.type === 'spikes') imgKey = trap.isActive ? 'pic_1' : 'pic_0';
         else if (trap.type === 'caisse') imgKey = 'caisse';
 
-        let tImg = typeof window.getAsset === 'function' ? window.getAsset(imgKey) : assetsManager.images[imgKey];
+        let tImg = typeof window.getAsset === 'function' ? window.getAsset(imgKey) : (assetsManager && assetsManager.images ? assetsManager.images[imgKey] : null);
         
         if (tImg && tImg.complete && tImg.naturalWidth > 0) {
             if (trap.type === 'hole_death') {
@@ -368,11 +374,50 @@ window.renderLevel4 = function() {
         }
     });
 
-    // 5. Rendu du Joueur (Sécurisé pour être toujours affiché au bon endroit)
+    // 5. Rendu de l'Éboulement
+    if (window.level4State.dangerY < canvas.height) {
+        ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
+        ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
+        
+        ctx.shadowColor = '#1a110b';
+        ctx.shadowBlur = 20;
+        for (let i = corridorX; i < corridorX + window.level4State.corridorW; i += 45) {
+            ctx.fillStyle = (i % 90 === 0) ? '#4e342e' : '#3e2723';
+            ctx.beginPath();
+            ctx.arc(i + 20, window.level4State.dangerY + Math.random() * 15, 30 + Math.random() * 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+    }
+
+    // 6. BARRE DE PROGRESSION & UI
+    let totalDistanceMax = (window.level4State.sequence.length - 1) * window.level4State.segH;
+    let distRatio = Math.min(1, Math.max(0, window.level4State.distance / totalDistanceMax));
+    
+    let barW = 500;
+    ctx.fillStyle = '#111'; 
+    ctx.fillRect(canvas.width/2 - barW/2, 20, barW, 20);
+    
+    ctx.fillStyle = '#e67e22'; 
+    ctx.fillRect(canvas.width/2 - barW/2 + 2, 22, (barW - 4) * distRatio, 16);
+
+    if (!window.level4State.hasStarted) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, canvas.height/2 - 10, canvas.width, 140);
+        ctx.fillStyle = '#e74c3c';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText("LE CHÂTEAU S'EFFONDRE !", canvas.width/2, canvas.height/2 + 45);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText("Déplacez-vous vers le NORD (Haut) pour fuir !", canvas.width/2, canvas.height/2 + 90);
+        ctx.textAlign = 'left';
+    }
+
+    // 7. Rendu du Joueur
     let px = (player && typeof player.x === 'number' && !isNaN(player.x)) ? player.x : canvas.width/2 - pSize/2;
     let py = (player && typeof player.y === 'number' && !isNaN(player.y)) ? player.y : canvas.height * 0.4;
 
-    ctx.save();
     ctx.translate(px + pSize/2, py + pSize/2);
     
     let drawPlayer = true;
@@ -407,12 +452,15 @@ window.renderLevel4 = function() {
         if (pPrefix === 'Mage') pPrefix = 'Burned';
         else pPrefix = pPrefix.charAt(0).toUpperCase() + pPrefix.slice(1).toLowerCase();
         
+        // Double check avec minuscules pour éviter un bug de casse dans tes assets
         let skin1 = `${pPrefix}_${dir}_view`;
-        
         let img = typeof window.getAsset === 'function' ? window.getAsset(skin1) : null;
+        if (!img) img = typeof window.getAsset === 'function' ? window.getAsset(skin1.toLowerCase()) : null;
+        
         if (!img || !img.complete || img.naturalWidth === 0) {
             let fallbackName = pPrefix === 'Elf' ? 'Elf_south_view' : `${pPrefix}_south_view`;
             img = typeof window.getAsset === 'function' ? window.getAsset(fallbackName) : null;
+            if (!img) img = typeof window.getAsset === 'function' ? window.getAsset(fallbackName.toLowerCase()) : null;
         }
         
         if (img && img.complete && img.naturalWidth > 0) {
@@ -432,46 +480,6 @@ window.renderLevel4 = function() {
             ctx.fillText(pPrefix, 0, 4);
         }
     }
+    
     ctx.restore();
-
-    // 6. Rendu de l'Éboulement
-    if (window.level4State.dangerY < canvas.height) {
-        ctx.fillStyle = 'rgba(30, 20, 15, 0.95)';
-        ctx.fillRect(corridorX, window.level4State.dangerY, window.level4State.corridorW, canvas.height - window.level4State.dangerY);
-        
-        ctx.shadowColor = '#1a110b';
-        ctx.shadowBlur = 20;
-        for (let i = corridorX; i < corridorX + window.level4State.corridorW; i += 45) {
-            ctx.fillStyle = (i % 90 === 0) ? '#4e342e' : '#3e2723';
-            ctx.beginPath();
-            ctx.arc(i + 20, window.level4State.dangerY + Math.random() * 15, 30 + Math.random() * 20, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.shadowBlur = 0;
-    }
-
-    // 7. BARRE DE PROGRESSION FLUIDE
-    let totalDistanceMax = (window.level4State.sequence.length - 1) * window.level4State.segH;
-    let distRatio = Math.min(1, Math.max(0, window.level4State.distance / totalDistanceMax));
-    
-    let barW = 500;
-    ctx.fillStyle = '#111'; 
-    ctx.fillRect(canvas.width/2 - barW/2, 20, barW, 20);
-    
-    ctx.fillStyle = '#e67e22'; 
-    ctx.fillRect(canvas.width/2 - barW/2 + 2, 22, (barW - 4) * distRatio, 16);
-
-    // Message de démarrage
-    if (!window.level4State.hasStarted) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, canvas.height/2 - 70, canvas.width, 140);
-        ctx.fillStyle = '#e74c3c';
-        ctx.font = 'bold 40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText("LE CHÂTEAU S'EFFONDRE !", canvas.width/2, canvas.height/2 - 10);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 24px Arial';
-        ctx.fillText("Déplacez-vous vers le NORD (Haut) pour fuir !", canvas.width/2, canvas.height/2 + 35);
-        ctx.textAlign = 'left';
-    }
 };
