@@ -203,7 +203,7 @@ window.update = function() {
             }
         }
 
-        // --- CORRECTION 1 : ON ANNULE LE TP AUTO DE LA PORTE NORD POUR AFFICHER TON DIALOGUE ---
+        // --- CORRECTION 1 : ON ANNULE LE TP AUTO DE LA PORTE NORD ---
         if (doorToPass && currentRoomId == 302 && doorToPass.dest == 401) {
             doorToPass = null; 
         }
@@ -481,8 +481,20 @@ window.update = function() {
         if (typeof window.updateEnemies === 'function') window.updateEnemies();
         if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
-        // --- CORRECTION 2 : VÉRIFICATION SÉCURISÉE DU BOSS ET DU CHEAT '4' ---
-        if ((currentRoomId == 8 || currentRoomId == 208 || currentRoomId == 302) && (typeof currentEnemies === 'undefined' || currentEnemies.length === 0)) {
+        // --- CORRECTION 2 : VÉRIFICATION INTELLIGENTE DU BOSS ---
+        // On ignore les entités mortes, les âmes, et tes familiers persistants (isFriendly/isSummon)
+        let hasAliveHostile = false;
+        if (typeof currentEnemies !== 'undefined') {
+            for (let i = 0; i < currentEnemies.length; i++) {
+                let e = currentEnemies[i];
+                if (e && (e.health === undefined || e.health > 0) && !e.isFriendly && !e.isSummon && e.type !== 'soul' && e.type !== 'particle') {
+                    hasAliveHostile = true;
+                    break;
+                }
+            }
+        }
+
+        if ((currentRoomId == 8 || currentRoomId == 208 || currentRoomId == 302) && !hasAliveHostile) {
             if (worldState && !worldState.bossDefeated) {
                 worldState.bossDefeated = true;
                 if (typeof currentDoors !== 'undefined') {
@@ -525,9 +537,17 @@ window.update = function() {
             }
         }
 
-        // --- CORRECTION 3 : ZONE GÉANTE ET ROBUSTE AU CENTRE (300x300 pixels) ---
+        // --- CORRECTION 3 : ZONE GIGANTESQUE INFRATABLE POUR LA SALLE 302 ---
         if (currentRoomId == 302 && worldState && worldState.bossDefeated) {
-            let triggerLabyrinthe = { x: canvas.width/2 - 150, y: canvas.height/2 - 150, width: 300, height: 300 };
+            // La zone prend maintenant toute la largeur et toute la moitié Nord de l'écran. 
+            // Dès que tu marches vers le haut, Bam.
+            let zoneMargin = typeof wallMargin !== 'undefined' ? wallMargin : 50;
+            let triggerLabyrinthe = { 
+                x: zoneMargin, 
+                y: zoneMargin, 
+                width: canvas.width - (zoneMargin * 2), 
+                height: canvas.height / 2 
+            };
             
             let isColliding = player.x < triggerLabyrinthe.x + triggerLabyrinthe.width && 
                               player.x + player.size > triggerLabyrinthe.x && 
@@ -542,11 +562,11 @@ window.update = function() {
                         if (typeof window.saveRoomState === 'function') window.saveRoomState();
                         if (typeof window.loadRoom === 'function') window.loadRoom(401, 'south'); 
                         player.x = canvas.width / 2 - player.size / 2;
-                        player.y = canvas.height - (typeof wallMargin !== 'undefined' ? wallMargin : 50) - 150;
+                        player.y = canvas.height - zoneMargin - 150;
                     },
                     onCancel: function() { 
-                        // Te repousse sous la zone géante pour ne pas rouvrir le dialogue en boucle
-                        player.y = triggerLabyrinthe.y + triggerLabyrinthe.height + 20; 
+                        // Te repousse prudemment dans la moitié Sud si tu annules
+                        player.y = (canvas.height / 2) + 50; 
                     }
                 };
             }
