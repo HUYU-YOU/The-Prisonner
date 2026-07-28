@@ -16,9 +16,7 @@ window.update = function() {
             requestAnimationFrame(window.update); return;
         }
         
-        // --- NOUVEAU : FREEZE ATTENTE DE MOUVEMENT ---
         if (gameState === "WAITING_MOVE") {
-            // SI on appuie sur une touche de mouvement, on sort du freeze !
             if (keys['z'] || keys['w'] || keys['s'] || keys['q'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
                 gameState = "PLAYING";
             } else {
@@ -34,18 +32,15 @@ window.update = function() {
             }
         }
 
-        // --- SÉCURITÉ CINÉMATIQUE ---
         if (gameState === "PAUSED" || gameState === "CINEMATIC" || (gameState !== "PLAYING" && gameState !== "GAMEOVER")) { 
             requestAnimationFrame(window.update); return; 
         }
 
-        // --- SÉCURITÉ GAME OVER --- (REMIS EN PLACE)
         if (gameState === "GAMEOVER") { 
             if (typeof window.renderGameView === 'function') window.renderGameView(); 
             requestAnimationFrame(window.update); return; 
         }
 
-        // --- HOOK NIVEAU 4 ---
         if (typeof currentRoomId !== 'undefined' && currentRoomId === 301) {
             if (typeof window.updateLevel4 === 'function') {
                 window.updateLevel4();
@@ -54,7 +49,6 @@ window.update = function() {
             }
         }
 
-        // --- HOOK NIVEAU 5 (LABYRINTHE OPEN WORLD) ---
         if (typeof currentRoomId !== 'undefined' && currentRoomId >= 401 && currentRoomId < 500) {
             if (typeof window.updateLevel5 === 'function') {
                 window.updateLevel5();
@@ -62,7 +56,6 @@ window.update = function() {
                 return; 
             }
         }
-        // ---------------------
 
         if (typeof window.activeDialogue !== 'undefined' && window.activeDialogue) {
             if (keys['space'] || keys['enter']) {
@@ -234,7 +227,6 @@ window.update = function() {
                 }
             }
 
-            // --- FONCTION DE TRANSITION DE SALLE ---
             let executeRoomTransition = function() {
                 if (typeof window.saveRoomState === 'function') window.saveRoomState();
                 if (typeof window.loadRoom === 'function') window.loadRoom(doorToPass.dest, doorToPass.face);
@@ -258,7 +250,6 @@ window.update = function() {
                 requestAnimationFrame(window.update);
             };
 
-            // --- CINÉMATIQUE 3 : ENTRÉE DANS LE NIVEAU 4 (Salle 301) ---
             if (doorToPass.dest === 301) {
                 let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
                 if (pPrefix === 'mage') pPrefix = 'burned';
@@ -362,7 +353,6 @@ window.update = function() {
                                     onConfirm: function() {
                                         worldState.oxygen = 18000;
                                         
-                                        // --- CINÉMATIQUE 2 : PLONGÉE ---
                                         let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
                                         if (pPrefix === 'mage') pPrefix = 'burned';
                                         
@@ -412,7 +402,6 @@ window.update = function() {
                                     onConfirm: function() {
                                         worldState.oxygen = 18000;
 
-                                        // --- CINÉMATIQUE 2 : PLONGÉE ---
                                         let pPrefix = player.heroClass ? player.heroClass.toLowerCase() : 'knight';
                                         if (pPrefix === 'mage') pPrefix = 'burned';
                                         
@@ -486,6 +475,14 @@ window.update = function() {
         if (typeof window.updateItemsAndCrates === 'function') window.updateItemsAndCrates();
         if (typeof window.updateEnemies === 'function') window.updateEnemies();
         if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
+
+        // --- PATCH BOSS EN TEMPS RÉEL (SALLES 8, 208, 302) ---
+        if ((currentRoomId === 8 || currentRoomId === 208 || currentRoomId === 302) && typeof currentEnemies !== 'undefined' && currentEnemies.length === 0) {
+            if (!worldState.bossDefeated) {
+                worldState.bossDefeated = true;
+            }
+        }
+        // -----------------------------------------------------
 
         if (currentRoomId === 8 && worldState && worldState.bossDefeated) {
             let triggerStairs = { x: canvas.width/2 - 40, y: canvas.height/2 - 40, width: 80, height: 80 };
