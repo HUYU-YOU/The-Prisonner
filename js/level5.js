@@ -121,7 +121,7 @@ window.level5State = {
         }
     },
 
-  update: function() {
+    update: function() {
         if (!this.isInit) this.init();
 
         let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
@@ -263,6 +263,7 @@ window.level5State = {
             }
         }
     }
+}; // <-- CORRECTION ABSOLUE ICI (Fermeture de l'objet)
 
 window.updateLevel5 = function() {
     if (gameState !== "PLAYING") return;
