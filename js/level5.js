@@ -109,14 +109,14 @@ window.level5State = {
         if (emptyCells.length === 0) return;
         let spawnPos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         
-        // 50% Orcs (Groupe de 3), 50% Golem (Solo)
+        // 50% Loups (Groupe de 3, très rapides), 50% Golem (Solo, lent et tank)
         if (Math.random() < 0.5) {
             this.enemies.push({ type: 'golem', x: spawnPos.x, y: spawnPos.y, hp: 300, maxHp: 300, size: 60, speed: 1.2 });
         } else {
             for (let i = 0; i < 3; i++) {
                 let ox = spawnPos.x + (Math.random() * 80 - 40);
                 let oy = spawnPos.y + (Math.random() * 80 - 40);
-                this.enemies.push({ type: 'orc', x: ox, y: oy, hp: 100, maxHp: 100, size: 45, speed: 2.5 });
+                this.enemies.push({ type: 'wolf', x: ox, y: oy, hp: 80, maxHp: 80, size: 40, speed: 3.5 });
             }
         }
     },
@@ -130,15 +130,37 @@ window.level5State = {
 
         if (player.dashTimer > 0) player.dashTimer--;
         if (player.dashCooldown > 0) player.dashCooldown--;
+        
+        // Gestion manuelle des Cooldowns
+        if (typeof attackCooldown !== 'undefined' && attackCooldown > 0) attackCooldown--;
 
         let oldPx = player.x;
         let oldPy = player.y;
 
-        // Mouvements Libres (pas bloqués par l'écran)
-        if (keys['z'] || keys['w'] || keys['arrowup']) { player.y -= pSpeed; player.faceAngle = -Math.PI / 2; }
-        if (keys['s'] || keys['arrowdown']) { player.y += pSpeed; player.faceAngle = Math.PI / 2; }
-        if (keys['q'] || keys['a'] || keys['arrowleft']) { player.x -= pSpeed; player.faceAngle = Math.PI; }
-        if (keys['d'] || keys['arrowright']) { player.x += pSpeed; player.faceAngle = 0; }
+        // Mouvements Libres
+        if (keys['z'] || keys['w'] || keys['arrowup']) player.y -= pSpeed; 
+        if (keys['s'] || keys['arrowdown']) player.y += pSpeed; 
+        if (keys['q'] || keys['a'] || keys['arrowleft']) player.x -= pSpeed; 
+        if (keys['d'] || keys['arrowright']) player.x += pSpeed; 
+
+        // Visée : Suivi de la souris par rapport au centre de l'écran
+        if (typeof mouse !== 'undefined' && mouse.x !== undefined) {
+            let targetAngle = Math.atan2(mouse.y - (canvas.height / 2), mouse.x - (canvas.width / 2));
+            if (!isNaN(targetAngle)) {
+                let diff = targetAngle - player.faceAngle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                player.faceAngle += diff * 0.25; 
+            }
+        }
+
+        // Déclenchement manuel de l'attaque
+        if (typeof leftClickHeld !== 'undefined' && leftClickHeld && typeof attackCooldown !== 'undefined' && attackCooldown <= 0) {
+            if (typeof window.playerAttack === 'function') window.playerAttack();
+        }
+
+        // Mise à jour des projectiles
+        if (typeof window.updateProjectiles === 'function') window.updateProjectiles();
 
         // Collisions Murs Labyrinthe
         for (let wall of this.walls) {
@@ -189,8 +211,7 @@ window.level5State = {
         if (this.portalUnlocked) {
             if (player.x < this.portal.x + this.portal.width && player.x + pSize > this.portal.x &&
                 player.y < this.portal.y + this.portal.height && player.y + pSize > this.portal.y) {
-                // Lancer cinématique ou transition niveau 5 partie 2 / Boss
-                if (typeof window.loadRoom === 'function') window.loadRoom(502, 'south'); // Conceptuel, vers arène Drake
+                if (typeof window.loadRoom === 'function') window.loadRoom(502, 'south'); 
             }
         }
 
@@ -231,7 +252,7 @@ window.level5State = {
             // Dégâts basiques au joueur
             if (dist < (e.size/2 + pSize/2)) {
                 if (typeof playerInvulnerableTimer === 'undefined' || playerInvulnerableTimer <= 0) {
-                    playerStats.health -= (e.type === 'golem' ? 15 : 5);
+                    playerStats.health -= (e.type === 'golem' ? 15 : 8);
                     if (typeof playerInvulnerableTimer !== 'undefined') playerInvulnerableTimer = 30;
                     if (typeof window.updateHUD === 'function') window.updateHUD();
                 }
@@ -241,7 +262,7 @@ window.level5State = {
             if (typeof projectiles !== 'undefined') {
                 for (let j = projectiles.length - 1; j >= 0; j--) {
                     let proj = projectiles[j];
-                    let projSize = proj.size || proj.width || 20; // Fallback sécurisé
+                    let projSize = proj.size || proj.width || 20; 
                     
                     let projCenterX = proj.x + projSize / 2;
                     let projCenterY = proj.y + projSize / 2;
@@ -252,7 +273,7 @@ window.level5State = {
                     
                     if (distToEnemy < (e.size / 2 + projSize / 2)) {
                         e.hp -= (proj.damage || 25);
-                        projectiles.splice(j, 1); // Le projectile disparaît à l'impact
+                        projectiles.splice(j, 1); 
                     }
                 }
             }
@@ -263,7 +284,7 @@ window.level5State = {
             }
         }
     }
-}; // <-- CORRECTION ABSOLUE ICI (Fermeture de l'objet)
+};
 
 window.updateLevel5 = function() {
     if (gameState !== "PLAYING") return;
@@ -282,7 +303,7 @@ window.renderLevel5 = function() {
     // Application du décalage caméra global
     ctx.translate(-window.level5State.cameraX, -window.level5State.cameraY);
 
-    // 1. Sol (Motif optionnel)
+    // 1. Sol
     ctx.fillStyle = '#262626';
     for (let x = 0; x < window.level5State.mapW; x += 400) {
         for (let y = 0; y < window.level5State.mapH; y += 400) {
@@ -293,14 +314,13 @@ window.renderLevel5 = function() {
     // 2. Murs
     let wallImg = typeof window.getAsset === 'function' ? window.getAsset('wall_laby') : (typeof assetsManager !== 'undefined' ? assetsManager.images['wall_laby'] : null);
     for (let wall of window.level5State.walls) {
-        // Culling : ne dessine que ce qui est à l'écran
         if (wall.x + wall.width > window.level5State.cameraX && wall.x < window.level5State.cameraX + canvas.width &&
             wall.y + wall.height > window.level5State.cameraY && wall.y < window.level5State.cameraY + canvas.height) {
             
             if (wallImg && wallImg.complete && wallImg.naturalWidth > 0) {
                 ctx.drawImage(wallImg, wall.x, wall.y, wall.width, wall.height);
             } else {
-                ctx.fillStyle = '#34495e'; // Fallback
+                ctx.fillStyle = '#34495e'; 
                 ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
                 ctx.strokeStyle = '#2c3e50';
                 ctx.strokeRect(wall.x, wall.y, wall.width, wall.height);
@@ -331,24 +351,35 @@ window.renderLevel5 = function() {
         }
     }
 
-    // 5. Ennemis
+    // RENDU DES PROJECTILES
+    if (typeof projectiles !== 'undefined') {
+        for (let p of projectiles) {
+            if (typeof window.drawProjectile === 'function') window.drawProjectile(p);
+        }
+    }
+
+    // 5. Ennemis (Golems et Loups)
     for (let e of window.level5State.enemies) {
         if (e.type === 'golem') {
             ctx.fillStyle = '#7f8c8d';
-            ctx.fillRect(e.x, e.y, e.size, e.size); // Remplacer par dessin sprite Golem
-        } else {
-            ctx.fillStyle = '#27ae60';
-            ctx.beginPath(); ctx.arc(e.x + e.size/2, e.y + e.size/2, e.size/2, 0, Math.PI*2); ctx.fill(); // Remplacer par dessin sprite Orc
+            ctx.fillRect(e.x, e.y, e.size, e.size); 
+        } else if (e.type === 'wolf') {
+            ctx.fillStyle = '#555555'; 
+            ctx.beginPath();
+            ctx.moveTo(e.x + e.size/2, e.y);
+            ctx.lineTo(e.x + e.size, e.y + e.size);
+            ctx.lineTo(e.x, e.y + e.size);
+            ctx.closePath();
+            ctx.fill(); 
         }
         
-        // Barre de vie Ennemi
         ctx.fillStyle = 'red';
         ctx.fillRect(e.x, e.y - 10, e.size, 5);
         ctx.fillStyle = 'green';
         ctx.fillRect(e.x, e.y - 10, e.size * (e.hp / e.maxHp), 5);
     }
 
-    // 6. Joueur (Réutilise la logique de dessin standard simplifiée)
+    // 6. Joueur
     let pSize = (player && typeof player.size === 'number' && !isNaN(player.size)) ? player.size : 40;
     
     ctx.translate(player.x + pSize/2, player.y + pSize/2);
@@ -388,9 +419,8 @@ window.renderLevel5 = function() {
         }
     }
 
-    ctx.restore(); // Annule le Translate du joueur et de la caméra
+    ctx.restore(); 
 
-    // UI : Indication d'objectif statique à l'écran
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'left';
